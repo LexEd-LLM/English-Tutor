@@ -1,0 +1,43 @@
+MAX_SEQ_LENGTH: 2048
+RANDOM_STATE: 2004
+
+MODEL_CONFIG:
+  model_name: "meta-llama/Llama-3.1-8B-Instruct"
+  load_in_4bit: true
+  fast_inference: true
+  gpu_memory_utilization: 0.6
+
+PEFT_CONFIG:
+  r: 32
+  lora_alpha: 64
+  lora_dropout: 0
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "up_proj"
+    - "down_proj"
+    - "gate_proj"
+  use_rslora: true
+  use_gradient_checkpointing: "unsloth"
+  random_state: 2004
+
+TRAINING_ARGS:
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 2
+  warmup_steps: 60
+  num_train_epochs: 6
+  learning_rate: 2.0e-4
+  logging_steps: 224
+  save_steps: 224
+  save_total_limit: 10
+  save_strategy: "steps"
+  metric_for_best_model: "loss"
+  greater_is_better: false
+  optim: "adamw_8bit"
+  weight_decay: 0.01
+  lr_scheduler_type: "linear"
+  seed: 2004
+  output_dir: "outputs"
+  report_to: "none"
