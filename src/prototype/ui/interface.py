@@ -67,10 +67,10 @@ def create_quiz_interface():
                 progress(0, desc="Loading database...")
                 index = load_database()
                 
-                progress(0.3, desc="Getting relevant content...")
+                progress(0.2, desc="Getting relevant content...")
                 text_chunks = get_relevant_chunk(index, prompt, top_k=4)
                 
-                progress(0.6, desc="Generating questions...")
+                progress(0.3, desc="Generating questions...")
                 questions_data = generate_questions_batch(text_chunks, num_questions)
                 
                 progress(0.8, desc="Preparing interface...")

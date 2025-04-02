@@ -6,7 +6,7 @@ from ui.interface import create_quiz_interface
 
 def main():
     demo = create_quiz_interface()
-    demo.launch(share=False)
+    demo.launch(share=True)
 
 if __name__ == "__main__":
     main()

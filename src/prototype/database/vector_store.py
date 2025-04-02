@@ -3,7 +3,7 @@ from llama_index.core import VectorStoreIndex, StorageContext
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from prototype.config.settings import embed_model
 
-chroma_client = chromadb.PersistentClient(path="/home/buma04/ai-tutor/chromadb")
+chroma_client = chromadb.PersistentClient(path="/home/buma04/ai-questgen/chromadb")
 
 def load_database():
     """Connect database with ChromaDB backend."""
