@@ -38,19 +38,9 @@ export const Challenge = ({
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
 
-  // Log props for debugging
-  useEffect(() => {
-    console.log('Challenge props:', {
-      type,
-      imageUrl,
-      audioUrl,
-    });
-  }, [type, imageUrl, audioUrl]);
-
   // Tự động phát âm thanh khi component mount (cho câu hỏi voice)
   useEffect(() => {
-    if (type === "voice" && audioRef.current && audioUrl) {
-      console.log('Playing audio:', audioUrl);
+    if (type === "VOICE" && audioRef.current && audioUrl) {
       audioRef.current.play().catch(error => {
         console.error("Error playing audio:", error);
       });
@@ -59,7 +49,6 @@ export const Challenge = ({
 
   const handlePlayAudio = () => {
     if (audioRef.current) {
-      console.log('Manual audio play:', audioUrl);
       audioRef.current.currentTime = 0; // Reset về đầu
       audioRef.current.play().catch(error => {
         console.error("Error playing audio:", error);
@@ -68,12 +57,10 @@ export const Challenge = ({
   };
 
   const handleImageLoad = () => {
-    console.log('Image loaded successfully:', imageUrl);
     setIsImageLoading(false);
   };
 
   const handleImageError = () => {
-    console.error('Image failed to load:', imageUrl);
     setIsImageLoading(false);
     setImageError(true);
   };
@@ -84,29 +71,30 @@ export const Challenge = ({
         <div className="text-xl font-bold text-neutral-700">
           {question}
         </div>
-        {type === "voice" && audioUrl && (
+        {type === "VOICE" && audioUrl && (
           <button
             onClick={handlePlayAudio}
             className="flex items-center justify-center p-2 rounded-full hover:bg-neutral-100 transition"
           >
-            <Image
-              src="/speaker.svg"
-              alt="Play audio"
-              width={24}
-              height={24}
-              className="cursor-pointer"
-            />
+          <Image
+            src="/speaker.svg"
+            alt="Play audio"
+            width={24}
+            height={24}
+            className="cursor-pointer"
+            style={{ filter: "invert(48%) sepia(80%) saturate(2476%) hue-rotate(200deg) brightness(118%) contrast(119%)" }}
+          />
           </button>
         )}
       </div>
 
       {/* Hidden audio element for voice questions */}
-      {type === "voice" && audioUrl && (
+      {type === "VOICE" && audioUrl && (
         <audio ref={audioRef} src={audioUrl} controls={false} />
       )}
 
       {/* Image for image questions */}
-      {type === "image" && imageUrl && !imageError && (
+      {type === "IMAGE" && imageUrl && !imageError && (
         <div className="relative h-64 w-full overflow-hidden rounded-lg">
           {isImageLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-neutral-100">

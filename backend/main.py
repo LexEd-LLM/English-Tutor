@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import List, Tuple, Optional, Dict
 import sys
 import os
+import shutil
 from pathlib import Path
 
 # Thêm thư mục gốc vào sys.path
@@ -25,10 +26,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static directories
-static_dir = Path("static")
-app.mount("/images", StaticFiles(directory=static_dir / "images"), name="images")
-app.mount("/audio", StaticFiles(directory=static_dir / "audio"), name="audio")
+# Mount static directories to serve files from frontend/public
+frontend_public_dir = Path("../frontend/public")
+# Tạo thư mục nếu chưa tồn tại
+(frontend_public_dir / "images").mkdir(parents=True, exist_ok=True)
+(frontend_public_dir / "audio").mkdir(parents=True, exist_ok=True)
+app.mount("/images", StaticFiles(directory=frontend_public_dir / "images"), name="images")
+app.mount("/audio", StaticFiles(directory=frontend_public_dir / "audio"), name="audio")
 
 class QuizRequest(BaseModel):
     prompt: str
@@ -58,8 +62,11 @@ class QuizResponse(BaseModel):
     voice_questions: List[QuizItem]
 
 class ExplanationRequest(BaseModel):
+    question_id: int
     question: str
     correct_answer: str
+    question_type: Optional[str] = None
+    user_answer: Optional[str] = None
 
 @app.post("/api/generate-quiz", response_model=QuizResponse)
 async def generate_quiz(request: QuizRequest):
@@ -106,11 +113,11 @@ async def generate_quiz(request: QuizRequest):
                 
                 # Add image URL for image questions
                 if "image_url" in q:
-                    quiz_item.imageUrl = f"/images/{q['image_url']}" if not q["image_url"].startswith("/") else q["image_url"]
+                    quiz_item.imageUrl = q["image_url"]
                 
                 # Add audio URL for voice questions
                 if "audio_url" in q:
-                    quiz_item.audioUrl = f"/audio/{q['audio_url']}" if not q["audio_url"].startswith("/") else q["audio_url"]
+                    quiz_item.audioUrl = q["audio_url"]
                 
                 quiz_items.append(quiz_item)
             
@@ -140,7 +147,11 @@ async def generate_explanation(request: ExplanationRequest):
     try:
         from backend.services.question_generator import generate_explanation
         
-        explanation = generate_explanation(request.question, request.correct_answer)
+        explanation = generate_explanation(
+            question=request.question, 
+            correct_answer=request.correct_answer, 
+            user_answer=request.user_answer
+        )
         print(f"Generated explanation: {explanation[:100]}...")
         
         return {"explanation": explanation}

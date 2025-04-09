@@ -27,6 +27,7 @@ type Challenge = typeof challenges.$inferSelect & {
   challengeOptions: (typeof challengeOptions.$inferSelect)[];
   imageUrl?: string;
   audioUrl?: string;
+  originalType?: string;
 };
 
 type QuizProps = {
@@ -103,8 +104,8 @@ export const Quiz = ({
   // Transform media URLs for current challenge
   const transformedChallenge = challenge ? {
     ...challenge,
-    imageUrl: challenge.imageUrl ? `${BACKEND_URL}${challenge.imageUrl}` : undefined,
-    audioUrl: challenge.audioUrl ? `${BACKEND_URL}${challenge.audioUrl}` : undefined,
+    imageUrl: challenge.imageUrl,
+    audioUrl: challenge.audioUrl,
   } : null;
 
   useEffect(() => {
@@ -138,10 +139,19 @@ export const Quiz = ({
     if (status !== "none") return;
 
     setSelectedOption(id);
-    setUserAnswers(prev => ({
-      ...prev,
-      [challenge.id]: id
-    }));
+    setUserAnswers(prev => {
+      const newAnswers = {
+        ...prev,
+        [challenge.id]: id
+      };
+      
+      // Lưu câu trả lời vào localStorage để trang explanations có thể sử dụng
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('quizUserAnswers', JSON.stringify(newAnswers));
+      }
+      
+      return newAnswers;
+    });
 
     // Cập nhật thanh trạng thái dựa trên số câu đã trả lời
     const answeredCount = Object.keys({
@@ -153,6 +163,11 @@ export const Quiz = ({
   };
 
   const submitQuiz = () => {
+    // Đảm bảo lưu trữ câu trả lời khi submit quiz
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('quizUserAnswers', JSON.stringify(userAnswers));
+    }
+
     const score = challenges.reduce((total, challenge) => {
       const selectedOptionId = userAnswers[challenge.id];
       if (!selectedOptionId) return total;
@@ -184,20 +199,17 @@ export const Quiz = ({
 
   const transformMediaUrls = (questions: any[]) => {
     return questions.map(q => {
-      console.log('Original question:', q);
       const transformed = {
         ...q,
-        imageUrl: q.imageUrl ? `${BACKEND_URL}${q.imageUrl}` : (q.image_url ? `${BACKEND_URL}${q.image_url}` : undefined),
-        audioUrl: q.audioUrl ? `${BACKEND_URL}${q.audioUrl}` : (q.audio_url ? `${BACKEND_URL}${q.audio_url}` : undefined),
+        imageUrl: q.imageUrl || q.image_url,
+        audioUrl: q.audioUrl || q.audio_url,
       };
-      console.log('Transformed question:', transformed);
       return transformed;
     });
   };
 
   const fetchQuestions = async (text: string) => {
     try {
-      console.log('Fetching questions from:', `${BACKEND_URL}/api/generate-quiz`);
       const response = await fetch(`${BACKEND_URL}/api/generate-quiz`, {
         method: "POST",
         headers: {
@@ -216,7 +228,6 @@ export const Quiz = ({
       }
 
       const data = await response.json();
-      console.log('Raw response data:', data);
       
       // Transform image and audio URLs for all question types
       const transformedData = {
@@ -226,10 +237,8 @@ export const Quiz = ({
         voice_questions: transformMediaUrls(data.voice_questions || []),
       };
       
-      console.log('Transformed data:', transformedData);
       return transformedData;
     } catch (error) {
-      console.error("Error fetching questions:", error);
       return null;
     }
   };
@@ -269,6 +278,7 @@ export const Quiz = ({
             }
             
             setStatus("correct");
+            correctControls.play();
           })
           .catch(() => toast.error("Something went wrong. Please try again."));
       } else {
@@ -280,10 +290,20 @@ export const Quiz = ({
             }
 
             setStatus("wrong");
+            incorrectControls.play();
           })
           .catch(() => toast.error("Something went wrong. Please try again."));
       }
     });
+  };
+
+  // Cập nhật hàm chuyển đến trang explanations để đảm bảo dữ liệu được lưu
+  const goToExplanations = () => {
+    // Đảm bảo lưu trữ câu trả lời trước khi chuyển trang
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('quizUserAnswers', JSON.stringify(userAnswers));
+    }
+    router.push("/lesson/explanations");
   };
 
   if (!challenge) {
@@ -339,7 +359,7 @@ export const Quiz = ({
 
           <div className="flex flex-col gap-y-4 w-full mt-4">
             <Button
-              onClick={() => router.push("/lesson/explanations")}
+              onClick={goToExplanations}
               className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3"
             >
               View Explanations
@@ -395,27 +415,33 @@ export const Quiz = ({
           <div className="flex-1">
             {challenge && (
               <div className="px-6 pb-28 pt-8">
-                <Challenge
-                  id={challenge.id}
-                  type={challenge.type}
-                  question={challenge.question}
-                  options={options}
-                  selectedOption={selectedOption}
-                  status={status}
-                  onSelect={onSelect}
-                  imageUrl={challenge.imageUrl ? `${BACKEND_URL}${challenge.imageUrl}` : undefined}
-                  audioUrl={challenge.audioUrl ? `${BACKEND_URL}${challenge.audioUrl}` : undefined}
-                />
+                <h1 className="text-2xl font-bold text-neutral-700">
+                  {title}
+                </h1>
+                <div className="mt-6">
+                  <Challenge
+                    id={challenge.id}
+                    type={challenge.originalType || challenge.type}
+                    question=""
+                    options={options}
+                    selectedOption={selectedOption}
+                    status={status}
+                    onSelect={onSelect}
+                    imageUrl={challenge.imageUrl}
+                    audioUrl={challenge.audioUrl}
+                  />
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
       <Footer
+        lessonId={lessonId}
+        status={status}
         onCheck={onContinue}
         onBack={activeIndex > 0 ? onBack : undefined}
         onNext={activeIndex < challenges.length - 1 ? onNext : undefined}
-        status={status}
         disabled={!selectedOption}
         showNavigationButtons={true}
         isLastQuestion={isLastQuestion}

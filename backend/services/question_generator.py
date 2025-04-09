@@ -202,11 +202,21 @@ def parse_json_questions(response_text: str) -> List[Dict[str, Any]]:
         print(f"Error parsing questions: {e}")
         return []
 
-def generate_explanation(question: str, correct_answer: str) -> str:
+def generate_explanation(question: str, correct_answer: str, user_answer: str) -> str:
     """Generates explanation for a question"""
     template = PromptTemplate(
-        template="Provide an explanation for the following question and answer:\n\nQuestion: {question}\nCorrect Answer: {correct_answer}\n\nExplanation:"
+        template=(
+            "Bạn là một giáo viên tận tâm, hướng dẫn học sinh lớp 12 ôn tập môn tiếng Anh. "
+            "Hãy giải thích ngắn gọn, đi thẳng vào nội dung chính, giúp học sinh hiểu vì sao đáp án đúng là {correct_answer} "
+            "và tại sao đáp án của học sinh ({user_answer}) chưa chính xác. "
+            "Dự đoán lý do học sinh có thể chọn sai, sau đó đưa ví dụ minh họa để làm rõ nghĩa.\n\n"
+            "Câu hỏi: {question}\n"
+            "Đáp án đúng: {correct_answer}\n"
+            "Đáp án của học sinh: {user_answer}\n\n"
+            "Giải thích:"
+        )
     )
-    prompt = template.format(question=question, correct_answer=correct_answer)
+    prompt = template.format(question=question, correct_answer=correct_answer, user_answer=user_answer)
     response = llm.complete(prompt)
-    return response.text
+    
+    return "\n".join(response.text.splitlines()[1:])

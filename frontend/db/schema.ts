@@ -212,3 +212,22 @@ export const quizAudiosRelations = relations(quizAudios, ({ one }) => ({
     references: [userQuizStorage.id],
   }),
 }));
+
+// Bảng lưu trữ giải thích cho câu hỏi
+export const explanations = pgTable("explanations", {
+  id: serial("id").primaryKey(),
+  questionId: integer("question_id").notNull(), // ID của câu hỏi trong userQuizStorage.questions
+  userId: text("user_id").notNull(),
+  explanation: text("explanation").notNull(),
+  userAnswer: text("user_answer"), // Đáp án người dùng đã chọn
+  correctAnswer: text("correct_answer").notNull(), // Đáp án đúng
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const explanationsRelations = relations(explanations, ({ one }) => ({
+  user: one(userProgress, {
+    fields: [explanations.userId],
+    references: [userProgress.userId],
+  }),
+}));
