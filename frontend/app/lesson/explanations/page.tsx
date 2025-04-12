@@ -111,7 +111,7 @@ export default function ExplanationsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          question,
+          question: question,
           correct_answer: correctAnswer,
           question_type: questionType,
           question_id: questionId,

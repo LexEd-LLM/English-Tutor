@@ -1,6 +1,7 @@
 from enum import Enum
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
+from datetime import datetime
 
 class QuestionType(str, Enum):
     FILL_IN_BLANK = "fill_in_blank"
@@ -27,7 +28,20 @@ class QuizRequest(BaseModel):
     image_count: int = Field(description="Number of image questions")
     voice_count: int = Field(description="Number of voice questions")
 
-class QuizResponse(BaseModel):
-    multiple_choice_questions: List[BaseQuestion] = Field(default_factory=list)
-    image_questions: List[ImageQuestion] = Field(default_factory=list)
-    voice_questions: List[VoiceQuestion] = Field(default_factory=list)
+class WrongQuestionOption(BaseModel):
+    id: int
+    text: str
+    correct: bool
+
+class WrongQuestion(BaseModel):
+    id: str
+    question: str
+    userAnswer: str
+    correctAnswer: str
+    type: str
+    options: Optional[List[WrongQuestionOption]]
+
+class PracticeHistory(BaseModel):
+    userId: str = Field(description="User ID")
+    wrongQuestions: List[WrongQuestion] = Field(description="List of questions answered incorrectly")
+    originalPrompt: str = Field(description="Original prompt used for generating questions", default="")

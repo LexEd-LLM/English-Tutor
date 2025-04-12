@@ -5,10 +5,10 @@ from llama_index.embeddings.langchain import LangchainEmbedding
 from llama_index.llms.gemini import Gemini
 from llama_index.llms.ollama import Ollama
 from llama_index.core import Settings
+from google import genai
 
-_ = load_dotenv(find_dotenv())
+_ = load_dotenv(dotenv_path=".env", override=True)
 
-# Initialize Gemini
 os.environ["GEMINI_API_KEY"] = os.getenv('GEMINI_API_KEY')
 llm = Gemini(model="models/gemini-2.0-flash", temperature=1)
 # llm = Ollama(

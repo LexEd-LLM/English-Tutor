@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 
 // Các route không cần auth
 const publicRoutes = [
+  "/",
   "/admin/login",
   "/api/admin/auth"
 ];
@@ -45,8 +46,12 @@ export default authMiddleware({
   },
   afterAuth: (auth, req) => {
     // Xử lý sau khi Clerk auth hoàn tất
-    if (!auth.userId && !isPublicRoute(req.nextUrl.pathname)) {
-      return NextResponse.redirect(new URL("/", req.url));
+    const { pathname } = req.nextUrl;
+    
+    // Nếu chưa đăng nhập và không phải public route, redirect tới /admin/login
+    if (!auth.userId && !isPublicRoute(pathname)) {
+      const isAdmin = isAdminRoute(pathname);
+      return NextResponse.redirect(new URL(isAdmin ? "/admin/login" : "/", req.url));
     }
 
     return NextResponse.next();

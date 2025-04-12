@@ -15,6 +15,7 @@ import { MAX_HEARTS } from "@/constants";
 import { challengeOptions, challenges, userSubscription } from "@/db/schema";
 import { useHeartsModal } from "@/store/use-hearts-modal";
 import { usePracticeModal } from "@/store/use-practice-modal";
+import { generatePracticeQuestions, savePracticeHistory } from "@/actions/practice";
 
 import { Challenge } from "./challenge";
 import { Footer } from "./footer";
@@ -22,12 +23,51 @@ import { Header } from "./header";
 import { QuestionBubble } from "./question-bubble";
 import { ResultCard } from "./result-card";
 
-type Challenge = typeof challenges.$inferSelect & {
+type QuestionType = "SELECT" | "ASSIST" | "VOICE" | "IMAGE";
+
+type WrongQuestion = {
+  id: string;
+  question: string;
+  userAnswer: string;
+  correctAnswer: string;
+  type: QuestionType;
+  options?: {
+    id: number;
+    text: string;
+    correct: boolean;
+  }[];
+};
+
+type Challenge = {
+  id: number;
+  order: number;
+  lessonId: number;
+  type: QuestionType;
+  question: string;
   completed: boolean;
-  challengeOptions: (typeof challengeOptions.$inferSelect)[];
+  challengeOptions: {
+    id: number;
+    text: string;
+    correct: boolean;
+    challengeId: number;
+  }[];
   imageUrl?: string;
   audioUrl?: string;
   originalType?: string;
+};
+
+type PracticeQuestion = {
+  id: number;
+  question: string;
+  type: QuestionType;
+  explanation: string;
+  imageUrl?: string;
+  audioUrl?: string;
+  options: {
+    id: number;
+    text: string;
+    correct: boolean;
+  }[];
 };
 
 type QuizProps = {
@@ -40,6 +80,7 @@ type QuizProps = {
         isActive: boolean;
       })
     | null;
+  userId: string;
 };
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -50,6 +91,7 @@ export const Quiz = ({
   initialLessonId,
   initialLessonChallenges,
   userSubscription,
+  userId,
 }: QuizProps) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [correctAudio, _c, correctControls] = useAudio({ src: "/correct.wav" });
@@ -82,7 +124,7 @@ export const Quiz = ({
   const [percentage, setPercentage] = useState(() => {
     return initialPercentage === 100 ? 0 : initialPercentage;
   });
-  const [challenges] = useState(initialLessonChallenges);
+  const [challenges, setChallenges] = useState(initialLessonChallenges);
   const [activeIndex, setActiveIndex] = useState(() => {
     const uncompletedIndex = challenges.findIndex(
       (challenge) => !challenge.completed
@@ -96,6 +138,9 @@ export const Quiz = ({
   const [showQuestionsNav, setShowQuestionsNav] = useState(true);
   const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
   const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false);
+  const [wrongQuestions, setWrongQuestions] = useState<WrongQuestion[]>([]);
+  const [originalPrompt, setOriginalPrompt] = useState<string>("");
+  const [isPracticeMode, setIsPracticeMode] = useState(false);
 
   const challenge = challenges[activeIndex];
   const options = challenge?.challengeOptions ?? [];
@@ -145,15 +190,43 @@ export const Quiz = ({
         [challenge.id]: id
       };
       
-      // Lưu câu trả lời vào localStorage để trang explanations có thể sử dụng
+      // Store answers in localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem('quizUserAnswers', JSON.stringify(newAnswers));
+      }
+
+      // Track wrong answers with more details
+      const selectedOption = challenge.challengeOptions.find(opt => opt.id === id);
+      const correctOption = challenge.challengeOptions.find(opt => opt.correct);
+      
+      if (selectedOption && correctOption && !selectedOption.correct) {
+        const wrongQuestion: WrongQuestion = {
+          id: challenge.id.toString(),
+          question: challenge.question,
+          userAnswer: selectedOption.text,
+          correctAnswer: correctOption.text,
+          type: challenge.type as QuestionType,
+          options: challenge.challengeOptions.map(opt => ({
+            id: opt.id,
+            text: opt.text,
+            correct: opt.correct
+          }))
+        };
+        
+        setWrongQuestions(prev => {
+          // Remove any existing entry for this question
+          const filtered = prev.filter(q => q.id !== wrongQuestion.id);
+          return [...filtered, wrongQuestion];
+        });
+      } else {
+        // If answer is correct, remove from wrongQuestions if it exists
+        setWrongQuestions(prev => prev.filter(q => q.id !== challenge.id.toString()));
       }
       
       return newAnswers;
     });
 
-    // Cập nhật thanh trạng thái dựa trên số câu đã trả lời
+    // Update progress bar
     const answeredCount = Object.keys({
       ...userAnswers,
       [challenge.id]: id
@@ -306,6 +379,58 @@ export const Quiz = ({
     router.push("/lesson/explanations");
   };
 
+  const startPracticeMode = async () => {
+    try {
+      const { questions, nextReview } = await generatePracticeQuestions(
+        userId,
+        wrongQuestions.map(q => q.id),
+        originalPrompt
+      );
+
+      // Transform questions to match Challenge type
+      const transformedQuestions: Challenge[] = questions.map((q: any, index) => ({
+        id: q.id,
+        order: index,
+        lessonId: lessonId,
+        completed: false,
+        type: q.type as QuestionType,
+        question: q.question,
+        challengeOptions: q.options.map((opt: any) => ({
+          id: opt.id,
+          text: opt.text,
+          correct: opt.correct,
+          challengeId: q.id
+        })),
+        imageUrl: q.imageUrl,
+        audioUrl: q.audioUrl
+      }));
+
+      // Reset state for practice mode
+      setIsPracticeMode(true);
+      setChallenges(transformedQuestions);
+      setActiveIndex(0);
+      setSelectedOption(undefined);
+      setStatus("none");
+      setUserAnswers({});
+      setPercentage(0);
+      
+      // Save practice start to history
+      await savePracticeHistory({
+        userId,
+        questionId: questions[0].id.toString(),
+        isCorrect: false,
+        answer: "",
+        timestamp: new Date(),
+        reviewCount: 0,
+        nextReview: nextReview
+      });
+
+    } catch (error) {
+      console.error("Failed to start practice mode:", error);
+      toast.error("Failed to start practice mode");
+    }
+  };
+
   if (!challenge) {
     return (
       <>
@@ -349,6 +474,8 @@ export const Quiz = ({
                 }, 0),
                 total: challenges.length
               }}
+              showPracticeButton={wrongQuestions.length > 0}
+              onPractice={startPracticeMode}
             />
             <ResultCard
               variant="hearts"
@@ -371,6 +498,10 @@ export const Quiz = ({
           lessonId={lessonId}
           status="completed"
           onCheck={() => router.push("/learn")}
+          isPracticeMode={isPracticeMode}
+          userId={userId}
+          wrongQuestions={wrongQuestions}
+          originalPrompt={originalPrompt}
         />
       </>
     );
@@ -446,6 +577,10 @@ export const Quiz = ({
         showNavigationButtons={true}
         isLastQuestion={isLastQuestion}
         allQuestionsAnswered={allQuestionsAnswered}
+        isPracticeMode={isPracticeMode}
+        userId={userId}
+        wrongQuestions={wrongQuestions}
+        originalPrompt={originalPrompt}
       />
     </div>
   );

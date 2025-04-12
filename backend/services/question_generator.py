@@ -2,36 +2,103 @@ from llama_index.core.prompts import PromptTemplate
 from llama_index.core.output_parsers import PydanticOutputParser
 from ..config.settings import llm
 from ..schemas.quiz import BaseQuestion, ImageQuestion, VoiceQuestion, QuestionType
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import json
 import random
 from .voice_quiz_generator import generate_audio
 from .image_generator import generate_image
+from langchain.prompts import ChatPromptTemplate
 
-def generate_fill_in_blank(content: str, count: int) -> List[Dict[str, Any]]:
-    prompt_template = PromptTemplate(
-        template="""
-            Generate {count} different fill-in-the-blank multiple-choice questions based on the following content.
-            Make sure questions cover different aspects and concepts from the content.
-            Content: {content}
-            
-            For each question:
-            1. Create a sentence with a key word or phrase removed
-            2. The correct answer should be the removed word/phrase
-            3. Generate 3 other plausible but incorrect options
-            4. Provide a brief explanation why the answer is correct
-            
-            Return the questions in JSON format with these fields:
-            - question: the fill-in-the-blank question
-            - options: array of 4 possible answers
-            - correct_answer: the correct option
-            - type: "fill_in_blank"
-            
-            Generate exactly {count} questions.
-        """
-    )
+# Base prompt template for question generation without strengths/weaknesses
+BASE_FIB_QUESTION_TEMPLATE = """
+    Generate {count} different {question_type} multiple-choice questions from the following content.
+    Make sure questions cover different aspects and concepts from the content.
+    Content: {content}
+
+    For each question:
+    1. Create a question in the specified format
+    2. Generate 4 options with only one correct answer
+    3. Mark the correct answer
+
+    Return the questions in JSON format with these fields:
+    - question: the {question_type} question
+    - options: array of 4 possible answers
+    - correct_answer: the correct option
+    - type: "{question_type}"
+
+    Generate exactly {count} questions.
+"""
+
+BASE_TRANSLATION_QUESTION_TEMPLATE = """
+    Generate {count} Vietnamese-English translation multiple-choice questions based on the following content.
+    Content: {content}
     
-    prompt = prompt_template.format(content=content, count=count)
+    For each question:
+    1. Create a question in Vietnamese asking for the English meaning of a word/phrase
+    2. The correct answer should be the English translation
+    3. Generate 3 other plausible but incorrect English translations
+    4. Provide a brief explanation in Vietnamese
+    
+    Return the questions in JSON format with these fields:
+    - question: the Vietnamese question
+    - options: array of 4 English options
+    - correct_answer: the correct English translation
+    - type: "translation"
+    
+    Generate exactly {count} questions.
+"""
+
+# Template for practice questions with strengths/weaknesses
+PRACTICE_QUESTION_TEMPLATE = """
+You are a language learning expert. Generate {count} {question_type} questions focused on improving the student's weak areas while occasionally reinforcing their strengths.
+
+Student Profile:
+Strengths: {strengths}
+Weaknesses: {weaknesses}
+
+Content: {content}
+
+For each question:
+1. Create a question targeting specific language skills
+2. Generate 4 options with only one correct answer
+3. Mark the correct answer
+4. Focus on areas where the student needs improvement
+
+Return the questions in JSON format with these fields:
+- question: the question text
+- options: array of 4 possible answers
+- correct_answer: the correct option
+- type: "{question_type}"
+
+Generate exactly {count} questions.
+"""
+
+def generate_fill_in_blank_questions(
+    content: str, 
+    count: int,
+    strengths: Optional[List[str]] = None,
+    weaknesses: Optional[List[str]] = None
+) -> List[Dict[str, Any]]:
+    """Generate fill-in-the-blank questions."""
+    if strengths or weaknesses:
+        template = PRACTICE_QUESTION_TEMPLATE 
+        prompt_template = PromptTemplate(template=template)
+        
+        prompt = prompt_template.format(
+            content=content,
+            count=count,
+            question_type="fill_in_blank",
+            strengths=", ".join(strengths) if strengths else "None",
+            weaknesses=", ".join(weaknesses) if weaknesses else "None"
+        )
+    else:
+        template = BASE_FIB_QUESTION_TEMPLATE
+        prompt_template = PromptTemplate(template=template)
+        prompt = prompt_template.format(
+            content=content,
+            count=count,
+        )
+    
     response = llm.complete(prompt)
     questions = parse_json_questions(response.text)
     return [
@@ -44,29 +111,33 @@ def generate_fill_in_blank(content: str, count: int) -> List[Dict[str, Any]]:
         for q in questions
     ]
 
-def generate_translation_questions(content: str, count: int) -> List[Dict[str, Any]]:
-    prompt_template = PromptTemplate(
-        template="""
-            Generate {count} Vietnamese-English translation multiple-choice questions based on the following content.
-            Content: {content}
-            
-            For each question:
-            1. Create a question in Vietnamese asking for the English meaning of a word/phrase
-            2. The correct answer should be the English translation
-            3. Generate 3 other plausible but incorrect English translations
-            4. Provide a brief explanation in Vietnamese
-            
-            Return the questions in JSON format with these fields:
-            - question: the Vietnamese question
-            - options: array of 4 English options
-            - correct_answer: the correct English translation
-            - type: "translation"
-            
-            Generate exactly {count} questions.
-        """
-    )
+def generate_translation_questions(
+    content: str, 
+    count: int,
+    strengths: Optional[List[str]] = None,
+    weaknesses: Optional[List[str]] = None
+) -> List[Dict[str, Any]]:
+    """Generate translation questions."""
     
-    prompt = prompt_template.format(content=content, count=count)
+    if strengths or weaknesses:
+        template = PRACTICE_QUESTION_TEMPLATE
+        prompt_template = PromptTemplate(template=template)
+        
+        prompt = prompt_template.format(
+            content=content,
+            count=count,
+            question_type="translation",
+            strengths=", ".join(strengths) if strengths else "None",
+            weaknesses=", ".join(weaknesses) if weaknesses else "None"
+        )
+    else:
+        template = BASE_TRANSLATION_QUESTION_TEMPLATE
+        prompt_template = PromptTemplate(template=template)
+        prompt = prompt_template.format(
+            content=content,
+            count=count,
+        )
+    
     response = llm.complete(prompt)
     questions = parse_json_questions(response.text)
     return [
@@ -162,16 +233,38 @@ def generate_voice_questions(content: str, count: int) -> List[Dict[str, Any]]:
         for q in questions
     ]
 
-def generate_questions_batch(chunks: List[str], multiple_choice_count: int, image_count: int, voice_count: int) -> Dict[str, List[Dict[str, Any]]]:
-    """Generates multiple types of questions from given chunks of text"""
-    combined_content = "\n\n".join(chunks)
+def generate_questions_batch(
+    text_chunks: List[str],
+    multiple_choice_count: int,
+    image_count: int,
+    voice_count: int,
+    strengths: Optional[List[str]] = None,
+    weaknesses: Optional[List[str]] = None
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Generate a batch of questions."""
     
-    # Randomly split multiple choice questions between fill-in-blank and translation
-    fill_blank_count = random.randint(multiple_choice_count // 2, multiple_choice_count - 1)
+    # Combine chunks into one text
+    combined_content = "\n".join(text_chunks)
+    
+    # Split multiple choice questions between types
+    fill_blank_count = multiple_choice_count // 2
     translation_count = multiple_choice_count - fill_blank_count
     
-    fill_blank_questions = generate_fill_in_blank(combined_content, fill_blank_count)
-    translation_questions = generate_translation_questions(combined_content, translation_count)
+    # Generate questions
+    fill_blank_questions = generate_fill_in_blank_questions(
+        combined_content, 
+        fill_blank_count,
+        strengths=strengths,
+        weaknesses=weaknesses
+    )
+    
+    translation_questions = generate_translation_questions(
+        combined_content, 
+        translation_count,
+        strengths=strengths,
+        weaknesses=weaknesses
+    )
+    
     image_questions = generate_image_questions(combined_content, image_count)
     voice_questions = generate_voice_questions(combined_content, voice_count)
     
@@ -180,6 +273,28 @@ def generate_questions_batch(chunks: List[str], multiple_choice_count: int, imag
         "image_questions": image_questions,
         "voice_questions": voice_questions
     }
+
+def generate_explanation(question: str, correct_answer: str, user_answer: str) -> str:
+    """Generate explanation for a question."""
+    template = PromptTemplate(
+        template=(
+            "Bạn là một giáo viên tận tâm, hướng dẫn học sinh lớp 12 ôn tập môn tiếng Anh. "
+            "Hãy giải thích ngắn gọn, đi thẳng vào nội dung chính, giúp học sinh hiểu vì sao đáp án đúng là {correct_answer} "
+            "và tại sao đáp án của học sinh ({user_answer}) chưa chính xác. "
+            "Dự đoán lý do học sinh có thể chọn sai, sau đó đưa ví dụ minh họa để làm rõ nghĩa.\n\n"
+            "Câu hỏi: {question}\n"
+            "Đáp án đúng: {correct_answer}\n"
+            "Đáp án của học sinh: {user_answer}\n\n"
+            "Giải thích:"
+        )
+    )
+    prompt = template.format(
+        question=question,
+        correct_answer=correct_answer,
+        user_answer=user_answer
+    )
+    response = llm.complete(prompt)
+    return "\n".join(response.text.splitlines()[1:])
 
 def parse_json_questions(response_text: str) -> List[Dict[str, Any]]:
     """Parse generated questions from JSON response"""
@@ -201,22 +316,3 @@ def parse_json_questions(response_text: str) -> List[Dict[str, Any]]:
     except Exception as e:
         print(f"Error parsing questions: {e}")
         return []
-
-def generate_explanation(question: str, correct_answer: str, user_answer: str) -> str:
-    """Generates explanation for a question"""
-    template = PromptTemplate(
-        template=(
-            "Bạn là một giáo viên tận tâm, hướng dẫn học sinh lớp 12 ôn tập môn tiếng Anh. "
-            "Hãy giải thích ngắn gọn, đi thẳng vào nội dung chính, giúp học sinh hiểu vì sao đáp án đúng là {correct_answer} "
-            "và tại sao đáp án của học sinh ({user_answer}) chưa chính xác. "
-            "Dự đoán lý do học sinh có thể chọn sai, sau đó đưa ví dụ minh họa để làm rõ nghĩa.\n\n"
-            "Câu hỏi: {question}\n"
-            "Đáp án đúng: {correct_answer}\n"
-            "Đáp án của học sinh: {user_answer}\n\n"
-            "Giải thích:"
-        )
-    )
-    prompt = template.format(question=question, correct_answer=correct_answer, user_answer=user_answer)
-    response = llm.complete(prompt)
-    
-    return "\n".join(response.text.splitlines()[1:])
