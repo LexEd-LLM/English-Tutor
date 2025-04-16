@@ -1,50 +1,61 @@
-import { Check } from "lucide-react";
-import Image from "next/image";
+"use client";
 
+import { Check } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type CardProps = {
-  title: string;
   id: number;
-  imageSrc: string;
+  title: string;
+  description: string;
+  image_url?: string;
   onClick: (id: number) => void;
   disabled?: boolean;
-  isActive?: boolean;
+  active?: boolean;
 };
 
 export const Card = ({
-  title,
   id,
-  imageSrc,
+  title,
+  description,
+  image_url,
   onClick,
   disabled,
-  isActive,
+  active,
 }: CardProps) => {
   return (
-    <div
+    <Button
+      type="button"
       onClick={() => onClick(id)}
+      disabled={disabled}
       className={cn(
-        "flex h-full min-h-[217px] min-w-[200px] cursor-pointer flex-col items-center justify-between rounded-xl border-2 border-b-[4px] p-3 pb-6 hover:bg-black/5 active:border-b-2",
-        disabled && "pointer-events-none opacity-50"
+        "relative w-full p-0 flex flex-col items-start justify-between h-auto",
+        "hover:bg-accent hover:text-accent-foreground",
+        active && "border-primary border-2"
       )}
     >
-      <div className="flex min-h-[24px] w-full items-center justify-end">
-        {isActive && (
-          <div className="flex items-center justify-center rounded-md bg-green-600 p-1.5">
-            <Check className="h-4 w-4 stroke-[4] text-white" />
+      <div className="p-6 flex flex-col gap-4 w-full">
+        <div className="font-bold line-clamp-2">{title}</div>
+        
+        {image_url && (
+          <div className="w-full h-[160px] relative overflow-hidden rounded-lg">
+            <img 
+              src={image_url} 
+              alt={title}
+              className="object-contain w-full h-full"
+            />
           </div>
         )}
+        
+        <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap">{description}</p>
       </div>
-
-      <Image
-        src={imageSrc}
-        alt={title}
-        height={70}
-        width={93.33}
-        className="rounded-lg border object-cover drop-shadow-md"
-      />
-
-      <p className="mt-3 text-center font-bold text-neutral-700">{title}</p>
-    </div>
+      
+      {active && (
+        <div className="absolute top-3 right-3">
+          <Check className="h-4 w-4 text-primary" />
+        </div>
+      )}
+    </Button>
   );
 };

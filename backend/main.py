@@ -8,18 +8,28 @@ import os
 import shutil
 from pathlib import Path
 from datetime import datetime, timedelta
+import json
 
 # Thêm thư mục gốc vào sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import từ thư mục local
 from backend.services.question_generator import generate_questions_batch, generate_explanation
-from backend.database.vector_store import load_database, get_relevant_chunk
 from backend.schemas.quiz import (
     WrongQuestion,
-    PracticeHistory
+    PracticeHistory,
+    QuizItem,
+    QuizOption,
+    QuizRequest,
+    QuizResponse,
+    ExplanationRequest,
+    QuizAgainRequest
 )
 from backend.services.practice_service import practice_service
+from backend.services.quiz_service import quiz_service
+from backend.services.unit_service import get_unit_chunks
+from backend.database import get_db
+
 app = FastAPI()
 
 # Enable CORS
@@ -38,45 +48,6 @@ frontend_public_dir = Path("../frontend/public")
 (frontend_public_dir / "audio").mkdir(parents=True, exist_ok=True)
 app.mount("/images", StaticFiles(directory=frontend_public_dir / "images"), name="images")
 app.mount("/audio", StaticFiles(directory=frontend_public_dir / "audio"), name="audio")
-
-class QuizRequest(BaseModel):
-    prompt: str
-    multiple_choice_count: int = 6
-    image_count: int = 2
-    voice_count: int = 2
-
-class QuizOption(BaseModel):
-    id: int
-    text: str
-    correct: bool
-    imageSrc: Optional[str] = None
-    audioSrc: Optional[str] = None
-
-class QuizItem(BaseModel):
-    id: int
-    question: str
-    challengeOptions: List[QuizOption]
-    type: str
-    explanation: str = ""
-    imageUrl: Optional[str] = None
-    audioUrl: Optional[str] = None
-
-class QuizResponse(BaseModel):
-    multiple_choice_questions: List[QuizItem]
-    image_questions: List[QuizItem]
-    voice_questions: List[QuizItem]
-
-class ExplanationRequest(BaseModel):
-    question_id: int
-    question: str
-    correct_answer: str
-    question_type: Optional[str] = None
-    user_answer: str
-
-class QuizAgainRequest(BaseModel):
-    userId: str
-    wrongQuestions: List[WrongQuestion]
-    originalPrompt: str
 
 # Chuyển đổi định dạng từ backend sang frontend
 def convert_to_quiz_items(questions: List[dict], start_id: int = 0) -> List[QuizItem]:
@@ -117,20 +88,21 @@ def convert_to_quiz_items(questions: List[dict], start_id: int = 0) -> List[Quiz
         
 @app.post("/api/generate-quiz", response_model=QuizResponse)
 async def generate_quiz(request: QuizRequest):
-    print(f"Received request - prompt: {request.prompt}, mc: {request.multiple_choice_count}, img: {request.image_count}, voice: {request.voice_count}")
-    try:
-        # Tải database vector
-        index = load_database()
-        
-        # Lấy text chunks liên quan đến prompt
-        text_chunks = get_relevant_chunk(index, request.prompt, top_k=4)
-        
-        # Tạo câu hỏi từ chunks
+    print(f"Received request - units: {request.unit_ids}, prompt: {request.prompt}, mc: {request.multiple_choice_count}, img: {request.image_count}, voice: {request.voice_count}")
+    try:       
+        # Lấy text chunks liên quan đến unit
+        text_chunks = []
+        for unit_id in request.unit_ids:
+            unit_chunks = get_unit_chunks(unit_id)
+            text_chunks.extend(unit_chunks)
+
+        # Generate questions from chunks
         questions_data = generate_questions_batch(
-            text_chunks,
-            request.multiple_choice_count,
-            request.image_count,
-            request.voice_count
+            text_chunks=text_chunks,
+            multiple_choice_count=request.multiple_choice_count,
+            image_count=request.image_count,
+            voice_count=request.voice_count,
+            custom_prompt=request.prompt
         )
         
         # Convert each question type
@@ -176,11 +148,8 @@ async def health_check():
 async def generate_quiz_again(request: QuizAgainRequest):
     try:
         print("Start generate quiz again")
-        # Load database vector
-        index = load_database()
-        
         # Get relevant chunks for the original prompt
-        text_chunks = get_relevant_chunk(index, request.originalPrompt, top_k=4)
+        text_chunks = []
         
         # Generate new questions based on practice history
         questions_data = await practice_service.generate_practice_questions(
@@ -188,20 +157,26 @@ async def generate_quiz_again(request: QuizAgainRequest):
             request.wrongQuestions,
             request.originalPrompt,
             text_chunks
-        )        
+        )
 
-        # Convert each question type
+        # Convert each question type to QuizItems
         multiple_choice_items = convert_to_quiz_items(questions_data["multiple_choice_questions"], 0)
         image_items = convert_to_quiz_items(questions_data["image_questions"], len(multiple_choice_items))
         voice_items = convert_to_quiz_items(questions_data["voice_questions"], len(multiple_choice_items) + len(image_items))
         
+        # Save new questions to database
+        quiz_service.save_new_questions(request.quizId, multiple_choice_items + image_items + voice_items)
+
+        # Return only new questions
         result = QuizResponse(
             multiple_choice_questions=multiple_choice_items,
             image_questions=image_items,
             voice_questions=voice_items
         )
+
         print(f"Generated questions - MC: {len(multiple_choice_items)}, Image: {len(image_items)}, Voice: {len(voice_items)}")
         return result
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -222,18 +197,35 @@ async def complete_practice(user_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/generate-explanation")
-async def generate_question_explanation(request: ExplanationRequest):
-    """Generate explanation for a specific question."""
+@app.get("/api/user-progress/{user_id}")
+async def get_user_progress(user_id: str):
+    """Get user progress including hearts"""
     try:
-        explanation = generate_explanation(
-            question=request.question,
-            correct_answer=request.correct_answer,
-            user_answer=request.user_answer
-        )
-        return {"explanation": explanation}
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                # Check if user exists first
+                cur.execute("""
+                    SELECT id, hearts
+                    FROM users
+                    WHERE id = %s
+                """, (user_id,))
+                result = cur.fetchone()
+                
+                if not result:
+                    print(f"User {user_id} not found")
+                    return {"hearts": 5}  # Default hearts if user not found
+                
+                # Handle null hearts value
+                hearts = result[1] if result[1] is not None else 5
+                print(f"Found user {user_id} with {hearts} hearts")
+                return {"hearts": hearts}
+        finally:
+            conn.close()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error getting user progress: {str(e)}")
+        # Return default hearts instead of error
+        return {"hearts": 5}
 
 # Chạy với uvicorn
 if __name__ == "__main__":

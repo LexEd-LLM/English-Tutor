@@ -1,66 +1,42 @@
-import { InfinityIcon } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { courses } from "@/db/schema";
+import { Progress } from "@/components/ui/progress";
+import { curriculums } from "@/db/schema";
 
 type UserProgressProps = {
-  activeCourse: typeof courses.$inferSelect;
-  hearts: number;
-  points: number;
-  hasActiveSubscription: boolean;
+  activeCourse: typeof curriculums.$inferSelect;
+  progressPercent: number;
 };
 
 export const UserProgress = ({
   activeCourse,
-  hearts,
-  points,
-  hasActiveSubscription,
+  progressPercent,
 }: UserProgressProps) => {
   return (
-    <div className="flex w-full items-center justify-between gap-x-2">
-      <Link href="/courses">
-        <Button variant="ghost">
-          <Image
-            src={activeCourse.imageSrc}
-            alt={activeCourse.title}
-            className="rounded-md border"
-            width={32}
-            height={32}
-          />
-        </Button>
-      </Link>
-
-      <Link href="/shop">
-        <Button variant="ghost" className="text-orange-500">
-          <Image
-            src="/points.svg"
-            height={28}
-            width={28}
-            alt="Points"
-            className="mr-2"
-          />
-          {points}
-        </Button>
-      </Link>
-
-      <Link href="/shop">
-        <Button variant="ghost" className="text-rose-500">
-          <Image
-            src="/heart.svg"
-            height={22}
-            width={22}
-            alt="Hearts"
-            className="mr-2"
-          />
-          {hasActiveSubscription ? (
-            <InfinityIcon className="stroke-3 h-4 w-4" />
-          ) : (
-            hearts
-          )}
-        </Button>
-      </Link>
+    <div className="w-full min-w-[240px] bg-white rounded-xl p-4 shadow-sm">
+      <div className="flex items-center gap-x-2">
+        <Link href="/courses">
+          <h2 className="font-bold text-neutral-700">
+            {activeCourse.title}
+          </h2>
+        </Link>
+      </div>
+      <div className="mt-4">
+        <Progress value={progressPercent} className="h-2" />
+        <p className="text-muted-foreground text-sm mt-2">
+          {progressPercent}% Complete
+        </p>
+      </div>
+      <Button
+        asChild
+        variant="secondary"
+        className="w-full mt-4"
+      >
+        <Link href="/courses">
+          Change Course
+        </Link>
+      </Button>
     </div>
   );
 };

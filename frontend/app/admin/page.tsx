@@ -1,20 +1,9 @@
-import dynamic from "next/dynamic";
-import { redirect } from "next/navigation";
+import { AdminDashboard } from "./components/admin-dashboard";
 
-import { getIsAdmin } from "@/lib/admin";
-
-const App = dynamic(() => import("./app"), { ssr: false });
-
-const AdminPage = () => {
-  const isAdmin = getIsAdmin();
-
-  if (!isAdmin) redirect("/");
-
+export default function AdminPage() {
   return (
-    <div>
-      <App />
+    <div className="min-h-screen bg-gray-100">
+      <AdminDashboard />
     </div>
   );
-};
-
-export default AdminPage;
+}

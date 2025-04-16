@@ -2,11 +2,27 @@ import { redirect } from "next/navigation";
 
 import { getUserProgress, getUserSubscription } from "@/db/queries";
 import { getGeneratedQuiz } from "@/actions/quiz";
+import { questionTypeEnum } from "@/db/schema";
 
 import { Quiz } from "./quiz";
 
+type APIQuizQuestion = {
+  id: number;
+  question: string;
+  type: typeof questionTypeEnum.enumValues[number];
+  challengeOptions: {
+    id: number;
+    text: string;
+    correct: boolean;
+    imageSrc: string | null;
+    audioSrc: string | null;
+  }[];
+  imageUrl?: string;
+  audioUrl?: string;
+};
+
 // Hàm tạo dữ liệu mẫu nếu không có dữ liệu từ backend
-function generateDemoQuestions() {
+function generateDemoQuestions(): APIQuizQuestion[] {
   const demoQuestions = [];
   const questionTypes = ["What is", "Explain", "How does", "Why is", "Define"];
   const topic = "Unit 1";
@@ -18,7 +34,9 @@ function generateDemoQuestions() {
     demoQuestions.push({
       id: i + 1,
       question,
-      type: "SELECT",
+      type: questionTypeEnum.enumValues[0],
+      imageUrl: undefined,
+      audioUrl: undefined,
       challengeOptions: [
         {
           id: 1,
@@ -71,7 +89,7 @@ const LessonPage = async () => {
   ]);
 
   // Kiểm tra user progress
-  if (!userProgress) {
+  if (!userProgress?.userId) {
     return redirect("/learn");
   }
 
@@ -87,7 +105,7 @@ const LessonPage = async () => {
   }
   
   // Đảm bảo generatedQuestions là một mảng hợp lệ
-  let questions = generatedQuestions;
+  let questions = generatedQuestions as APIQuizQuestion[];
   if (!questions || !Array.isArray(questions) || questions.length === 0) {
     questions = generateDemoQuestions();
     
@@ -102,20 +120,14 @@ const LessonPage = async () => {
     const hasImageUrl = 'imageUrl' in q && q.imageUrl;
     const hasAudioUrl = 'audioUrl' in q && q.audioUrl;
     
-    // Dùng type assertion để phù hợp với định nghĩa type
-    const questionType = (q.type === "IMAGE" || q.type === "VOICE") 
-      ? "SELECT" // Convert to SELECT for type compatibility
-      : q.type as "SELECT" | "ASSIST";
-      
     return {
       id: q.id,
-      order: index + 1, // Thêm trường order
-      lessonId: 1, // Giả định ID bài học
-      type: questionType,
-      originalType: q.type, // Lưu giữ loại câu hỏi gốc
+      order: index + 1,
+      lessonId: 1,
+      type: q.type,
+      originalType: q.type,
       question: q.question,
       completed: false,
-      // Thêm imageUrl và audioUrl nếu có
       imageUrl: hasImageUrl ? q.imageUrl : undefined,
       audioUrl: hasAudioUrl ? q.audioUrl : undefined,
       challengeOptions: q.challengeOptions.map((option) => ({
@@ -131,11 +143,12 @@ const LessonPage = async () => {
 
   return (
     <Quiz
-      initialLessonId={1} // Giả định ID bài học
+      initialLessonId={1}
       initialLessonChallenges={challenges}
       initialHearts={userProgress.hearts}
-      initialPercentage={0} // Bắt đầu từ 0%
+      initialPercentage={0}
       userSubscription={userSubscription}
+      userId={userProgress.userId}
     />
   );
 };

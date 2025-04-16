@@ -1,9 +1,8 @@
-// frontend/app/api/generate-explanation/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs';
 import db from '@/db/drizzle';
-import { explanations } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { quizQuestions } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 interface RequestData {
   question: string;
@@ -49,8 +48,10 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        question_id: requestData.question_id,
         question: requestData.question,
         correct_answer: requestData.correct_answer,
+        question_type: requestData.question_type,
         user_answer: requestData.user_answer || requestData.correct_answer,
       }),
     });
@@ -70,42 +71,35 @@ export async function POST(request: NextRequest) {
     
     // Lưu explanation vào database
     try {
-      // Kiểm tra xem đã có explanation cho câu hỏi này chưa
-      const existingExplanation = await db.query.explanations.findFirst({
-        where: and(
-          eq(explanations.userId, userId),
-          eq(explanations.questionId, requestData.question_id)
-        ),
-      });
-      
-      if (existingExplanation) {
-        // Cập nhật explanation nếu đã tồn tại
-        await db.update(explanations)
-          .set({
-            explanation: explanationText,
-            userAnswer: requestData.user_answer,
-            correctAnswer: requestData.correct_answer,
-            updatedAt: new Date(),
-          })
-          .where(eq(explanations.id, existingExplanation.id));
-      } else {
-        // Tạo mới nếu chưa tồn tại
-        await db.insert(explanations).values({
-          userId,
-          questionId: requestData.question_id,
+      // Cập nhật explanation trong bảng quizQuestions
+      const result = await db
+        .update(quizQuestions)
+        .set({
           explanation: explanationText,
-          userAnswer: requestData.user_answer,
-          correctAnswer: requestData.correct_answer,
-        });
+        })
+        .where(eq(quizQuestions.id, requestData.question_id))
+        .returning({ explanation: quizQuestions.explanation });
+
+      if (!result || result.length === 0) {
+        throw new Error("Failed to update explanation in database");
       }
       
       console.log("Saved explanation to database");
+      
+      // Trả về kết quả với trạng thái đã lưu
+      return NextResponse.json({
+        explanation: explanationText,
+        saved: true
+      });
     } catch (dbError) {
       console.error("Error saving explanation to database:", dbError);
-      // Vẫn trả về explanation dù có lỗi khi lưu vào database
+      // Trả về explanation với trạng thái chưa lưu được
+      return NextResponse.json({
+        explanation: explanationText,
+        saved: false,
+        error: "Failed to save explanation"
+      });
     }
-    
-    return NextResponse.json(data);
   } catch (error) {
     console.error(`Error in API route: ${error}`);
     return NextResponse.json(
@@ -137,14 +131,17 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    const savedExplanation = await db.query.explanations.findFirst({
-      where: and(
-        eq(explanations.userId, userId),
-        eq(explanations.questionId, parseInt(questionId))
-      ),
-    });
+    const question = await db
+      .select({
+        explanation: quizQuestions.explanation,
+        questionText: quizQuestions.questionText,
+        correctAnswer: quizQuestions.correctAnswer,
+      })
+      .from(quizQuestions)
+      .where(eq(quizQuestions.id, parseInt(questionId)))
+      .limit(1);
     
-    if (!savedExplanation) {
+    if (!question || question.length === 0) {
       return NextResponse.json(
         { error: "Explanation not found" },
         { status: 404 }
@@ -152,9 +149,10 @@ export async function GET(request: NextRequest) {
     }
     
     return NextResponse.json({
-      explanation: savedExplanation.explanation,
-      userAnswer: savedExplanation.userAnswer,
-      correctAnswer: savedExplanation.correctAnswer,
+      explanation: question[0].explanation || "No explanation available",
+      question: question[0].questionText,
+      correctAnswer: question[0].correctAnswer,
+      saved: true
     });
   } catch (error) {
     console.error(`Error fetching explanation: ${error}`);

@@ -1,5 +1,7 @@
 import { ArrowLeft, ArrowRight, CheckCircle, XCircle } from "lucide-react";
 import { useKey, useMedia } from "react-use";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -37,76 +39,50 @@ export const Footer = ({
 }: FooterProps) => {
   useKey("Enter", onCheck, {}, [onCheck]);
   const isMobile = useMedia("(max-width: 1024px)");
+  const router = useRouter();
 
   const handlePracticeAgain = async () => {
     try {
+      if (!userId) {
+        console.error('UserId is required but not provided');
+        return;
+      }
+
       // Debug data being sent
       console.log('Practice Again - Input Data:', {
         userId,
+        quizId: lessonId,
         wrongQuestionsLength: wrongQuestions?.length,
         wrongQuestions,
         originalPrompt
       });
 
-      // 1. Save practice history
-      const historyResponse = await fetch("/api/practice/history", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          wrongQuestions,
-          originalPrompt
-        }),
-      });
-
-      if (!historyResponse.ok) {
-        const errorData = await historyResponse.json();
-        console.error('Practice History API Error:', {
-          status: historyResponse.status,
-          statusText: historyResponse.statusText,
-          error: errorData
-        });
-        throw new Error(`Failed to save practice history: ${JSON.stringify(errorData)}`);
+      // Validate data before sending
+      if (!Array.isArray(wrongQuestions) || wrongQuestions.length === 0) {
+        console.error('No wrong questions to practice');
+        return;
       }
 
-      console.log('Practice history saved successfully');
-
-      // 2. Generate new quiz based on history
-      const quizResponse = await fetch("/api/generate-quiz-again", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          wrongQuestions,
-          originalPrompt,
-        }),
-      });
-
-      if (!quizResponse.ok) {
-        const errorData = await quizResponse.json();
-        console.error('Generate Quiz API Error:', {
-          status: quizResponse.status,
-          statusText: quizResponse.statusText,
-          error: errorData
-        });
-        throw new Error(`Failed to generate new quiz: ${JSON.stringify(errorData)}`);
-      }
-
-      const quizData = await quizResponse.json();
-      console.log('New quiz generated successfully:', quizData);
-
-      // Save quiz data to localStorage for the new lesson
-      localStorage.setItem('currentQuiz', JSON.stringify({
-        questions: [
-          ...quizData.multiple_choice_questions || [],
-          ...quizData.image_questions || [],
-          ...quizData.voice_questions || []
-        ],
-        isPracticeMode: true,
-        originalPrompt
+      // Clean up wrong questions data
+      const cleanedWrongQuestions = wrongQuestions.map(q => ({
+        id: q.id,
+        question: q.question,
+        userAnswer: q.userAnswer,
+        correctAnswer: q.correctAnswer,
+        type: q.type,
+        options: q.options
       }));
 
-      // 3. Redirect to new lesson
+      // Save practice data to localStorage
+      const practiceData = {
+        wrongQuestions: cleanedWrongQuestions,
+        originalPrompt,
+        userId,
+        quizId: lessonId
+      };
+      localStorage.setItem('practiceData', JSON.stringify(practiceData));
+
+      // Redirect to practice page
       router.push('/practice');
     } catch (error: any) {
       console.error("Practice Again - Full Error:", {
@@ -114,7 +90,7 @@ export const Footer = ({
         message: error.message,
         stack: error.stack
       });
-      // TODO: Show error toast to user
+      toast.error("Failed to start practice session");
     }
   };
 

@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { questionTypeEnum } from "@/db/schema";
 
 type ChallengeProps = {
   id: number;
-  type: string;
+  type: typeof questionTypeEnum.enumValues[number];
   question: string;
   options: {
     id: number;

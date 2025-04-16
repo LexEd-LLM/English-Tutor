@@ -9,225 +9,208 @@ import {
   timestamp,
   json,
 } from "drizzle-orm/pg-core";
+import { InferSelectModel } from "drizzle-orm";
 
 import { MAX_HEARTS } from "@/constants";
 
-export const courses = pgTable("courses", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  imageSrc: text("image_src").notNull(),
+// Define enums first
+export const roleEnum = pgEnum("role", ["USER", "VIP", "ADMIN"]);
+export const questionTypeEnum = pgEnum("question_type", ["FILL_IN_BLANK", "TRANSLATION", "IMAGE", "VOICE"]);
+export const unitContentTypeEnum = pgEnum("unit_content_type", ["BOOKMAP", "VOCABULARY", "DIALOGUE", "EXERCISE"]);
+
+// Type definitions
+export type Unit = InferSelectModel<typeof units>;
+export type QuizQuestion = InferSelectModel<typeof quizQuestions>;
+export type UnitContent = InferSelectModel<typeof unitContents>;
+
+export type UserSubscription = {
+  isActive: boolean;
+  isLifetime?: boolean;
+  endDate?: Date;
+};
+
+// users
+export const users = pgTable("users", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().default("User"),
+  imageSrc: text("image_src").notNull().default("/default-user.png"),
+  role: roleEnum("role").notNull().default("USER"),
+  hearts: integer("hearts").notNull().default(MAX_HEARTS),
+  subscriptionStatus: roleEnum("subscription_status").notNull().default("USER"),
+  subscriptionStartDate: timestamp("subscription_start_date"),
+  subscriptionEndDate: timestamp("subscription_end_date"),
 });
 
-export const coursesRelations = relations(courses, ({ many }) => ({
-  userProgress: many(userProgress),
+// userCurriculumProgress - Track user's curriculum progress
+export const userCurriculumProgress = pgTable("user_curriculum_progress", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  curriculumId: integer("curriculum_id")
+    .references(() => curriculums.id, { onDelete: "cascade" })
+    .notNull(),
+  progressPercent: integer("progress_percent").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// user_unit_progress – Mỗi unit user đã tạo quiz cho
+export const userUnitProgress = pgTable("user_unit_progress", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  unitId: integer("unit_id")
+    .references(() => units.id, { onDelete: "cascade" })
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// curriculums – Giáo trình/Chương trình học
+export const curriculums = pgTable("curriculums", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  image_url: text("image_url"),
+});
+
+// units – Mỗi chương trong một giáo trình
+export const units = pgTable("units", {
+  id: serial("id").primaryKey(),
+  curriculumId: integer("curriculum_id")
+    .references(() => curriculums.id, { onDelete: "cascade" })
+    .notNull(),
+  title: text("title").notNull(),
+  order: integer("order").notNull(),
+});
+
+// unit_contents – Nội dung của một chương
+export const unitContents = pgTable("unit_contents", {
+  id: serial("id").primaryKey(),
+  unitId: integer("unit_id")
+    .references(() => units.id, { onDelete: "cascade" })
+    .notNull(),
+  type: unitContentTypeEnum("type").notNull(),
+  content: text("content").notNull(), // hoặc json nếu cần cấu trúc phức tạp
+  order: integer("order").notNull(), // dùng để sắp xếp hiển thị
+});
+
+// user_quizzes – Mỗi quiz do người dùng tạo
+export const userQuizzes = pgTable("user_quizzes", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  unitId: integer("unit_id")
+  .references(() => units.id, { onDelete: "cascade" })
+  .notNull(),
+  prompt: text("prompt"), // câu lệnh yêu cầu AI tạo quiz
+  strengths: text("strengths"),      // điểm mạnh của user trong quiz
+  weaknesses: text("weaknesses"),    // điểm yếu của user trong quiz
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// quiz_questions – Câu hỏi trong quiz do AI tạo
+export const quizQuestions = pgTable("quiz_questions", {
+  id: serial("id").primaryKey(),
+  quizId: integer("quiz_id")
+    .references(() => userQuizzes.id, { onDelete: "cascade" })
+    .notNull(),
+  questionText: text("question_text").notNull(),
+  type: questionTypeEnum("type").notNull(),
+  options: json("options").notNull(), // List of answers (QuizOption[])
+  correctAnswer: text("correct_answer").notNull(),
+  explanation: text("explanation"),
+  imageUrl: text("image_url"),     // Đường dẫn đến ảnh trong câu hỏi hình ảnh
+  audioUrl: text("audio_url"),     // Đường dẫn đến audio trong câu hỏi phát âm
+});
+
+// userAnswers – Lịch sử trả lời của User
+export const userAnswers = pgTable("user_answers", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  questionId: integer("question_id").references(() => quizQuestions.id, { onDelete: "cascade" }).notNull(),
+  userAnswer: text("user_answer").notNull(),
+  isCorrect: boolean("is_correct").notNull(),
+});
+
+// Relations
+export const curriculumRelations = relations(curriculums, ({ many }) => ({
   units: many(units),
 }));
 
-export const units = pgTable("units", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(), // Unit 1
-  description: text("description").notNull(), // Learn the basics of spanish
-  courseId: integer("course_id")
-    .references(() => courses.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
-  order: integer("order").notNull(),
-});
-
-export const unitsRelations = relations(units, ({ many, one }) => ({
-  course: one(courses, {
-    fields: [units.courseId],
-    references: [courses.id],
+export const unitRelations = relations(units, ({ one, many }) => ({
+  curriculum: one(curriculums, {
+    fields: [units.curriculumId],
+    references: [curriculums.id],
   }),
-  lessons: many(lessons),
+  contents: many(unitContents),
 }));
 
-export const lessons = pgTable("lessons", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  unitId: integer("unit_id")
-    .references(() => units.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
-  order: integer("order").notNull(),
-});
-
-export const lessonsRelations = relations(lessons, ({ one, many }) => ({
+export const unitContentRelations = relations(unitContents, ({ one }) => ({
   unit: one(units, {
-    fields: [lessons.unitId],
+    fields: [unitContents.unitId],
     references: [units.id],
   }),
-  challenges: many(challenges),
 }));
 
-export const challengesEnum = pgEnum("type", ["SELECT", "ASSIST"]);
-
-export const challenges = pgTable("challenges", {
-  id: serial("id").primaryKey(),
-  lessonId: integer("lesson_id")
-    .references(() => lessons.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
-  type: challengesEnum("type").notNull(),
-  question: text("question").notNull(),
-  order: integer("order").notNull(),
-});
-
-export const challengesRelations = relations(challenges, ({ one, many }) => ({
-  lesson: one(lessons, {
-    fields: [challenges.lessonId],
-    references: [lessons.id],
+export const userCurriculumProgressRelations = relations(userCurriculumProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [userCurriculumProgress.userId],
+    references: [users.id],
   }),
-  challengeOptions: many(challengeOptions),
-  challengeProgress: many(challengeProgress),
-}));
-
-export const challengeOptions = pgTable("challenge_options", {
-  id: serial("id").primaryKey(),
-  challengeId: integer("challenge_id")
-    .references(() => challenges.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
-  text: text("text").notNull(),
-  correct: boolean("correct").notNull(),
-  imageSrc: text("image_src"),
-  audioSrc: text("audio_src"),
-});
-
-export const challengeOptionsRelations = relations(
-  challengeOptions,
-  ({ one }) => ({
-    challenge: one(challenges, {
-      fields: [challengeOptions.challengeId],
-      references: [challenges.id],
-    }),
-  })
-);
-
-export const challengeProgress = pgTable("challenge_progress", {
-  id: serial("id").primaryKey(),
-  userId: text("user_id").notNull(),
-  challengeId: integer("challenge_id")
-    .references(() => challenges.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
-  completed: boolean("completed").notNull().default(false),
-});
-
-export const challengeProgressRelations = relations(
-  challengeProgress,
-  ({ one }) => ({
-    challenge: one(challenges, {
-      fields: [challengeProgress.challengeId],
-      references: [challenges.id],
-    }),
-  })
-);
-
-export const userRoleEnum = pgEnum("role", ["USER", "VIP", "ADMIN"]);
-
-export const userProgress = pgTable("user_progress", {
-  userId: text("user_id").primaryKey(),
-  userName: text("user_name").notNull().default("User"),
-  userImageSrc: text("user_image_src").notNull().default("/mascot.svg"),
-  activeCourseId: integer("active_course_id").references(() => courses.id, {
-    onDelete: "cascade",
-  }),
-  hearts: integer("hearts").notNull().default(MAX_HEARTS),
-  points: integer("points").notNull().default(0),
-  role: userRoleEnum("role").notNull().default("USER"),
-});
-
-export const userProgressRelations = relations(userProgress, ({ one }) => ({
-  activeCourse: one(courses, {
-    fields: [userProgress.activeCourseId],
-    references: [courses.id],
+  curriculum: one(curriculums, {
+    fields: [userCurriculumProgress.curriculumId],
+    references: [curriculums.id],
   }),
 }));
 
-export const userSubscription = pgTable("user_subscription", {
-  id: serial("id").primaryKey(),
-  userId: text("user_id").notNull().unique(),
-  stripeCustomerId: text("stripe_customer_id").notNull().unique(),
-  stripeSubscriptionId: text("stripe_subscription_id").notNull().unique(),
-  stripePriceId: text("stripe_price_id").notNull(),
-  stripeCurrentPeriodEnd: timestamp("stripe_current_period_end").notNull(),
-});
-
-// Bảng lưu trữ câu hỏi quiz của người dùng
-export const userQuizStorage = pgTable("user_quiz_storage", {
-  id: serial("id").primaryKey(),
-  userId: text("user_id").notNull(),
-  questions: json("questions").notNull(), // Lưu trữ dưới dạng JSON
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-// Bảng lưu trữ tài nguyên hình ảnh
-export const quizImages = pgTable("quiz_images", {
-  id: serial("id").primaryKey(),
-  quizId: integer("quiz_id").references(() => userQuizStorage.id, {
-    onDelete: "cascade",
-  }).notNull(),
-  imageUrl: text("image_url").notNull(),
-  imageDescription: text("image_description"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-// Bảng lưu trữ tài nguyên âm thanh
-export const quizAudios = pgTable("quiz_audios", {
-  id: serial("id").primaryKey(),
-  quizId: integer("quiz_id").references(() => userQuizStorage.id, {
-    onDelete: "cascade",
-  }).notNull(),
-  audioUrl: text("audio_url").notNull(),
-  word: text("word").notNull(), // Từ cần phát âm
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const userQuizStorageRelations = relations(userQuizStorage, ({ one, many }) => ({
-  user: one(userProgress, {
-    fields: [userQuizStorage.userId],
-    references: [userProgress.userId],
+export const userQuizzesRelations = relations(userQuizzes, ({ one, many }) => ({
+  user: one(users, {
+    fields: [userQuizzes.userId],
+    references: [users.id],
   }),
-  images: many(quizImages),
-  audios: many(quizAudios),
+  unit: one(units, {
+    fields: [userQuizzes.unitId],
+    references: [units.id],
+  }),
+  questions: many(quizQuestions),
 }));
 
-export const quizImagesRelations = relations(quizImages, ({ one }) => ({
-  quiz: one(userQuizStorage, {
-    fields: [quizImages.quizId],
-    references: [userQuizStorage.id],
+export const quizQuestionsRelations = relations(quizQuestions, ({ one }) => ({
+  quiz: one(userQuizzes, {
+    fields: [quizQuestions.quizId],
+    references: [userQuizzes.id],
   }),
 }));
 
-export const quizAudiosRelations = relations(quizAudios, ({ one }) => ({
-  quiz: one(userQuizStorage, {
-    fields: [quizAudios.quizId],
-    references: [userQuizStorage.id],
+export const userAnswersRelations = relations(userAnswers, ({ one }) => ({
+  user: one(users, {
+    fields: [userAnswers.userId],
+    references: [users.id],
+  }),
+  question: one(quizQuestions, {
+    fields: [userAnswers.questionId],
+    references: [quizQuestions.id],
   }),
 }));
 
-// Bảng lưu trữ giải thích cho câu hỏi
-export const explanations = pgTable("explanations", {
-  id: serial("id").primaryKey(),
-  questionId: integer("question_id").notNull(), // ID của câu hỏi trong userQuizStorage.questions
-  userId: text("user_id").notNull(),
-  explanation: text("explanation").notNull(),
-  userAnswer: text("user_answer"), // Đáp án người dùng đã chọn
-  correctAnswer: text("correct_answer").notNull(), // Đáp án đúng
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const explanationsRelations = relations(explanations, ({ one }) => ({
-  user: one(userProgress, {
-    fields: [explanations.userId],
-    references: [userProgress.userId],
+export const userUnitProgressRelations = relations(userUnitProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [userUnitProgress.userId],
+    references: [users.id],
+  }),
+  unit: one(units, {
+    fields: [userUnitProgress.unitId],
+    references: [units.id],
   }),
 }));
+
+// QUAN HỆ GIỮA CÁC BẢNG
+// users → userQuizzes → quizQuestions → userAnswers
+
+// curriculums → units → unitContents
+
+// quizQuestions chứa đầy đủ nội dung + media
+

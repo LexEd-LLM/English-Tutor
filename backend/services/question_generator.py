@@ -1,7 +1,7 @@
 from llama_index.core.prompts import PromptTemplate
 from llama_index.core.output_parsers import PydanticOutputParser
 from ..config.settings import llm
-from ..schemas.quiz import BaseQuestion, ImageQuestion, VoiceQuestion, QuestionType
+from ..schemas.quiz import QuestionType
 from typing import List, Dict, Any, Optional
 import json
 import random
@@ -32,7 +32,8 @@ BASE_FIB_QUESTION_TEMPLATE = """
 BASE_TRANSLATION_QUESTION_TEMPLATE = """
     Generate {count} Vietnamese-English translation multiple-choice questions based on the following content.
     Content: {content}
-    
+    {custom_prompt}
+
     For each question:
     1. Create a question in Vietnamese asking for the English meaning of a word/phrase
     2. The correct answer should be the English translation
@@ -50,35 +51,39 @@ BASE_TRANSLATION_QUESTION_TEMPLATE = """
 
 # Template for practice questions with strengths/weaknesses
 PRACTICE_QUESTION_TEMPLATE = """
-You are a language learning expert. Generate {count} {question_type} questions focused on improving the student's weak areas while occasionally reinforcing their strengths.
+    You are a language learning expert. Generate {count} {question_type} questions focused on improving the student's weak areas while occasionally reinforcing their strengths.
 
-Student Profile:
-Strengths: {strengths}
-Weaknesses: {weaknesses}
+    Student Profile:
+    Strengths: {strengths}
+    Weaknesses: {weaknesses}
 
-Content: {content}
+    Content: {content}
 
-For each question:
-1. Create a question targeting specific language skills
-2. Generate 4 options with only one correct answer
-3. Mark the correct answer
-4. Focus on areas where the student needs improvement
+    For each question:
+    1. Create a question targeting specific language skills
+    2. Generate 4 options with only one correct answer
+    3. Mark the correct answer
+    4. Focus on areas where the student needs improvement
 
-Return the questions in JSON format with these fields:
-- question: the question text
-- options: array of 4 possible answers
-- correct_answer: the correct option
-- type: "{question_type}"
+    Return the questions in JSON format with these fields:
+    - question: the question text
+    - options: array of 4 possible answers
+    - correct_answer: the correct option
+    - type: "{question_type}"
 
-Generate exactly {count} questions.
+    Generate exactly {count} questions.
 """
 
 def generate_fill_in_blank_questions(
-    content: str, 
+    content: str,
     count: int,
+    custom_prompt: Optional[str] = None,
     strengths: Optional[List[str]] = None,
     weaknesses: Optional[List[str]] = None
 ) -> List[Dict[str, Any]]:
+    if count < 1:
+        return []
+    
     """Generate fill-in-the-blank questions."""
     if strengths or weaknesses:
         template = PRACTICE_QUESTION_TEMPLATE 
@@ -87,15 +92,17 @@ def generate_fill_in_blank_questions(
         prompt = prompt_template.format(
             content=content,
             count=count,
-            question_type="fill_in_blank",
+            question_type=QuestionType.FILL_IN_BLANK.value,
             strengths=", ".join(strengths) if strengths else "None",
             weaknesses=", ".join(weaknesses) if weaknesses else "None"
         )
     else:
+        custom_prompt = f"You should incorporate the following instruction when generating questions: {custom_prompt}" if custom_prompt else ""
         template = BASE_FIB_QUESTION_TEMPLATE
         prompt_template = PromptTemplate(template=template)
         prompt = prompt_template.format(
             content=content,
+            custom_prompt=custom_prompt,
             count=count,
         )
     
@@ -106,17 +113,21 @@ def generate_fill_in_blank_questions(
             "question": q["question"],
             "options": q["options"],
             "correct_answer": q["correct_answer"],
-            "type": "fill_in_blank"
+            "type": QuestionType.FILL_IN_BLANK.value
         }
         for q in questions
     ]
 
 def generate_translation_questions(
-    content: str, 
+    content: str,
     count: int,
+    custom_prompt: Optional[str] = None,
     strengths: Optional[List[str]] = None,
     weaknesses: Optional[List[str]] = None
 ) -> List[Dict[str, Any]]:
+    if count < 1:
+        return []
+    
     """Generate translation questions."""
     
     if strengths or weaknesses:
@@ -126,15 +137,17 @@ def generate_translation_questions(
         prompt = prompt_template.format(
             content=content,
             count=count,
-            question_type="translation",
+            question_type=QuestionType.TRANSLATION.value,
             strengths=", ".join(strengths) if strengths else "None",
             weaknesses=", ".join(weaknesses) if weaknesses else "None"
         )
     else:
         template = BASE_TRANSLATION_QUESTION_TEMPLATE
+        custom_prompt = f"You should incorporate the following instruction when generating questions: {custom_prompt}" if custom_prompt else ""
         prompt_template = PromptTemplate(template=template)
         prompt = prompt_template.format(
             content=content,
+            custom_prompt=custom_prompt,
             count=count,
         )
     
@@ -145,16 +158,24 @@ def generate_translation_questions(
             "question": q["question"],
             "options": q["options"],
             "correct_answer": q["correct_answer"],
-            "type": "translation"
+            "type": QuestionType.TRANSLATION.value
         }
         for q in questions
     ]
 
-def generate_image_questions(content: str, count: int) -> List[Dict[str, Any]]:
+def generate_image_questions(
+    content: str,
+    count: int,
+    custom_prompt: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    if count < 1:
+        return []
+    
     prompt_template = PromptTemplate(
         template="""
             Generate {count} image-based questions from the following content.
             Content: {content}
+            {custom_prompt}
             
             For each question:
             1. Select a concrete noun or object that can be visualized
@@ -174,7 +195,8 @@ def generate_image_questions(content: str, count: int) -> List[Dict[str, Any]]:
         """
     )
     
-    prompt = prompt_template.format(content=content, count=count)
+    custom_prompt = f"You should incorporate the following instruction when generating questions: {custom_prompt}" if custom_prompt else ""
+    prompt = prompt_template.format(content=content, custom_prompt=custom_prompt, count=count)
     response = llm.complete(prompt)
     questions = parse_json_questions(response.text)
     
@@ -184,7 +206,7 @@ def generate_image_questions(content: str, count: int) -> List[Dict[str, Any]]:
             "question": q["question"],
             "options": q["options"],
             "correct_answer": q["correct_answer"],
-            "type": "image",
+            "type": QuestionType.IMAGE.value,
             "image_url": generate_image(
                 f"An illustration of {q['correct_answer']}, in the style of Duolingo learning illustration. {q.get('image_description', '')}"
             ),
@@ -193,7 +215,14 @@ def generate_image_questions(content: str, count: int) -> List[Dict[str, Any]]:
         for q in questions
     ]
 
-def generate_voice_questions(content: str, count: int) -> List[Dict[str, Any]]:
+def generate_voice_questions(
+    content: str,
+    count: int,
+    custom_prompt: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    if count < 1:
+        return []
+    
     prompt_template = PromptTemplate(
         template="""
             Generate {count} pronunciation-based questions using words with similar sounds.
@@ -210,7 +239,6 @@ def generate_voice_questions(content: str, count: int) -> List[Dict[str, Any]]:
             - options: array with the correct word and similar-sounding word
             - correct_answer: the word from the content
             - type: "voice"
-            - similar_word: the similar-sounding word
             
             Generate exactly {count} questions.
         """
@@ -226,9 +254,8 @@ def generate_voice_questions(content: str, count: int) -> List[Dict[str, Any]]:
             "question": q["question"],
             "options": q["options"],
             "correct_answer": q["correct_answer"],
-            "type": "voice",
-            "audio_url": generate_audio(q["correct_answer"]),
-            "similar_word": q.get("similar_word", "")
+            "type": QuestionType.VOICE.value,
+            "audio_url": generate_audio(q["correct_answer"])
         }
         for q in questions
     ]
@@ -238,6 +265,7 @@ def generate_questions_batch(
     multiple_choice_count: int,
     image_count: int,
     voice_count: int,
+    custom_prompt: Optional[str] = None,
     strengths: Optional[List[str]] = None,
     weaknesses: Optional[List[str]] = None
 ) -> Dict[str, List[Dict[str, Any]]]:
@@ -252,21 +280,23 @@ def generate_questions_batch(
     
     # Generate questions
     fill_blank_questions = generate_fill_in_blank_questions(
-        combined_content, 
+        combined_content,
         fill_blank_count,
+        custom_prompt,
         strengths=strengths,
         weaknesses=weaknesses
     )
     
     translation_questions = generate_translation_questions(
-        combined_content, 
+        combined_content,
         translation_count,
+        custom_prompt,
         strengths=strengths,
         weaknesses=weaknesses
     )
     
-    image_questions = generate_image_questions(combined_content, image_count)
-    voice_questions = generate_voice_questions(combined_content, voice_count)
+    image_questions = generate_image_questions(combined_content, image_count, custom_prompt)
+    voice_questions = generate_voice_questions(combined_content, voice_count, custom_prompt)
     
     return {
         "multiple_choice_questions": fill_blank_questions + translation_questions,
@@ -315,4 +345,5 @@ def parse_json_questions(response_text: str) -> List[Dict[str, Any]]:
             return []
     except Exception as e:
         print(f"Error parsing questions: {e}")
+        print(response_text)
         return []

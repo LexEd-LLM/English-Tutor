@@ -40,7 +40,7 @@ export const ResultCard = ({
           variant === "hearts" && "bg-rose-500"
         )}
       >
-        {label || (variant === "hearts" ? "Hearts Left" : "Score")}
+        {label || (variant === "hearts" ? "Quota Left" : "Score")}
       </div>
 
       <div

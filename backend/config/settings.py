@@ -18,8 +18,8 @@ llm = Gemini(model="models/gemini-2.0-flash", temperature=1)
 img_model = "gemini-2.0-flash-exp-image-generation"
 
 # Initialize embedding model
-lc_embed_model = HuggingFaceEmbeddings(
-    model_name="intfloat/multilingual-e5-small"
-)
-embed_model = LangchainEmbedding(lc_embed_model)
-Settings.embed_model = embed_model
+# lc_embed_model = HuggingFaceEmbeddings(
+#     model_name="intfloat/multilingual-e5-small"
+# )
+# embed_model = LangchainEmbedding(lc_embed_model)
+# Settings.embed_model = embed_model

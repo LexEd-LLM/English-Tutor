@@ -1,91 +1,57 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { Check } from "lucide-react";
+import Link from "next/link";
 
-import { generateQuiz } from "@/actions/quiz";
 import { Button } from "@/components/ui/button";
-import { PromptInput } from "./prompt-input";
 
-export const Unit = () => {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  
-  const [prompt, setPrompt] = useState("");
-  const [multipleChoiceCount, setMultipleChoiceCount] = useState(6);
-  const [imageCount, setImageCount] = useState(2);
-  const [voiceCount, setVoiceCount] = useState(2);
+type UnitProps = {
+  id: number;
+  order: number;
+  title: string;
+  description: string;
+  completed?: boolean;
+  isActive?: boolean;
+};
 
-  const onSubmit = () => {
-    if (!prompt) {
-      toast.error("Please enter a topic");
-      return;
-    }
-
-    startTransition(async () => {
-      try {
-        const result = await generateQuiz(
-          prompt,
-          multipleChoiceCount,
-          imageCount,
-          voiceCount
-        );
-
-        if (result.success) {
-          router.push("/lesson");
-        } else {
-          toast.error(result.error || "Something went wrong");
-        }
-      } catch (error) {
-        toast.error("Failed to generate quiz");
-      }
-    });
-  };
-
-  const handleCountChange = (type: 'multiple' | 'image' | 'voice', value: number) => {
-    switch (type) {
-      case 'multiple':
-        setMultipleChoiceCount(value);
-        break;
-      case 'image':
-        setImageCount(value);
-        break;
-      case 'voice':
-        setVoiceCount(value);
-        break;
-    }
-  };
+export const Unit = ({
+  id,
+  order,
+  title,
+  description,
+  completed,
+  isActive,
+}: UnitProps) => {
+  const status = completed ? "completed" : isActive ? "active" : "locked";
 
   return (
-    <div className="h-full space-y-4 p-6">
-      <div className="flex flex-col items-start gap-y-4">
-        <h1 className="text-2xl font-bold">
-          Tạo bài kiểm tra
-        </h1>
-        <p className="text-muted-foreground">
-          Nhập chủ đề bạn muốn ôn tập và chọn số lượng câu hỏi cho mỗi loại
-        </p>
+    <div className="mb-4">
+      <div className="flex items-center gap-x-4 mb-2">
+        <div className={`
+          rounded-full flex items-center justify-center
+          ${status === "active" && "bg-primary text-primary-foreground"}
+          ${status === "completed" && "bg-emerald-500 text-emerald-50"}
+          ${status === "locked" && "bg-neutral-200 text-neutral-500"}
+          h-10 w-10 shrink-0
+        `}>
+          {status === "completed" ? (
+            <Check className="h-5 w-5" />
+          ) : (
+            <div>{order}</div>
+          )}
+        </div>
+        <div className="flex flex-col">
+          <h3 className="text-lg font-bold">{title}</h3>
+          <p className="text-muted-foreground text-sm">{description}</p>
+        </div>
       </div>
-
-      <div className="h-full space-y-4">
-        <PromptInput
-          value={prompt}
-          onChange={setPrompt}
-          multipleChoiceCount={multipleChoiceCount}
-          imageCount={imageCount}
-          voiceCount={voiceCount}
-          onCountChange={handleCountChange}
-        />
-
-        <Button
-          disabled={isPending || !prompt}
-          onClick={onSubmit}
-          className="w-full"
-        >
-          {isPending ? "Đang tạo bài kiểm tra..." : "Tạo bài kiểm tra"}
+      {isActive && (
+        <Button asChild className="w-full mt-2">
+          <Link href={`/unit/${id}`}>
+            Continue Unit
+          </Link>
         </Button>
-      </div>
+      )}
     </div>
   );
 };

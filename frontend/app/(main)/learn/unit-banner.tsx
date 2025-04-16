@@ -29,23 +29,6 @@ export const UnitBanner = () => {
 
   const handleStartGeneration = async () => {
     if (!prompt) return;
-    
-    setIsGenerating(true);
-    setError(null);
-    setStatus("Starting generation...");
-    setProgress(10);
-
-    // Tiến trình với status
-    setTimeout(() => {
-      setStatus("Getting relevant content...");
-      setProgress(30);
-    }, 500);
-
-    // Giả lập quá trình tạo câu hỏi để hiển thị tiến trình
-    setTimeout(() => {
-      setStatus("Generating questions...");
-      setProgress(60);
-    }, 1000);
 
     // Gọi API để tạo câu hỏi
     try {

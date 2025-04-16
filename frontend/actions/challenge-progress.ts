@@ -7,11 +7,11 @@ import { revalidatePath } from "next/cache";
 import { MAX_HEARTS } from "@/constants";
 import db from "@/db/drizzle";
 import { getUserProgress, getUserSubscription } from "@/db/queries";
-import { challengeProgress, challenges, userProgress } from "@/db/schema";
+import { userAnswers, quizQuestions, users } from "@/db/schema";
 
-export const upsertChallengeProgress = async (challengeId: number) => {
+export const upsertChallengeProgress = async (questionId: number) => {
   const { userId } = auth();
-  console.log("Updating progress for user:", userId, "challenge:", challengeId);
+  console.log("Updating progress for user:", userId, "question:", questionId);
 
   if (!userId) throw new Error("Unauthorized.");
 
@@ -25,61 +25,77 @@ export const upsertChallengeProgress = async (challengeId: number) => {
     const userSubscription = await getUserSubscription();
     console.log("User subscription:", userSubscription);
 
-    // Find challenge and its progress
-    console.log("Finding challenge:", challengeId);
-    const challenge = await db.query.challenges.findFirst({
-      where: eq(challenges.id, challengeId),
-      with: {
-        challengeProgress: {
-          where: eq(challengeProgress.userId, userId),
-        },
+    // Get current user hearts
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: {
+        hearts: true,
       },
     });
-    console.log("Found challenge:", challenge);
 
-    if (!challenge) {
-      console.error("Challenge not found in database:", challengeId);
-      // Instead of throwing error, return error object
-      return { error: "challenge_not_found" };
+    if (!user) throw new Error("User not found");
+
+    // Find question and user's answer
+    console.log("Finding question:", questionId);
+    const question = await db.query.quizQuestions.findFirst({
+      where: eq(quizQuestions.id, questionId),
+      with: {
+        quiz: true,
+      },
+    });
+    console.log("Found question:", question);
+
+    if (!question) {
+      console.error("Question not found in database:", questionId);
+      return { error: "question_not_found" };
     }
 
-    const lessonId = challenge.lessonId;
-    const existingProgress = challenge.challengeProgress?.[0];
-    console.log("Existing progress:", existingProgress);
+    // Check if user has already answered this question
+    const existingAnswer = await db.query.userAnswers.findFirst({
+      where: and(
+        eq(userAnswers.userId, userId),
+        eq(userAnswers.questionId, questionId)
+      ),
+    });
+    console.log("Existing answer:", existingAnswer);
 
-    // If this is practice (already completed before)
-    if (existingProgress) {
-      if (!existingProgress.completed) {
-        console.log("Updating existing progress");
-        await db.update(challengeProgress)
-          .set({ completed: true })
-          .where(eq(challengeProgress.id, existingProgress.id));
+    // If this is practice (already answered before)
+    if (existingAnswer) {
+      if (!existingAnswer.isCorrect) {
+        console.log("Updating existing answer");
+        await db.update(userAnswers)
+          .set({ isCorrect: true })
+          .where(eq(userAnswers.id, existingAnswer.id));
 
-        await db.update(userProgress)
+        // Add hearts for correct answer in practice mode
+        await db.update(users)
           .set({
-            hearts: Math.min(currentUserProgress.hearts + 1, MAX_HEARTS),
-            points: currentUserProgress.points + 10,
+            hearts: Math.min(user.hearts + 1, MAX_HEARTS),
           })
-          .where(eq(userProgress.userId, userId));
+          .where(eq(users.id, userId));
       }
     } else {
-      // First time completing this challenge
+      // First time answering this question
       if (currentUserProgress.hearts === 0 && !userSubscription?.isActive) {
         return { error: "hearts" };
       }
 
-      console.log("Creating new progress");
-      await db.insert(challengeProgress).values({
-        challengeId,
+      console.log("Creating new answer");
+      await db.insert(userAnswers).values({
         userId,
-        completed: true,
+        questionId,
+        userAnswer: "correct", // You may want to pass the actual user answer
+        isCorrect: true,
       });
 
-      await db.update(userProgress)
-        .set({
-          points: currentUserProgress.points + 10,
-        })
-        .where(eq(userProgress.userId, userId));
+      // Update user hearts if not VIP
+      if (!userSubscription?.isActive) {
+        await db.update(users)
+          .set({
+            hearts: Math.max(user.hearts - 1, 0),
+          })
+          .where(eq(users.id, userId));
+      }
     }
 
     // Revalidate paths
@@ -87,12 +103,12 @@ export const upsertChallengeProgress = async (challengeId: number) => {
     revalidatePath("/lesson");
     revalidatePath("/quests");
     revalidatePath("/leaderboard");
-    revalidatePath(`/lesson/${lessonId}`);
+    revalidatePath(`/lesson/${question.quiz.unitId}`);
 
     console.log("Successfully updated progress");
     return { success: true };
   } catch (error) {
-    console.error("Error updating challenge progress:", error);
+    console.error("Error updating question progress:", error);
     return { error: "update_failed", details: error };
   }
 };

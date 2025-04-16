@@ -57,6 +57,7 @@ const getAudioUrl = (question: QuizQuestion): string | undefined => {
 
 export default function ExplanationsPage() {
   // State
+  const [mounted, setMounted] = useState(false);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedQuestions, setExpandedQuestions] = useState<Record<number, boolean>>({});
@@ -69,10 +70,19 @@ export default function ExplanationsPage() {
   const audioRefs = useRef<Record<number, HTMLAudioElement | null>>({});
   const router = useRouter();
 
+  // Add hydration protection
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   // Load saved explanation from database
   const loadSavedExplanation = async (questionId: number) => {
     try {
-      const response = await fetch(`/api/generate-explaination?questionId=${questionId}`);
+      const response = await fetch(`/api/generate-explanation?questionId=${questionId}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -88,7 +98,7 @@ export default function ExplanationsPage() {
       }
       return false;
     } catch (error) {
-      // Xử lý lỗi khi load explanation
+      console.error("Error loading explanation:", error);
       return false;
     }
   };
@@ -122,18 +132,33 @@ export default function ExplanationsPage() {
       if (!response.ok) throw new Error("Failed to generate explanation");
       
       const data = await response.json();
+      
+      // Cập nhật explanation
       setExplanations(prev => ({
         ...prev,
         [questionId]: data.explanation
       }));
       
-      // Đánh dấu là đã lưu vào DB
+      // Chỉ cập nhật trạng thái saved nếu API trả về saved: true
+      if (data.saved) {
+        setSavedExplanations(prev => ({
+          ...prev,
+          [questionId]: true
+        }));
+      } else {
+        // Nếu không lưu được vào DB, hiển thị thông báo lỗi
+        console.error("Failed to save explanation:", data.error);
+        setSavedExplanations(prev => ({
+          ...prev,
+          [questionId]: false
+        }));
+      }
+    } catch (error) {
+      console.error("Error generating explanation:", error);
       setSavedExplanations(prev => ({
         ...prev,
-        [questionId]: true
+        [questionId]: false
       }));
-    } catch (error) {
-      // Xử lý lỗi
     } finally {
       setGeneratingExplanations(prev => ({ ...prev, [questionId]: false }));
     }
@@ -146,28 +171,31 @@ export default function ExplanationsPage() {
         setLoading(true);
         const quizQuestions = await getGeneratedQuiz();
         
-        // Process questions to ensure proper URLs
-        const transformedQuestions = quizQuestions.map(q => {
-          const transformed: any = { ...q };
-          
-          if (q.type === "IMAGE") {
-            const imageUrl = (q as any).imageUrl || (q as any).image_url;
-            if (imageUrl) {
-              transformed.imageUrl = imageUrl.startsWith('http') || imageUrl.startsWith('/') 
-                ? imageUrl : '/' + imageUrl;
+        // Process questions to ensure proper URLs and maintain order
+        const transformedQuestions = quizQuestions
+          .map(q => {
+            const transformed: any = { ...q };
+            
+            if (q.type === "IMAGE") {
+              const imageUrl = (q as any).imageUrl || (q as any).image_url;
+              if (imageUrl) {
+                transformed.imageUrl = imageUrl.startsWith('http') || imageUrl.startsWith('/') 
+                  ? imageUrl : '/' + imageUrl;
+              }
             }
-          }
-          
-          if (q.type === "VOICE") {
-            const audioUrl = (q as any).audioUrl || (q as any).audio_url;
-            if (audioUrl) {
-              transformed.audioUrl = audioUrl.startsWith('http') || audioUrl.startsWith('/') 
-                ? audioUrl : '/' + audioUrl;
+            
+            if (q.type === "VOICE") {
+              const audioUrl = (q as any).audioUrl || (q as any).audio_url;
+              if (audioUrl) {
+                transformed.audioUrl = audioUrl.startsWith('http') || audioUrl.startsWith('/') 
+                  ? audioUrl : '/' + audioUrl;
+              }
             }
-          }
-          
-          return transformed as QuizQuestion;
-        });
+            
+            return transformed as QuizQuestion;
+          })
+          // Sort by question ID to maintain original order
+          .sort((a, b) => a.id - b.id);
         
         setQuestions(transformedQuestions);
         
@@ -185,11 +213,11 @@ export default function ExplanationsPage() {
               }
             }
           } catch (e) {
-            // Xử lý lỗi nếu dữ liệu không phải JSON hợp lệ
+            console.error("Error parsing saved answers:", e);
           }
         }
       } catch (error) {
-        // Xử lý lỗi
+        console.error("Error loading questions:", error);
       } finally {
         setLoading(false);
       }
@@ -218,7 +246,7 @@ export default function ExplanationsPage() {
   };
 
   // Loading state
-  if (loading) {
+  if (!mounted || loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="w-16 h-16 border-4 border-t-green-500 border-b-green-500 rounded-full animate-spin"></div>
@@ -300,7 +328,7 @@ export default function ExplanationsPage() {
                     </div>
                     
                     {/* Audio player */}
-                    {hasAudio && getAudioUrl(question) && (
+                    {mounted && hasAudio && getAudioUrl(question) && (
                       <audio 
                         ref={el => { 
                           audioRefs.current[question.id] = el;
@@ -311,7 +339,7 @@ export default function ExplanationsPage() {
                     )}
                     
                     {/* Image display */}
-                    {hasImage && getImageUrl(question) && (
+                    {mounted && hasImage && getImageUrl(question) && (
                       <div className="relative h-64 w-full overflow-hidden rounded-lg mt-4">
                         <img 
                           src={getImageUrl(question)} 
@@ -388,7 +416,7 @@ export default function ExplanationsPage() {
                   
                   {isExpanded && (
                     <div className="mt-2 p-4 bg-blue-50 rounded-md">
-                      {hasExplanation && (
+                      {hasExplanation && mounted && (
                         <div className="prose prose-sm max-w-none">
                           <ReactMarkdown 
                             remarkPlugins={[remarkGfm]} 

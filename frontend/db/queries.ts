@@ -1,27 +1,59 @@
 import { cache } from "react";
 import { auth } from "@clerk/nextjs";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import db from "./drizzle";
 import {
-  challengeProgress,
-  courses,
-  lessons,
   units,
-  userProgress,
-  userSubscription,
-  userQuizStorage,
-  quizImages,
-  quizAudios,
+  userCurriculumProgress,
+  userQuizzes,
+  curriculums,
+  userUnitProgress,
+  users,
+  quizQuestions,
+  unitContents,
 } from "./schema";
-import { User } from "@/db/schema";
-import { db as dbIndex } from "@/db/index";
-import type { UserProgress } from "./schema";
+
+import type { InferSelectModel } from "drizzle-orm";
+
+// Quiz types from API
+interface ChallengeOption {
+  id: number;
+  text: string;
+  correct: boolean;
+  imageSrc: string | null;
+  audioSrc: string | null;
+}
+
+interface BaseQuestion {
+  id: number;
+  question: string;
+  type: "FILL_IN_BLANK" | "TRANSLATION" | "IMAGE" | "VOICE";
+  challengeOptions: ChallengeOption[];
+  explanation?: string;
+}
+
+interface ImageQuestion extends BaseQuestion {
+  imageUrl: string;
+}
+
+interface VoiceQuestion extends BaseQuestion {
+  audioUrl: string;
+}
+
+type APIQuizQuestion = BaseQuestion | ImageQuestion | VoiceQuestion;
+
+// Local type definitions to avoid conflicts
+type UnitType = InferSelectModel<typeof units>;
+type QuizQuestionType = InferSelectModel<typeof quizQuestions>;
+
+export type Unit = InferSelectModel<typeof units>;
+export type UserQuiz = InferSelectModel<typeof userQuizzes>;
+export type QuizQuestion = InferSelectModel<typeof quizQuestions>;
 
 const DAY_IN_MS = 86_400_000;
 
-export const getCourses = cache(async () => {
-  const data = await db.query.courses.findMany();
-
+export const getCurriculums = cache(async () => {
+  const data = await db.query.curriculums.findMany();
   return data;
 });
 
@@ -30,12 +62,32 @@ export const getUserProgress = cache(async () => {
 
   if (!userId) return null;
 
-  const data = await db.query.userProgress.findFirst({
-    where: eq(userProgress.userId, userId),
-    with: {
-      activeCourse: true,
-    },
-  });
+  // Get user progress and user data
+  const [progress, user] = await Promise.all([
+    db.query.userCurriculumProgress.findFirst({
+      where: eq(userCurriculumProgress.userId, userId),
+      with: {
+        curriculum: true,
+      },
+    }),
+    db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: {
+        hearts: true,
+      },
+    })
+  ]);
+
+  if (!progress || !user) return null;
+
+  return {
+    ...progress,
+    hearts: user.hearts,
+  };
+});
+
+export const getCourses = cache(async () => {
+  const data = await db.query.curriculums.findMany();
 
   return data;
 });
@@ -44,59 +96,76 @@ export const getUnits = cache(async () => {
   const { userId } = auth();
   const userProgress = await getUserProgress();
 
-  if (!userId || !userProgress?.activeCourseId) return [];
+  if (!userId || !userProgress?.curriculumId) return [];
 
-  const data = await db.query.units.findMany({
-    where: eq(units.courseId, userProgress.activeCourseId),
+  const allUnits = await db.query.units.findMany({
+    where: eq(units.curriculumId, userProgress.curriculumId),
     orderBy: (units, { asc }) => [asc(units.order)],
+  });
+
+  const completedUnits = await db.query.userUnitProgress.findMany({
+    where: eq(userUnitProgress.userId, userId),
+  });
+
+  const completedUnitIds = new Set(completedUnits.map(u => u.unitId));
+
+  return allUnits.map(unit => ({
+    ...unit,
+    completed: completedUnitIds.has(unit.id)
+  }));
+});
+
+export const getCurriculumById = cache(async (curriculumId: number) => {
+  const data = await db.query.curriculums.findFirst({
+    where: eq(curriculums.id, curriculumId),
     with: {
-      lessons: {
-        orderBy: (lessons, { asc }) => [asc(lessons.order)],
-        with: {
-          challenges: {
-            orderBy: (challenges, { asc }) => [asc(challenges.order)],
-            with: {
-              challengeProgress: {
-                where: eq(challengeProgress.userId, userId),
-              },
-            },
-          },
-        },
+      units: {
+        orderBy: (units, { asc }) => [asc(units.order)],
       },
     },
   });
 
-  const normalizedData = data.map((unit) => {
-    const lessonsWithCompletedStatus = unit.lessons.map((lesson) => {
-      if (lesson.challenges.length === 0)
-        return { ...lesson, completed: false };
-
-      const allCompletedChallenges = lesson.challenges.every((challenge) => {
-        return (
-          challenge.challengeProgress &&
-          challenge.challengeProgress.length > 0 &&
-          challenge.challengeProgress.every((progress) => progress.completed)
-        );
-      });
-
-      return { ...lesson, completed: allCompletedChallenges };
-    });
-
-    return { ...unit, lessons: lessonsWithCompletedStatus };
-  });
-
-  return normalizedData;
+  return data;
 });
 
-export const getCourseById = cache(async (courseId: number) => {
-  const data = await db.query.courses.findFirst({
-    where: eq(courses.id, courseId),
+export const getCurriculumProgress = cache(async () => {
+  const { userId } = auth();
+  const userProgress = await getUserProgress();
+
+  if (!userId || !userProgress?.curriculumId) return null;
+
+  // Get all units in the curriculum
+  const allUnits = await db.query.units.findMany({
+    where: eq(units.curriculumId, userProgress.curriculumId),
+    orderBy: (units, { asc }) => [asc(units.order)],
+  });
+
+  // Get completed units
+  const completedUnits = await db.query.userUnitProgress.findMany({
+    where: eq(userUnitProgress.userId, userId),
+  });
+
+  const completedUnitIds = new Set(completedUnits.map(u => u.unitId));
+
+  // Find first incomplete unit
+  const firstIncompleteUnit = allUnits.find(unit => !completedUnitIds.has(unit.id));
+
+  return {
+    activeUnit: firstIncompleteUnit || allUnits[0],
+    activeUnitId: firstIncompleteUnit?.id || allUnits[0]?.id,
+    progressPercent: userProgress.progressPercent,
+  };
+});
+
+export const getCourseById = cache(async (curriculumId: number) => {
+  const data = await db.query.curriculums.findFirst({
+    where: eq(curriculums.id, curriculumId),
     with: {
       units: {
         orderBy: (units, { asc }) => [asc(units.order)],
         with: {
-          lessons: {
-            orderBy: (lessons, { asc }) => [asc(lessons.order)],
+          contents: {
+            orderBy: (unitContents, { asc }) => [asc(unitContents.order)],
           },
         },
       },
@@ -110,43 +179,33 @@ export const getCourseProgress = cache(async () => {
   const { userId } = auth();
   const userProgress = await getUserProgress();
 
-  if (!userId || !userProgress?.activeCourseId) return null;
+  if (!userId || !userProgress?.curriculumId) return null;
 
-  const unitsInActiveCourse = await db.query.units.findMany({
+  const allUnits = await db.query.units.findMany({
+    where: eq(units.curriculumId, userProgress.curriculumId),
     orderBy: (units, { asc }) => [asc(units.order)],
-    where: eq(units.courseId, userProgress.activeCourseId),
-    with: {
-      lessons: {
-        orderBy: (lessons, { asc }) => [asc(lessons.order)],
-        with: {
-          unit: true,
-          challenges: {
-            with: {
-              challengeProgress: {
-                where: eq(challengeProgress.userId, userId),
-              },
-            },
-          },
-        },
-      },
-    },
   });
 
-  const firstUncompletedLesson = unitsInActiveCourse
-    .flatMap((unit) => unit.lessons)
-    .find((lesson) => {
-      return lesson.challenges.some((challenge) => {
-        return (
-          !challenge.challengeProgress ||
-          challenge.challengeProgress.length === 0 ||
-          challenge.challengeProgress.some((progress) => !progress.completed)
-        );
-      });
-    });
+  // Get all quizzes completed by user for this curriculum's units
+  const userQuizzesData = await db.query.userQuizzes.findMany({
+    where: eq(userQuizzes.userId, userId),
+    with: {
+      questions: true,
+    }
+  });
+
+  // Find first unit that doesn't have a completed quiz
+  const firstIncompleteUnit = allUnits.find((unit: UnitType) => {
+    return !userQuizzesData.some(quiz => 
+      quiz.questions.some(question => 
+        question.questionText.includes(`Unit ${unit.order}`)
+      )
+    );
+  });
 
   return {
-    activeLesson: firstUncompletedLesson,
-    activeLessonId: firstUncompletedLesson?.id,
+    activeUnit: firstIncompleteUnit || allUnits[0],
+    activeUnitId: firstIncompleteUnit?.id || allUnits[0]?.id,
   };
 });
 
@@ -156,54 +215,56 @@ export const getLesson = cache(async (id?: number) => {
   if (!userId) return null;
 
   const courseProgress = await getCourseProgress();
-  const lessonId = id || courseProgress?.activeLessonId;
+  const unitId = id || courseProgress?.activeUnitId;
 
-  if (!lessonId) return null;
+  if (!unitId) return null;
 
-  const data = await db.query.lessons.findFirst({
-    where: eq(lessons.id, lessonId),
+  const data = await db.query.units.findFirst({
+    where: eq(units.id, unitId),
     with: {
-      challenges: {
-        orderBy: (challenges, { asc }) => [asc(challenges.order)],
-        with: {
-          challengeOptions: true,
-          challengeProgress: {
-            where: eq(challengeProgress.userId, userId),
-          },
-        },
+      contents: {
+        orderBy: (unitContents, { asc }) => [asc(unitContents.order)],
       },
     },
   });
 
-  if (!data || !data.challenges) return null;
+  if (!data || !data.contents) return null;
 
-  const normalizedChallenges = data.challenges.map((challenge) => {
-    const completed =
-      challenge.challengeProgress &&
-      challenge.challengeProgress.length > 0 &&
-      challenge.challengeProgress.every((progress) => progress.completed);
-
-    return { ...challenge, completed };
+  // Get user progress for this unit
+  const userProgress = await db.query.userUnitProgress.findFirst({
+    where: and(
+      eq(userUnitProgress.userId, userId),
+      eq(userUnitProgress.unitId, unitId)
+    ),
   });
 
-  return { ...data, challenges: normalizedChallenges };
+  const contents = data.contents.map(content => ({
+    ...content,
+    completed: false // We'll implement content completion tracking later
+  }));
+
+  return {
+    ...data,
+    contents,
+    completed: !!userProgress,
+  };
 });
 
 export const getLessonPercentage = cache(async () => {
   const courseProgress = await getCourseProgress();
 
-  if (!courseProgress?.activeLessonId) return 0;
+  if (!courseProgress?.activeUnitId) return 0;
 
-  const lesson = await getLesson(courseProgress?.activeLessonId);
+  const lesson = await getLesson(courseProgress?.activeUnitId);
 
   if (!lesson) return 0;
 
-  const completedChallenges = lesson.challenges.filter(
-    (challenge) => challenge.completed
+  const completedContents = lesson.contents.filter(
+    (content) => content.completed
   );
 
   const percentage = Math.round(
-    (completedChallenges.length / lesson.challenges.length) * 100
+    (completedContents.length / lesson.contents.length) * 100
   );
 
   return percentage;
@@ -214,28 +275,38 @@ export const getUserSubscription = cache(async () => {
 
   if (!userId) return null;
 
-  const user = await db.query.userProgress.findFirst({
-    where: eq(userProgress.userId, userId),
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: {
+      role: true,
+      subscriptionStatus: true,
+      subscriptionEndDate: true,
+    },
   });
 
-  if (user?.role === "VIP" || user?.role === "ADMIN") {
+  if (!user) return null;
+
+  // VIP users always have active subscription
+  if (user.role === "VIP" || user.role === "ADMIN") {
     return {
       isActive: true,
+      isLifetime: true,
     };
   }
 
-  const data = await db.query.userSubscription.findFirst({
-    where: eq(userSubscription.userId, userId),
-  });
-
-  if (!data) return null;
-
-  const isActive =
-    data.stripeCurrentPeriodEnd.getTime() + DAY_IN_MS > Date.now();
+  // Check if subscription is still active
+  if (user.subscriptionStatus === "VIP" && user.subscriptionEndDate) {
+    const isActive = user.subscriptionEndDate.getTime() > Date.now();
+    return {
+      isActive,
+      isLifetime: false,
+      endDate: user.subscriptionEndDate,
+    };
+  }
 
   return {
-    ...data,
-    isActive,
+    isActive: false,
+    isLifetime: false,
   };
 });
 
@@ -244,29 +315,46 @@ export const getTopTenUsers = cache(async () => {
 
   if (!userId) return [];
 
-  const data = await db.query.userProgress.findMany({
-    orderBy: (userProgress, { desc }) => [desc(userProgress.points)],
+  const data = await db.query.userCurriculumProgress.findMany({
+    orderBy: (progress, { desc }) => [desc(progress.progressPercent)],
     limit: 10,
-    columns: {
-      userId: true,
-      userName: true,
-      userImageSrc: true,
-      points: true,
+    with: {
+      user: {
+        columns: {
+          name: true,
+          imageSrc: true,
+        }
+      }
+    }
+  });
+
+  return data.map(progress => ({
+    userId: progress.userId,
+    userName: progress.user.name,
+    userImageSrc: progress.user.imageSrc,
+    progressPercent: progress.progressPercent
+  }));
+});
+
+export const getUserQuizzes = cache(async () => {
+  const { userId } = auth();
+
+  if (!userId) return [];
+
+  const quizzes = await db.query.userQuizzes.findMany({
+    where: eq(userQuizzes.userId, userId),
+    with: {
+      unit: {
+        with: {
+          curriculum: true
+        }
+      },
+      questions: true,
     },
   });
 
-  return data;
+  return quizzes;
 });
-
-interface QuizQuestion {
-  type: string;
-  question: string;
-  options: string[];
-  correct_answer: string;
-  image_url?: string;
-  image_description?: string;
-  audio_url?: string;
-}
 
 export const getUserQuizQuestions = async () => {
   const { userId } = auth();
@@ -277,13 +365,11 @@ export const getUserQuizQuestions = async () => {
   }
 
   try {
-    // Lấy quiz mới nhất của user
-    const quiz = await db.query.userQuizStorage.findFirst({
-      where: eq(userQuizStorage.userId, userId),
-      orderBy: [desc(userQuizStorage.createdAt)],
+    const quiz = await db.query.userQuizzes.findFirst({
+      where: eq(userQuizzes.userId, userId),
+      orderBy: [desc(userQuizzes.createdAt)],
       with: {
-        images: true,
-        audios: true,
+        questions: true,
       },
     });
 
@@ -292,104 +378,178 @@ export const getUserQuizQuestions = async () => {
       return null;
     }
 
-    // Kết hợp câu hỏi với tài nguyên
-    const questions = (quiz.questions as QuizQuestion[]).map((q) => {
-      if (q.type === "image") {
-        const imageResource = quiz.images.find(img => img.imageDescription === q.image_description);
-        if (imageResource) {
-          q.image_url = imageResource.imageUrl;
-        }
-      } else if (q.type === "voice") {
-        const audioResource = quiz.audios.find(audio => audio.word === q.correct_answer);
-        if (audioResource) {
-          q.audio_url = audioResource.audioUrl;
-        }
-      }
-      return q;
-    });
-
-    return questions;
+    return quiz.questions;
   } catch (error) {
     console.error("Error retrieving quiz:", error);
     return null;
   }
 };
 
-export const setUserQuizQuestions = async (questions: QuizQuestion[]) => {
+export const updateUserProgress = async (userId: string, curriculumId: number) => {
+  const completedUnits = await db.query.userUnitProgress.findMany({
+    where: eq(userUnitProgress.userId, userId),
+  });
+
+  const allUnits = await db.query.units.findMany({
+    where: eq(units.curriculumId, curriculumId),
+  });
+
+  const completedUnitIds = new Set(completedUnits.map(u => u.unitId));
+  const totalUnits = allUnits.length;
+  const completedCount = allUnits.filter(unit => completedUnitIds.has(unit.id)).length;
+  const progressPercent = Math.round((completedCount / totalUnits) * 100);
+
+  await db
+    .insert(userCurriculumProgress)
+    .values({
+      userId,
+      curriculumId,
+      progressPercent,
+    })
+    .onConflictDoUpdate({
+      target: [userCurriculumProgress.userId, userCurriculumProgress.curriculumId],
+      set: {
+        progressPercent,
+      },
+    });
+};
+
+export const setUserQuizQuestions = async (questions: APIQuizQuestion[], unitId?: number, prompt: string = "") => {
   const { userId } = auth();
 
-  if (!userId) {
-    console.error("No user ID found");
-    return false;
-  }
+  if (!userId) return false;
 
   try {
-    // Lưu câu hỏi vào bảng quiz storage
-    const [quiz] = await db
-      .insert(userQuizStorage)
+    // First create a new quiz
+    const [quiz] = await db.insert(userQuizzes)
       .values({
         userId,
-        questions,
+        unitId: unitId || 1, // Default to first unit if not provided
+        prompt,
+        createdAt: new Date(),
       })
       .returning();
 
     if (!quiz) {
-      console.error("Failed to insert quiz");
+      console.error('Failed to create new quiz');
       return false;
     }
 
-    // Lưu hình ảnh cho câu hỏi image
-    const imageQuestions = questions.filter(q => q.type === "image");
-    if (imageQuestions.length > 0) {
-      await db.insert(quizImages).values(
-        imageQuestions.map(q => ({
-          quizId: quiz.id,
-          imageUrl: q.image_url || "",
-          imageDescription: q.image_description || "",
-        }))
-      );
-    }
+    // Insert all questions with proper type mapping
+    const questionsToInsert = questions.map(q => {
+      const correctOption = q.challengeOptions.find((opt: ChallengeOption) => opt.correct);
+      
+      // Convert the question to match database schema
+      const dbQuestion = {
+        quizId: quiz.id,
+        questionText: q.question,
+        type: q.type,
+        options: q.challengeOptions as any, // JSON field in database
+        correctAnswer: correctOption?.text || "",
+        explanation: q.explanation || null,
+        imageUrl: null as string | null,
+        audioUrl: null as string | null,
+      };
 
-    // Lưu âm thanh cho câu hỏi voice
-    const voiceQuestions = questions.filter(q => q.type === "voice");
-    if (voiceQuestions.length > 0) {
-      await db.insert(quizAudios).values(
-        voiceQuestions.map(q => ({
-          quizId: quiz.id,
-          audioUrl: q.audio_url || "",
-          word: q.correct_answer,
-        }))
-      );
-    }
+      // Add optional fields if they exist
+      if ('imageUrl' in q) {
+        dbQuestion.imageUrl = q.imageUrl;
+      }
+      if ('audioUrl' in q) {
+        dbQuestion.audioUrl = q.audioUrl;
+      }
+
+      return dbQuestion;
+    });
+
+    await db.insert(quizQuestions)
+      .values(questionsToInsert);
 
     return true;
   } catch (error) {
-    console.error("Error storing quiz:", error);
+    console.error('Error storing quiz questions:', error);
     return false;
   }
 };
 
-export const getUsersWithRoles = cache(async () => {
+export const updateUserCurriculumProgress = async (userId: string, curriculumId: number) => {
   try {
-    console.log("[QUERIES] Fetching users with roles");
-    
-    const result = await db.query.userProgress.findMany({
-      orderBy: (progress, { desc }) => [desc(progress.points)],
+    // Get total units in curriculum
+    const totalUnits = await db.query.units.findMany({
+      where: eq(units.curriculumId, curriculumId),
     });
 
-    console.log("[QUERIES] Found users:", result.length);
+    // Get completed units
+    const completedUnits = await db.query.userUnitProgress.findMany({
+      where: and(
+        eq(userUnitProgress.userId, userId),
+        eq(units.curriculumId, curriculumId)
+      ),
+    });
 
-    return result.map((item) => ({
-      id: item.userId,
-      email: item.userName || "No Name",
-      imageUrl: item.userImageSrc || "",
-      role: item.role || "USER",
-      points: item.points || 0,
-      hearts: item.hearts || 0,
-      createdAt: new Date(),
-    }));
+    // Calculate progress percentage
+    const progressPercent = Math.round(
+      (completedUnits.length / totalUnits.length) * 100
+    );
+
+    // Update progress
+    await db
+      .update(userCurriculumProgress)
+      .set({ progressPercent })
+      .where(
+        and(
+          eq(userCurriculumProgress.userId, userId),
+          eq(userCurriculumProgress.curriculumId, curriculumId)
+        )
+      );
+
+    return true;
   } catch (error) {
-    console.error("[QUERIES] Error fetching users:", error);
-    return [];
+    console.error("[UPDATE_CURRICULUM_PROGRESS]", error);
+    return false;
   }
+};
+
+export const getUserHearts = cache(async () => {
+  const { userId } = auth();
+
+  if (!userId) return null;
+
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: {
+      hearts: true,
+      imageSrc: true,
+    },
+  });
+
+  if (!user) return null;
+
+  return {
+    hearts: user.hearts,
+    imageSrc: user.imageSrc,
+  };
+});
+
+export const getQuizById = cache(async (quizId: number) => {
+  const { userId } = auth();
+
+  if (!userId) return null;
+
+  const quiz = await db.query.userQuizzes.findFirst({
+    where: and(
+      eq(userQuizzes.id, quizId),
+      eq(userQuizzes.userId, userId)
+    ),
+    with: {
+      questions: true,
+      unit: {
+        with: {
+          curriculum: true
+        }
+      }
+    },
+  });
+
+  return quiz;
 });

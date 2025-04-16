@@ -1,47 +1,56 @@
 "use client";
 
 import { useTransition } from "react";
-
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { upsertUserProgress } from "@/actions/user-progress";
-import { courses, userProgress } from "@/db/schema";
+import { curriculums, userCurriculumProgress } from "@/db/schema";
 
 import { Card } from "./card";
 
 type ListProps = {
-  courses: (typeof courses.$inferSelect)[];
-  activeCourseId?: typeof userProgress.$inferSelect.activeCourseId;
+  courses: (typeof curriculums.$inferSelect)[];
+  activeCourseId?: typeof userCurriculumProgress.$inferSelect.curriculumId;
 };
 
-export const List = ({ courses, activeCourseId }: ListProps) => {
+export const List = ({
+  courses,
+  activeCourseId,
+}: ListProps) => {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
-  const onClick = (id: number) => {
-    if (pending) return;
+  const onClick = (curriculumId: number) => {
+    if (isPending) return;
 
-    if (id === activeCourseId) return router.push("/learn");
+    if (curriculumId === activeCourseId) {
+      router.push("/learn");
+      return;
+    }
 
     startTransition(() => {
-      upsertUserProgress(id).catch(() => toast.error("Something went wrong."));
+      upsertUserProgress(curriculumId)
+        .catch(() => toast.error("Something went wrong"));
     });
   };
 
   return (
-    <div className="grid grid-cols-2 gap-4 pt-6 lg:grid-cols-[repeat(auto-fill,minmax(210px,1fr))]">
-      {courses.map((course) => (
-        <Card
-          key={course.id}
-          id={course.id}
-          title={course.title}
-          imageSrc={course.imageSrc}
-          onClick={onClick}
-          disabled={pending}
-          isActive={course.id === activeCourseId}
-        />
-      ))}
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
+      {courses.map((course) => {
+        return (
+          <Card
+            key={course.id}
+            id={course.id}
+            title={course.title}
+            description={course.description || ""}
+            image_url={course.image_url || ""}
+            onClick={onClick}
+            disabled={isPending}
+            active={course.id === activeCourseId}
+          />
+        );
+      })}
     </div>
   );
 };

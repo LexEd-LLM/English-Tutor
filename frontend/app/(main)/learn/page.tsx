@@ -1,76 +1,68 @@
 import { redirect } from "next/navigation";
 
 import { FeedWrapper } from "@/components/feed-wrapper";
-import { Promo } from "@/components/promo";
-import { Quests } from "@/components/quests";
+import { Header } from "@/components/header";
 import { StickyWrapper } from "@/components/sticky-wrapper";
 import { UserProgress } from "@/components/user-progress";
 import {
-  getCourseProgress,
-  getLessonPercentage,
   getUnits,
   getUserProgress,
   getUserSubscription,
+  getUserHearts,
 } from "@/db/queries";
 
-import { Header } from "./header";
-import { Unit } from "./unit";
+import { QuizGenerator } from "./quiz-generator";
 
 const LearnPage = async () => {
   const userProgressData = getUserProgress();
-  const courseProgressData = getCourseProgress();
-  const lessonPercentageData = getLessonPercentage();
   const unitsData = getUnits();
   const userSubscriptionData = getUserSubscription();
+  const userHeartsData = getUserHearts();
 
   const [
     userProgress,
     units,
-    courseProgress,
-    lessonPercentage,
     userSubscription,
+    userHearts,
   ] = await Promise.all([
     userProgressData,
     unitsData,
-    courseProgressData,
-    lessonPercentageData,
     userSubscriptionData,
+    userHeartsData,
   ]);
 
-  if (!courseProgress || !userProgress || !userProgress.activeCourse)
+  if (!userProgress || !userProgress.curriculum)
     redirect("/courses");
 
-  const isPro = !!userSubscription?.isActive;
+  if (!userHearts)
+    redirect("/sign-in");
+
+  const isVIP = userSubscription?.isLifetime || 
+    (userSubscription?.isActive && userSubscription?.endDate && 
+     userSubscription.endDate.getTime() > Date.now());
 
   return (
-    <div className="flex flex-row-reverse gap-[48px] px-6">
-      <StickyWrapper>
-        <UserProgress
-          activeCourse={userProgress.activeCourse}
-          hearts={userProgress.hearts}
-          points={userProgress.points}
-          hasActiveSubscription={isPro}
-        />
-
-        {!isPro && <Promo />}
-        <Quests points={userProgress.points} />
-      </StickyWrapper>
-      <FeedWrapper>
-        <Header title={userProgress.activeCourse.title} />
-        {units.slice(0, 1).map((unit) => (
-          <div key={unit.id} className="mb-10">
-            <Unit
-              id={unit.id}
-              order={unit.order}
-              description={unit.description}
-              title={unit.title}
-              lessons={unit.lessons}
-              activeLesson={courseProgress.activeLesson}
-              activeLessonPercentage={lessonPercentage}
-            />
+    <div className="flex flex-col h-full">
+      <Header 
+        hearts={userHearts.hearts} 
+        userImage={userHearts.imageSrc}
+        activeCourse={userProgress.curriculum}
+        isVIP={isVIP}
+      />
+      <div className="flex flex-row-reverse gap-[48px] px-6 flex-1">
+        <StickyWrapper>
+          <UserProgress
+            activeCourse={userProgress.curriculum}
+            progressPercent={userProgress.progressPercent}
+          />
+        </StickyWrapper>
+        <FeedWrapper>
+          <div className="w-full max-w-3xl mx-auto p-6 bg-white rounded-xl shadow-sm">
+            <h2 className="text-2xl font-bold mb-6 text-center">Generate Quiz</h2>
+            <QuizGenerator units={units} />
           </div>
-        ))}
-      </FeedWrapper>
+        </FeedWrapper>
+      </div>
     </div>
   );
 };

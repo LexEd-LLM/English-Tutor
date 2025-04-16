@@ -1,10 +1,15 @@
 "use server";
 
+import { auth } from "@clerk/nextjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getUserQuizQuestions, setUserQuizQuestions } from "@/db/queries";
 
-// Type definitions
+import db from "@/db/drizzle";
+import { updateUserCurriculumProgress } from "@/db/queries";
+import { userQuizzes, userUnitProgress, type QuizQuestion as DBQuizQuestion } from "@/db/schema";
+
+// Type definitions for API response
 interface ChallengeOption {
   id: number;
   text: string;
@@ -16,7 +21,7 @@ interface ChallengeOption {
 interface BaseQuestion {
   id: number;
   question: string;
-  type: string;
+  type: "FILL_IN_BLANK" | "TRANSLATION" | "IMAGE" | "VOICE";
   challengeOptions: ChallengeOption[];
   explanation?: string;
 }
@@ -29,7 +34,7 @@ interface VoiceQuestion extends BaseQuestion {
   audioUrl: string;
 }
 
-type QuizQuestion = BaseQuestion | ImageQuestion | VoiceQuestion;
+type APIQuizQuestion = BaseQuestion | ImageQuestion | VoiceQuestion;
 
 interface APIResponse {
   multiple_choice_questions: BaseQuestion[];
@@ -38,10 +43,10 @@ interface APIResponse {
 }
 
 // Store quiz questions directly in database
-async function storeQuizQuestions(questions: QuizQuestion[]): Promise<boolean> {
+async function storeQuizQuestions(questions: APIQuizQuestion[], unitId?: number, prompt?: string): Promise<boolean> {
   try {
     console.log(`Storing ${questions.length} questions directly to database`);
-    const success = await setUserQuizQuestions(questions);
+    const success = await setUserQuizQuestions(questions, unitId, prompt);
     
     if (success) {
       console.log('Successfully stored questions in database');
@@ -57,14 +62,24 @@ async function storeQuizQuestions(questions: QuizQuestion[]): Promise<boolean> {
 }
 
 // Get stored quiz questions
-export const getGeneratedQuiz = async (): Promise<QuizQuestion[]> => {
+export const getGeneratedQuiz = async (): Promise<APIQuizQuestion[]> => {
   try {
     console.log('Getting quiz questions directly from database');
     const questions = await getUserQuizQuestions();
     
     if (questions && Array.isArray(questions)) {
       console.log(`Retrieved ${questions.length} questions directly from database`);
-      return questions;
+      // Convert DB questions to API format
+      const apiQuestions = questions.map(q => ({
+        id: q.id,
+        question: q.questionText,
+        type: q.type,
+        challengeOptions: q.options as ChallengeOption[],
+        explanation: q.explanation || undefined,
+        ...(q.imageUrl ? { imageUrl: q.imageUrl } : {}),
+        ...(q.audioUrl ? { audioUrl: q.audioUrl } : {}),
+      })) as APIQuizQuestion[];
+      return apiQuestions;
     } else {
       console.warn('No questions found in database via direct call');
       return [];
@@ -88,18 +103,20 @@ export const clearGeneratedQuiz = async () => {
 
 // Generate new quiz questions
 export const generateQuiz = async (
-  prompt: string,
-  multipleChoiceCount: number = 6,
-  imageCount: number = 2,
-  voiceCount: number = 2
+  unitIds: number[],
+  prompt?: string,
+  multipleChoiceCount: number = 3,
+  imageCount: number = 1,
+  voiceCount: number = 1
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    console.log(`Calling API with prompt: ${prompt}, MC: ${multipleChoiceCount}, Image: ${imageCount}, Voice: ${voiceCount}`);
+    console.log(`Calling API with units: ${unitIds}, prompt: ${prompt}, MC: ${multipleChoiceCount}, Image: ${imageCount}, Voice: ${voiceCount}`);
     
     const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
     console.log(`Using backend URL: ${backendUrl}`);
     
     const requestBody = {
+      unit_ids: unitIds,
       prompt,
       multiple_choice_count: multipleChoiceCount,
       image_count: imageCount,
@@ -161,7 +178,7 @@ export const generateQuiz = async (
     }
     
     // Store questions in database
-    const storeSuccess = await storeQuizQuestions(allQuestions);
+    const storeSuccess = await storeQuizQuestions(allQuestions, unitIds[0], prompt);
     if (!storeSuccess) {
       console.warn('Failed to store questions in database');
     }
@@ -176,4 +193,61 @@ export const generateQuiz = async (
       error: error instanceof Error ? error.message : "Unknown error occurred",
     };
   }
-}; 
+};
+
+export async function createQuizForUnit(unitId: number, prompt: string) {
+  const { userId } = auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  try {
+    // Create the quiz
+    const [quiz] = await db
+      .insert(userQuizzes)
+      .values({
+        userId,
+        unitId,
+        prompt,
+      })
+      .returning();
+
+    if (!quiz) {
+      throw new Error("Failed to create quiz");
+    }
+
+    // Mark unit as completed
+    const [progress] = await db
+      .insert(userUnitProgress)
+      .values({
+        userId,
+        unitId,
+      })
+      .returning();
+
+    if (!progress) {
+      throw new Error("Failed to update unit progress");
+    }
+
+    // Get the curriculum ID for this unit
+    const unit = await db.query.units.findFirst({
+      where: (units, { eq }) => eq(units.id, unitId),
+    });
+
+    if (!unit) {
+      throw new Error("Unit not found");
+    }
+
+    // Update curriculum progress
+    await updateUserCurriculumProgress(userId, unit.curriculumId);
+
+    revalidatePath("/learn");
+    revalidatePath("/unit/[id]");
+
+    return { success: true, quizId: quiz.id };
+  } catch (error) {
+    console.error("[QUIZ_CREATION]", error);
+    return { success: false, error: "Failed to create quiz" };
+  }
+} 

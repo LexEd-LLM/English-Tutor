@@ -1,26 +1,44 @@
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
 from backend.services.question_generator import generate_questions_batch
-from backend.database.vector_store import get_relevant_chunk
 from backend.schemas.quiz import PracticeHistory, WrongQuestion
 from ..config.settings import llm
 from llama_index.core.prompts import PromptTemplate
+from backend.database.database import get_db
 import json
 
 class PracticeService:
     def __init__(self):
-        # Placeholder for database - replace with actual database implementation
-        self._user_data: Dict[str, Dict[str, Any]] = {}
+        pass
 
     async def load_user_profile(self, user_id: str) -> Dict[str, List[str]]:
         """Load user's learning profile from database."""
-        # Placeholder - implement actual database query
-        return self._user_data.get(user_id, {
-            "strengths": [],
-            "weaknesses": []
-        })
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                # Get the latest quiz for this user
+                cur.execute("""
+                    SELECT strengths, weaknesses 
+                    FROM user_quizzes 
+                    WHERE user_id = %s 
+                    ORDER BY created_at DESC 
+                    LIMIT 1
+                """, (user_id,))
+                
+                result = cur.fetchone()
+                if result and result["strengths"] and result["weaknesses"]:
+                    return {
+                        "strengths": result["strengths"].split("\n"),
+                        "weaknesses": result["weaknesses"].split("\n")
+                    }
+                return {
+                    "strengths": [],
+                    "weaknesses": []
+                }
+        finally:
+            conn.close()
 
-    def parse_json_response(self, response_text: str) -> List[Dict[str, Any]]:
+    def parse_json_response(self, response_text: str) -> Dict[str, Any]:
         """Parse generated questions from JSON response"""
         try:
             # Clean up the response text to ensure it's valid JSON
@@ -29,15 +47,29 @@ class PracticeService:
                 cleaned_text = cleaned_text[7:]
             if cleaned_text.endswith("```"):
                 cleaned_text = cleaned_text[:-3]
+            
+            # Try to find JSON object within the text
+            start_idx = cleaned_text.find("{")
+            end_idx = cleaned_text.rfind("}")
+            if start_idx >= 0 and end_idx >= 0:
+                cleaned_text = cleaned_text[start_idx:end_idx + 1]
+            
             data = json.loads(cleaned_text)
-            if isinstance(data, dict) and "strengths" in data and "weaknesses" in data:
-                return data
-            else:
-                print("Parsed JSON is not in expected format.")
-                return {}
+            if not isinstance(data, dict):
+                raise ValueError("Parsed JSON is not a dictionary.")
+
+            return {
+                "strengths": data.get("strengths", {}),
+                "weaknesses": data.get("weaknesses", {})
+            }
+
         except Exception as e:
             print(f"Error parsing response: {e}")
-            return {}
+            print(f"Response text: {response_text}")
+            return {
+                "strengths": {},
+                "weaknesses": {}
+            }
     
     async def analyze_performance(
         self,
@@ -67,22 +99,16 @@ class PracticeService:
             - Compare the current performance to the previous profile, and mention if there's any improvement or recurring issue.
 
             ### Output Format (strictly return only valid JSON):
-            [
-            "strengths": 
             {
-                "point_1": "Specific strength with clear example",
-            },
-            {
-                "point_2": "Another strength with clear example"
-            },
-            "weaknesses": 
-            {
-                "point_1": "Specific weakness with clear example",
-            },
-            {
-                "point_2": "Another weakness with clear example"
-            },
-            ]
+                "strengths": {
+                    "point_1": "Specific strength with clear example",
+                    "point_2": "Another strength with clear example"
+                },
+                "weaknesses": {
+                    "point_1": "Specific weakness with clear example",
+                    "point_2": "Another weakness with clear example"
+                }
+            }
             Only output JSON. Do not include any explanation or extra text outside of the JSON.
             """
         )
@@ -113,20 +139,32 @@ class PracticeService:
             combined_strengths = "\n".join(unique_strengths)
             combined_weaknesses = "\n".join(unique_weaknesses)
 
-            # Lưu lại hồ sơ người dùng
-            self._user_data[user_id] = {
-                "strengths": combined_strengths,
-                "weaknesses": combined_weaknesses,
-            }
+            # Update the latest quiz with new strengths and weaknesses
+            conn = get_db()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE user_quizzes 
+                        SET strengths = %s, weaknesses = %s
+                        WHERE id = (
+                            SELECT id FROM user_quizzes 
+                            WHERE user_id = %s 
+                            ORDER BY created_at DESC 
+                            LIMIT 1
+                        )
+                    """, (combined_strengths, combined_weaknesses, user_id))
+                    conn.commit()
+            finally:
+                conn.close()
 
             return {
-                "strengths": combined_strengths,
-                "weaknesses": combined_weaknesses
+                "strengths": unique_strengths,
+                "weaknesses": unique_weaknesses
             }
         except Exception as e:
             print(f"Error parsing analysis: {e}")
             return previous_profile
-        
+
     async def generate_practice_questions(
         self,
         user_id: str,
@@ -150,13 +188,13 @@ class PracticeService:
         question_types = set(q.type for q in wrong_questions)
 
         # Adjust question counts based on wrong answer types
-        multiple_choice_count = 4 if "SELECT" in question_types or "TRANSLATION" in question_types else 2
+        multiple_choice_count = 4 if "FILL_IN_BLANK" in question_types or "TRANSLATION" in question_types else 2
         image_count = 1 if "IMAGE" in question_types else 0
         voice_count = 1 if "VOICE" in question_types else 0
 
         # Generate questions with focus on weak areas
         questions_data = generate_questions_batch(
-            text_chunks,
+            text_chunks=text_chunks,
             multiple_choice_count=multiple_choice_count,
             image_count=image_count,
             voice_count=voice_count,
@@ -165,11 +203,6 @@ class PracticeService:
         )
         print("Successfully generated questions")
         return questions_data
-
-    async def clear_user_profile(self, user_id: str) -> None:
-        """Clear user's learning profile after practice session."""
-        if user_id in self._user_data:
-            del self._user_data[user_id]
 
     async def save_practice_history(self, history: PracticeHistory) -> None:
         """Save practice attempt to database."""
