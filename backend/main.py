@@ -217,7 +217,7 @@ async def get_user_progress(user_id: str):
                     return {"hearts": 5}  # Default hearts if user not found
                 
                 # Handle null hearts value
-                hearts = result[1] if result[1] is not None else 5
+                hearts = result['hearts'] if result['hearts'] is not None else 5
                 print(f"Found user {user_id} with {hearts} hearts")
                 return {"hearts": hearts}
         finally:

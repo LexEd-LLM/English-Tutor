@@ -38,6 +38,16 @@ interface VoiceQuestion extends BaseQuestion {
 
 type QuizQuestion = BaseQuestion | ImageQuestion | VoiceQuestion;
 
+interface APIQuizQuestion extends BaseQuestion {
+  image_url?: string;
+  audio_url?: string;
+}
+
+interface QuizResponse {
+  questions: APIQuizQuestion[];
+  quizId: number;
+}
+
 // Utility functions
 const isImageQuestion = (question: QuizQuestion): question is ImageQuestion => 
   question.type === "IMAGE";
@@ -74,10 +84,6 @@ export default function ExplanationsPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  if (!mounted) {
-    return null;
-  }
 
   // Load saved explanation from database
   const loadSavedExplanation = async (questionId: number) => {
@@ -166,35 +172,46 @@ export default function ExplanationsPage() {
 
   // Load questions and user answers on mount
   useEffect(() => {
+    if (!mounted) return;
+
     async function loadQuestions() {
       try {
         setLoading(true);
-        const quizQuestions = await getGeneratedQuiz();
+        const quizResponse = await getGeneratedQuiz() as QuizResponse;
+        
+        if (!quizResponse?.questions) {
+          console.error("No questions found in quiz response");
+          setLoading(false);
+          return;
+        }
         
         // Process questions to ensure proper URLs and maintain order
-        const transformedQuestions = quizQuestions
-          .map(q => {
-            const transformed: any = { ...q };
+        const transformedQuestions = quizResponse.questions
+          .map((q: APIQuizQuestion) => {
+            let transformed: QuizQuestion = { ...q };
             
             if (q.type === "IMAGE") {
-              const imageUrl = (q as any).imageUrl || (q as any).image_url;
+              const imageUrl = q.image_url || (q as any).imageUrl;
               if (imageUrl) {
-                transformed.imageUrl = imageUrl.startsWith('http') || imageUrl.startsWith('/') 
-                  ? imageUrl : '/' + imageUrl;
+                transformed = {
+                  ...transformed,
+                  imageUrl,
+                } as ImageQuestion;
               }
             }
             
             if (q.type === "VOICE") {
-              const audioUrl = (q as any).audioUrl || (q as any).audio_url;
+              const audioUrl = q.audio_url || (q as any).audioUrl;
               if (audioUrl) {
-                transformed.audioUrl = audioUrl.startsWith('http') || audioUrl.startsWith('/') 
-                  ? audioUrl : '/' + audioUrl;
+                transformed = {
+                  ...transformed,
+                  audioUrl,
+                } as VoiceQuestion;
               }
             }
             
-            return transformed as QuizQuestion;
+            return transformed;
           })
-          // Sort by question ID to maintain original order
           .sort((a, b) => a.id - b.id);
         
         setQuestions(transformedQuestions);
@@ -224,7 +241,7 @@ export default function ExplanationsPage() {
     }
 
     loadQuestions();
-  }, []);
+  }, [mounted]);
 
   // Audio play function
   const handlePlayAudio = (questionId: number, audioUrl?: string) => {
@@ -246,13 +263,8 @@ export default function ExplanationsPage() {
   };
 
   // Loading state
-  if (!mounted || loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <div className="w-16 h-16 border-4 border-t-green-500 border-b-green-500 rounded-full animate-spin"></div>
-        <p className="mt-4 text-lg">Loading explanations...</p>
-      </div>
-    );
+  if (!mounted) {
+    return null;
   }
 
   // No data state

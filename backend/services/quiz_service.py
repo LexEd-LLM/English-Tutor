@@ -57,8 +57,6 @@ class QuizService:
                     return
                 
                 print(f"\n=== Quiz {quiz_id} Found ===")
-                print(f"User ID: {quiz[1]}")
-                print(f"Unit ID: {quiz[2]}")
 
                 # Get current question count
                 cur.execute("""
@@ -66,7 +64,7 @@ class QuizService:
                     FROM quiz_questions 
                     WHERE quiz_id = %s
                 """, (quiz_id,))
-                current_count = cur.fetchone()[0]
+                current_count = cur.fetchone()['count']
                 print(f"Current question count: {current_count}")
 
                 # Add new questions
@@ -95,7 +93,7 @@ class QuizService:
                             json.dumps(options), correct_answer,
                             item.explanation, item.imageUrl, item.audioUrl
                         ))
-                        new_id = cur.fetchone()[0]
+                        new_id = cur.fetchone()['id']
                         questions_added += 1
                         print(f"Added question {new_id}: {item.question[:50]}...")
                     except Exception as e:
@@ -110,7 +108,7 @@ class QuizService:
                     FROM quiz_questions 
                     WHERE quiz_id = %s
                 """, (quiz_id,))
-                final_count = cur.fetchone()[0]
+                final_count = cur.fetchone()['count']
                 
                 print(f"\n=== Quiz After Adding Questions ===")
                 print(f"Questions added: {questions_added}")

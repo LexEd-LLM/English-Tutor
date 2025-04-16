@@ -35,6 +35,7 @@ type Challenge = {
   id: number;
   order: number;
   lessonId: number;
+  quizId: number;
   type: typeof questionTypeEnum.enumValues[number];
   originalType?: typeof questionTypeEnum.enumValues[number];
   question: string;
@@ -58,73 +59,83 @@ export default function PracticePage() {
   const [userSubscription, setUserSubscription] = useState<UserSubscription | null>(null);
   const [userProgress, setUserProgress] = useState<any>(null);
   const [lessonId, setLessonId] = useState<number>(1);
+  const [quizId, setQuizId] = useState<number>(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const initializeUserData = async () => {
-      try {
-        // Load practice data to get userId
-        const practiceDataStr = localStorage.getItem("practiceData");
-        if (!practiceDataStr) {
-          console.log("No practice data found");
-          return;
-        }
+    let isSubscribed = true;
 
-        const practiceData = JSON.parse(practiceDataStr);
-        const { userId } = practiceData;
-
-        // Fetch user progress from API
-        const response = await fetch(`${BACKEND_URL}/api/user-progress/${userId}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch user progress");
-        }
-        const progress = await response.json();
-        setUserProgress(progress);
-        
-      } catch (error) {
-        console.error("Failed to load user progress:", error);
-        // Don't show error toast here as we'll use default hearts
+    const initialize = async () => {
+      // Check if already initialized in this session
+      const initKey = "practice_init_" + Date.now();
+      const isAlreadyInitialized = localStorage.getItem(initKey);
+      
+      if (isAlreadyInitialized) {
+        console.log("[DEBUG] Already initialized in this session, skipping");
+        return;
       }
-    };
 
-    initializeUserData();
-  }, []);
-
-  useEffect(() => {
-    const initializePractice = async () => {
-      console.log("Practice page initialized");
+      console.log("[DEBUG] Starting initialization");
       try {
-        // Load practice data from localStorage
         const practiceDataStr = localStorage.getItem("practiceData");
-        if (!practiceDataStr) {
-          console.log("No practice data found, redirecting to learn page");
+        if (!practiceDataStr || !isSubscribed) {
+          console.log("[DEBUG] No practice data found, redirecting to learn page");
           router.push("/learn");
           return;
         }
 
+        // Mark as initialized early to prevent double initialization
+        localStorage.setItem(initKey, "true");
+        
         const practiceData = JSON.parse(practiceDataStr);
-        console.log("Practice data loaded:", practiceData);
-        const { wrongQuestions, originalPrompt, userId, quizId } = practiceData;
+        const { wrongQuestions, originalPrompt, userId, quizId, timestamp } = practiceData;
 
-        if (!wrongQuestions || wrongQuestions.length === 0) {
-          console.error("No wrong questions to practice");
-          toast.error("No questions to practice");
-          router.push("/learn");
-          return;
+        console.log("[DEBUG] Practice data loaded:", {
+          hasUserId: !!userId,
+          hasQuizId: !!quizId,
+          wrongQuestionsCount: wrongQuestions?.length,
+          timestamp
+        });
+
+        // Fetch user progress first
+        try {
+          const progressResponse = await fetch(`${BACKEND_URL}/api/user-progress/${userId}`);
+          if (progressResponse.ok && isSubscribed) {
+            const progress = await progressResponse.json();
+            setUserProgress(progress);
+          }
+        } catch (error) {
+          console.error("[DEBUG] Failed to load user progress:", error);
+          // Continue anyway as we have default hearts
         }
 
-        // Set new lesson ID (increment from the original quiz ID)
-        const newLessonId = (quizId || 0) + 1;
-        setLessonId(newLessonId);
+        if (!isSubscribed) return;
 
-        // Generate new practice questions
-        console.log("Fetching new practice questions...");
+        // Set quiz ID
+        setQuizId(quizId);
+
+        // Handle lesson ID
+        let currentLessonId = parseInt(localStorage.getItem('currentLessonId') || '0');
+        if (!currentLessonId || isNaN(currentLessonId)) {
+          currentLessonId = 1;
+        }
+        
+        const newLessonId = currentLessonId + 1;
+        if (!isSubscribed) return;
+        
+        setLessonId(newLessonId);
+        localStorage.setItem('currentLessonId', newLessonId.toString());
+        console.log("[DEBUG] New lesson ID:", newLessonId);
+
+        // Generate practice questions
+        console.log("[DEBUG] Fetching practice questions...");
         const response = await fetch(`${BACKEND_URL}/api/generate-quiz-again`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId,
-            quizId, // Use original quizId for database reference
-            wrongQuestions,
+            quizId,
+            wrongQuestions: wrongQuestions || [],
             originalPrompt,
           }),
         });
@@ -134,62 +145,75 @@ export default function PracticePage() {
         }
 
         const data = await response.json() as APIResponse;
-        console.log("API Response:", data);
+        console.log("[DEBUG] API Response received");
         
-        // Combine all question types and transform them
+        if (!isSubscribed) return;
+
         const allQuestions = [
           ...(data.multiple_choice_questions || []),
           ...(data.image_questions || []),
           ...(data.voice_questions || [])
         ];
 
-        // Validate questions array
         if (!allQuestions || !Array.isArray(allQuestions) || allQuestions.length === 0) {
           throw new Error("No questions received from API");
         }
 
-        // Transform questions to match Challenge type
-        const transformedQuestions: Challenge[] = allQuestions.map((q, index) => {
-          const hasImageUrl = 'imageUrl' in q && q.imageUrl;
-          const hasAudioUrl = 'audioUrl' in q && q.audioUrl;
-          
-          return {
-            id: q.id,
-            order: index + 1,
-            lessonId: newLessonId, // Use new lesson ID for practice session
-            type: q.type,
-            originalType: q.type,
-            question: q.question,
-            completed: false,
-            imageUrl: hasImageUrl ? q.imageUrl : undefined,
-            audioUrl: hasAudioUrl ? q.audioUrl : undefined,
-            challengeOptions: q.challengeOptions.map((option) => ({
-              id: option.id,
-              challengeId: q.id,
-              text: option.text,
-              correct: option.correct,
-              imageSrc: option.imageSrc,
-              audioSrc: option.audioSrc,
-            })),
-          };
-        });
+        const transformedQuestions: Challenge[] = allQuestions.map((q, index) => ({
+          id: q.id,
+          order: index + 1,
+          lessonId: newLessonId,
+          quizId: quizId,
+          type: q.type,
+          originalType: q.type,
+          question: q.question,
+          completed: false,
+          imageUrl: 'imageUrl' in q && q.imageUrl ? q.imageUrl : undefined,
+          audioUrl: 'audioUrl' in q && q.audioUrl ? q.audioUrl : undefined,
+          challengeOptions: q.challengeOptions.map((option) => ({
+            id: option.id,
+            challengeId: q.id,
+            text: option.text,
+            correct: option.correct,
+            imageSrc: option.imageSrc,
+            audioSrc: option.audioSrc,
+          })),
+        }));
 
-        console.log("Transformed questions:", transformedQuestions);
+        if (!isSubscribed) return;
+        console.log("[DEBUG] Setting challenges");
         setChallenges(transformedQuestions);
         
-        // Clear practice data from localStorage
+        // Mark as initialized before clearing localStorage
+        setIsInitialized(true);
+        
+        // Clear both practice data and init flag after successful setup
+        console.log("[DEBUG] Clearing practice data from localStorage");
         localStorage.removeItem("practiceData");
+        localStorage.removeItem(initKey);
+        console.log("[DEBUG] Practice data cleared");
+        
       } catch (error) {
-        console.error("Error in initializePractice:", error);
-        toast.error("Failed to load practice questions");
-        router.push("/learn");
+        // Clear init flag on error
+        localStorage.removeItem(initKey);
+        console.error("[DEBUG] Error in initialization:", error);
+        if (isSubscribed) {
+          toast.error("Failed to load practice questions");
+          router.push("/learn");
+        }
       } finally {
-        setLoading(false);
+        if (isSubscribed) {
+          setLoading(false);
+        }
       }
     };
 
-    initializePractice();
-  }, [router]);
+    initialize();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [router, isInitialized]); // Keep isInitialized in dependencies
 
   if (loading) {
     return (
@@ -210,6 +234,7 @@ export default function PracticePage() {
     <div className="min-h-screen bg-gray-50">
       <Quiz
         initialLessonId={lessonId}
+        initialQuizId={quizId}
         initialLessonChallenges={challenges}
         initialHearts={hearts}
         initialPercentage={0}

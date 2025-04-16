@@ -43,6 +43,7 @@ type Challenge = {
   id: number;
   order: number;
   lessonId: number;
+  quizId: number;
   type: QuestionType;
   question: string;
   completed: boolean;
@@ -75,10 +76,11 @@ type QuizProps = {
   initialPercentage: number;
   initialHearts: number;
   initialLessonId: number;
+  initialQuizId?: number;
   initialLessonChallenges: Challenge[];
   userSubscription: UserSubscription | null;
   userId: string;
-  isPracticeMode: boolean;
+  isPracticeMode?: boolean;
 };
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -87,10 +89,11 @@ export const Quiz = ({
   initialPercentage,
   initialHearts,
   initialLessonId,
+  initialQuizId,
   initialLessonChallenges,
   userSubscription,
   userId,
-  isPracticeMode,
+  isPracticeMode = false,
 }: QuizProps) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [correctAudio, _c, correctControls] = useAudio({ src: "/correct.wav" });
@@ -114,6 +117,7 @@ export const Quiz = ({
   });
 
   const [lessonId] = useState(initialLessonId);
+  const [quizId] = useState(initialQuizId || 0);
   const [hearts] = useState(initialHearts);
   const [percentage, setPercentage] = useState(() => {
     return initialPercentage === 100 ? 0 : initialPercentage;
@@ -152,6 +156,16 @@ export const Quiz = ({
     const answeredCount = Object.keys(userAnswers).length;
     setAllQuestionsAnswered(answeredCount === challenges.length);
   }, [userAnswers, challenges.length]);
+
+  useEffect(() => {
+    console.log('Quiz component initialized:', {
+      initialQuizId,
+      quizId,
+      initialLessonId,
+      lessonId,
+      challengesCount: initialLessonChallenges.length
+    });
+  }, [initialQuizId, quizId, initialLessonId, lessonId, initialLessonChallenges.length]);
 
   const onNext = () => {
     if (activeIndex < challenges.length - 1) {
@@ -204,7 +218,8 @@ export const Quiz = ({
           options: challenge.challengeOptions.map(opt => ({
             id: opt.id,
             text: opt.text,
-            correct: opt.correct
+            correct: opt.correct,
+            isSelected: opt.id === id
           }))
         };
         
@@ -358,13 +373,27 @@ export const Quiz = ({
 
   const startPracticeMode = async () => {
     try {
+      // Validate quizId
+      if (!quizId) {
+        console.error('QuizId is required but not provided');
+        toast.error("Cannot start practice mode - missing quiz ID");
+        return;
+      }
+
       // Save wrong questions and original prompt to localStorage
       const practiceData = {
         wrongQuestions,
         originalPrompt,
-        userId
+        userId,
+        quizId
       };
+
+      console.log('Saving practice data:', practiceData); // Debug log
+
       localStorage.setItem('practiceData', JSON.stringify(practiceData));
+      
+      // Save current lesson ID for practice mode
+      localStorage.setItem('currentLessonId', lessonId.toString());
       
       // Redirect to practice page
       router.push('/practice');
@@ -439,6 +468,7 @@ export const Quiz = ({
 
         <Footer
           lessonId={lessonId}
+          quizId={quizId}
           status="completed"
           onCheck={() => router.push("/learn")}
           isPracticeMode={isPracticeMode}
@@ -509,6 +539,7 @@ export const Quiz = ({
       </div>
       <Footer
         lessonId={lessonId}
+        quizId={quizId}
         status={status}
         onCheck={onContinue}
         onBack={activeIndex > 0 ? onBack : undefined}

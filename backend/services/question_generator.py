@@ -4,7 +4,7 @@ from ..config.settings import llm
 from ..schemas.quiz import QuestionType
 from typing import List, Dict, Any, Optional
 import json
-import random
+import re
 from .voice_quiz_generator import generate_audio
 from .image_generator import generate_image
 from langchain.prompts import ChatPromptTemplate
@@ -229,10 +229,11 @@ def generate_voice_questions(
             Content: {content}
             
             For each question:
-            1. Find a word from the content that has a potentially confusing pronunciation
-            2. Find another English word that sounds similar but has a different meaning
-            3. Create a question about distinguishing these similar-sounding words
-            4. Include phonetic transcriptions for both words
+                1. Select a word from the content that may be confusing in pronunciation
+                2. Find another real English word that sounds similar but has a different meaning
+                3. Create a question that helps learners distinguish them by sound
+                4. Show the phonetic transcription of both words **in the question text only**
+                5. Do **not** include phonetic transcriptions in the `options` or `correct_answer` fields
             
             Return the questions in JSON format with these fields:
             - question: "Which word did you hear?"
@@ -308,14 +309,15 @@ def generate_explanation(question: str, correct_answer: str, user_answer: str) -
     """Generate explanation for a question."""
     template = PromptTemplate(
         template=(
-            "Bạn là một giáo viên tận tâm, hướng dẫn học sinh lớp 12 ôn tập môn tiếng Anh. "
-            "Hãy giải thích ngắn gọn, đi thẳng vào nội dung chính, giúp học sinh hiểu vì sao đáp án đúng là {correct_answer} "
-            "và tại sao đáp án của học sinh ({user_answer}) chưa chính xác. "
-            "Dự đoán lý do học sinh có thể chọn sai, sau đó đưa ví dụ minh họa để làm rõ nghĩa.\n\n"
-            "Câu hỏi: {question}\n"
-            "Đáp án đúng: {correct_answer}\n"
-            "Đáp án của học sinh: {user_answer}\n\n"
-            "Giải thích:"
+        "Bạn là một giáo viên tận tâm, hướng dẫn học sinh lớp 12 ôn tập môn tiếng Anh. "
+        "Hãy giải thích ngắn gọn, đi thẳng vào nội dung chính để giúp học sinh hiểu rõ kiến thức.\n\n"
+        "- Luôn giải thích vì sao đáp án đúng là {correct_answer}.\n"
+        "- Nếu đáp án của học sinh ({user_answer}) khác đáp án đúng, hãy phân tích lý do sai và đưa ví dụ minh họa.\n"
+        "- Nếu học sinh đã chọn đúng, hãy củng cố bằng cách giải thích rõ vì sao đó là lựa chọn tốt nhất và đưa ví dụ tương tự để học sinh ghi nhớ.\n\n"
+        "Câu hỏi: {question}\n"
+        "Đáp án đúng: {correct_answer}\n"
+        "Đáp án của học sinh: {user_answer}\n\n"
+        "Giải thích:"
         )
     )
     prompt = template.format(
@@ -331,10 +333,17 @@ def parse_json_questions(response_text: str) -> List[Dict[str, Any]]:
     try:
         # Clean up the response text to ensure it's valid JSON
         cleaned_text = response_text.strip()
-        if cleaned_text.startswith("```json"):
-            cleaned_text = cleaned_text[7:]
-        if cleaned_text.endswith("```"):
-            cleaned_text = cleaned_text[:-3]
+        # if cleaned_text.startswith("```json"):
+        #     cleaned_text = cleaned_text[7:]
+        # if cleaned_text.endswith("```"):
+        #     cleaned_text = cleaned_text[:-3]
+        
+        cleaned_text = re.sub(r"^```json\s*", "", cleaned_text)
+        cleaned_text = re.sub(r"\s*```$", "", cleaned_text)
+
+        # Remove trailing commas before array or object ends
+        # Handles cases like: ..., ] or ..., }
+        cleaned_text = re.sub(r",(\s*[\]}])", r"\1", cleaned_text)
         
         data = json.loads(cleaned_text)
         if isinstance(data, list):

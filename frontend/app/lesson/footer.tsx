@@ -13,6 +13,7 @@ type FooterProps = {
   status: "correct" | "wrong" | "none" | "completed";
   disabled?: boolean;
   lessonId?: number;
+  quizId?: number;
   showNavigationButtons?: boolean;
   isLastQuestion?: boolean;
   allQuestionsAnswered?: boolean;
@@ -29,6 +30,7 @@ export const Footer = ({
   status,
   disabled,
   lessonId,
+  quizId,
   showNavigationButtons = false,
   isLastQuestion = false,
   allQuestionsAnswered = false,
@@ -48,23 +50,22 @@ export const Footer = ({
         return;
       }
 
-      // Debug data being sent
-      console.log('Practice Again - Input Data:', {
-        userId,
-        quizId: lessonId,
-        wrongQuestionsLength: wrongQuestions?.length,
-        wrongQuestions,
-        originalPrompt
-      });
-
-      // Validate data before sending
-      if (!Array.isArray(wrongQuestions) || wrongQuestions.length === 0) {
-        console.error('No wrong questions to practice');
+      if (!quizId) {
+        console.error('QuizId is required but not provided');
+        toast.error("Cannot start practice - missing quiz ID");
         return;
       }
 
-      // Clean up wrong questions data
-      const cleanedWrongQuestions = wrongQuestions.map(q => ({
+      // Debug data being sent
+      console.log('[DEBUG] Practice Again - Input Data:', {
+        userId,
+        quizId,
+        wrongQuestionsLength: wrongQuestions?.length,
+        originalPrompt
+      });
+
+      // Clean up wrong questions data - allow empty array
+      const cleanedWrongQuestions = (wrongQuestions || []).map(q => ({
         id: q.id,
         question: q.question,
         userAnswer: q.userAnswer,
@@ -73,19 +74,22 @@ export const Footer = ({
         options: q.options
       }));
 
-      // Save practice data to localStorage
+      // Save practice data to localStorage with timestamp to force refresh
       const practiceData = {
         wrongQuestions: cleanedWrongQuestions,
         originalPrompt,
         userId,
-        quizId: lessonId
+        quizId,
+        timestamp: Date.now()
       };
+
+      console.log('[DEBUG] Saving practice data:', practiceData);
       localStorage.setItem('practiceData', JSON.stringify(practiceData));
 
-      // Redirect to practice page
-      router.push('/practice');
+      // Force a hard reload when redirecting to practice page
+      window.location.href = '/practice';
     } catch (error: any) {
-      console.error("Practice Again - Full Error:", {
+      console.error("[DEBUG] Practice Again - Full Error:", {
         error,
         message: error.message,
         stack: error.stack
