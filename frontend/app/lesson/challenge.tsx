@@ -18,7 +18,7 @@ type ChallengeProps = {
     audioSrc?: string | null;
   }[];
   selectedOption?: number;
-  status: "none" | "correct" | "wrong";
+  status: "none" | "selected";
   onSelect: (id: number) => void;
   imageUrl?: string;
   audioUrl?: string;
@@ -121,13 +121,10 @@ export const Challenge = ({
         {options.map((option) => (
           <button
             key={option.id}
-            disabled={status !== "none"}
             onClick={() => onSelect(option.id)}
             className={cn(
               "relative flex items-center rounded-xl border-2 border-neutral-200 p-4 font-bold text-neutral-700 hover:bg-neutral-100",
               selectedOption === option.id && status === "none" && "border-blue-300 bg-blue-50 hover:bg-blue-50",
-              selectedOption === option.id && status === "correct" && "border-green-300 bg-green-50",
-              selectedOption === option.id && status === "wrong" && "border-red-300 bg-red-50",
               status !== "none" && selectedOption !== option.id && "opacity-50"
             )}
           >
@@ -146,36 +143,6 @@ export const Challenge = ({
 
               <p className="text-sm">{option.text}</p>
             </div>
-
-            {/* Status indicators */}
-            {selectedOption === option.id && status === "correct" && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="absolute right-4"
-              >
-                <Image
-                  src="/check.svg"
-                  alt="Correct"
-                  height={32}
-                  width={32}
-                />
-              </motion.div>
-            )}
-            {selectedOption === option.id && status === "wrong" && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="absolute right-4"
-              >
-                <Image
-                  src="/close.svg"
-                  alt="Wrong"
-                  height={32}
-                  width={32}
-                />
-              </motion.div>
-            )}
           </button>
         ))}
       </div>
