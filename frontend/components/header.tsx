@@ -77,13 +77,13 @@ export const Header = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem asChild>
-                <Link href="/quiz-history">Quiz History</Link>
+                <Link href="/quiz-history">Lịch sử câu hỏi</Link>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-rose-500"
                 onClick={() => router.push("/sign-out")}
               >
-                Sign out
+                Đăng xuất
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

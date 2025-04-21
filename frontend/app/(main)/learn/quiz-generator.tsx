@@ -70,7 +70,7 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
     <Card className="w-full p-6 bg-green-50">
       <div className="space-y-6">
         <div className="space-y-4">
-          <Label className="text-base font-semibold">Select Unit</Label>
+          <Label className="text-base font-semibold">Vui lòng chọn Unit</Label>
           <Select
             value={selectedUnit}
             onValueChange={setSelectedUnit}
@@ -98,27 +98,27 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
         </div>
 
         <div className="space-y-4">
-          <Label className="text-base font-semibold">Number of Questions</Label>
+          <Label className="text-base font-semibold">Số lượng câu hỏi</Label>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label>Multiple Choice</Label>
+              <Label>Câu hỏi trắc nghiệm</Label>
               <Input
                 type="number"
-                min={1}
-                max={10}
+                min={0}
+                max={50}
                 value={counts.multipleChoice}
                 onChange={(e) => setCounts(prev => ({
                   ...prev,
-                  multipleChoice: parseInt(e.target.value) || 1
+                  multipleChoice: parseInt(e.target.value) || 0
                 }))}
               />
             </div>
             <div>
-              <Label>Image Questions</Label>
+              <Label>Câu hỏi hình ảnh</Label>
               <Input
                 type="number"
                 min={0}
-                max={5}
+                max={10}
                 value={counts.image}
                 onChange={(e) => setCounts(prev => ({
                   ...prev,
@@ -127,11 +127,11 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
               />
             </div>
             <div>
-              <Label>Voice Questions</Label>
+              <Label>Câu hỏi âm thanh</Label>
               <Input
                 type="number"
                 min={0}
-                max={5}
+                max={20}
                 value={counts.voice}
                 onChange={(e) => setCounts(prev => ({
                   ...prev,
