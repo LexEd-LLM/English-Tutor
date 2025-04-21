@@ -4,10 +4,11 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 class QuestionType(str, Enum):
-    FILL_IN_BLANK = "FILL_IN_BLANK"
-    TRANSLATION = "TRANSLATION"
-    IMAGE = "IMAGE"
-    VOICE = "VOICE"
+    FILL_IN_BLANK = "fill_in_blank"
+    TRANSLATION = "translation"
+    IMAGE = "image"
+    VOICE = "voice"
+    PRONUNCIATION = "pronunciation"
 
 class QuizOption(BaseModel):
     id: int
@@ -19,13 +20,15 @@ class QuizOption(BaseModel):
 class QuizItem(BaseModel):
     id: int
     question: str
-    challengeOptions: List[QuizOption]
+    challengeOptions: Optional[List[QuizOption]] = []
     type: QuestionType
     explanation: str = ""
     imageUrl: Optional[str] = None
     audioUrl: Optional[str] = None
+    correctAnswer: Optional[str] = None
 
 class QuizRequest(BaseModel):
+    user_id: str
     unit_ids: List[int]
     prompt: Optional[str] = None
     multiple_choice_count: int = 3
@@ -51,9 +54,11 @@ class PracticeHistory(BaseModel):
     originalPrompt: str = Field(description="Original prompt used for generating questions", default="")
 
 class QuizResponse(BaseModel):
+    quiz_id: int
     multiple_choice_questions: List[QuizItem]
     image_questions: List[QuizItem]
     voice_questions: List[QuizItem]
+    pronunc_questions: List[QuizItem]
 
 class ExplanationRequest(BaseModel):
     question: str
@@ -67,3 +72,12 @@ class QuizAgainRequest(BaseModel):
     quizId: int
     wrongQuestions: List[WrongQuestion]
     originalPrompt: str
+
+class QuizAnswer(BaseModel):
+    questionId: int
+    userAnswer: str
+    
+class QuizSubmission(BaseModel):
+    userId: str
+    quizId: int 
+    answers: List[QuizAnswer]
