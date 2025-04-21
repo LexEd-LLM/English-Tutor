@@ -32,9 +32,9 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [counts, setCounts] = useState({
-    multipleChoice: 3,
+    multipleChoice: 2,
     image: 1,
-    voice: 1,
+    voice: 2,
   });
 
   const handleGenerateQuiz = async () => {
@@ -53,13 +53,18 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
         counts.voice
       );
 
-      if (result.success) {
+      console.log("Generate quiz result:", result);
+
+      if (result.success && result.quizId) {
         toast.success("Quiz generated successfully!");
-        router.push("/lesson");
+        console.log("Redirecting to lesson with quizId:", result.quizId);
+        router.push(`/lesson?quizId=${result.quizId}`);
       } else {
+        console.error("Failed to generate quiz:", result.error || "No quizId returned");
         toast.error(result.error || "Failed to generate quiz");
       }
     } catch (error) {
+      console.error("Error generating quiz:", error);
       toast.error("An error occurred while generating the quiz");
     } finally {
       setIsLoading(false);
