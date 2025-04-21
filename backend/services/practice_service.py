@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from backend.services.question_generator import generate_questions_batch
-from backend.schemas.quiz import PracticeHistory, WrongQuestion
+from backend.schemas.quiz import PracticeHistory, WrongQuestion, QuestionType
 from ..config.settings import llm
 from llama_index.core.prompts import PromptTemplate
 from backend.database.database import get_db
 import json
+from .voice_quiz_generator import process_user_audio
 
 class PracticeService:
     def __init__(self):
@@ -205,12 +205,33 @@ class PracticeService:
         return questions_data
 
     async def save_practice_history(self, history: PracticeHistory) -> None:
-        """Save practice attempt to database."""
+        """Save practice history to database."""
         try:
-            # TODO: Implement actual database storage
-            print(f"Saving practice history for user {history.userId}")
-            print(f"Wrong questions count: {len(history.wrongQuestions)}")
-            print(f"Question types: {[q.type for q in history.wrongQuestions]}")
+            conn = get_db()
+            with conn.cursor() as cur:
+                for answer in history.answers:
+                    user_phonemes = None
+                    is_correct = answer.isCorrect
+                    
+                    # Process pronunciation submissions
+                    if answer.userAudioUrl and answer.questionType == QuestionType.PRONUNCIATION:
+                        user_phonemes = process_user_audio(answer.userAudioUrl)
+                                          
+                    # Insert into database
+                    cur.execute("""
+                        INSERT INTO user_answers 
+                        (user_id, question_id, user_answer, is_correct, user_audio_url, user_phonemes)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (
+                        history.userId,
+                        answer.questionId,
+                        answer.userAnswer,
+                        is_correct,
+                        answer.userAudioUrl,
+                        user_phonemes
+                    ))
+            
+            conn.commit()
         except Exception as e:
             print(f"Error saving practice history: {e}")
             raise e
