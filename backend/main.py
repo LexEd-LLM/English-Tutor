@@ -150,6 +150,9 @@ async def generate_quiz_again(request: QuizAgainRequest):
         print("Start generate quiz again")
         # Get relevant chunks for the original prompt
         text_chunks = []
+        for unit_id in request.unit_ids:
+            unit_chunks = get_unit_chunks(unit_id)
+            text_chunks.extend(unit_chunks)
         
         # Generate new questions based on practice history
         questions_data = await practice_service.generate_practice_questions(
