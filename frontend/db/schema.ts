@@ -15,8 +15,14 @@ import { MAX_HEARTS } from "@/constants";
 
 // Define enums first
 export const roleEnum = pgEnum("role", ["USER", "VIP", "ADMIN"]);
-export const questionTypeEnum = pgEnum("question_type", ["FILL_IN_BLANK", "TRANSLATION", "IMAGE", "VOICE"]);
 export const unitContentTypeEnum = pgEnum("unit_content_type", ["BOOKMAP", "VOCABULARY", "DIALOGUE", "EXERCISE"]);
+export const questionTypeEnum = pgEnum("question_type", [
+  "FILL_IN_BLANK",
+  "TRANSLATION",
+  "IMAGE",
+  "VOICE",
+  "PRONUNCIATION",
+]);
 
 // Type definitions
 export type Unit = InferSelectModel<typeof units>;
@@ -119,7 +125,7 @@ export const quizQuestions = pgTable("quiz_questions", {
     .notNull(),
   questionText: text("question_text").notNull(),
   type: questionTypeEnum("type").notNull(),
-  options: json("options").notNull(), // List of answers (QuizOption[])
+  options: json("options"), // List of answers (QuizOption[]). Null for PRONUNCIATION
   correctAnswer: text("correct_answer").notNull(),
   explanation: text("explanation"),
   imageUrl: text("image_url"),     // Đường dẫn đến ảnh trong câu hỏi hình ảnh
@@ -133,6 +139,8 @@ export const userAnswers = pgTable("user_answers", {
   questionId: integer("question_id").references(() => quizQuestions.id, { onDelete: "cascade" }).notNull(),
   userAnswer: text("user_answer").notNull(),
   isCorrect: boolean("is_correct").notNull(),
+  userAudioUrl: text("user_audio_url"), // Added: URL to the user's pronunciation recording (MP3) - nullable
+  userPhonemes: text("user_phonemes"), // Added: IPA phonemes derived from the user's recording - nullable
 });
 
 // Relations
@@ -213,4 +221,3 @@ export const userUnitProgressRelations = relations(userUnitProgress, ({ one }) =
 // curriculums → units → unitContents
 
 // quizQuestions chứa đầy đủ nội dung + media
-
