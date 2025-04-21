@@ -1,16 +1,14 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useKey, useMedia } from "react-use";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { lessonApi } from "./api";
 
 type FooterProps = {
   onCheck: () => void;
   onBack?: () => void;
   onNext?: () => void;
+  onSubmitQuiz?: () => void;
   status: "none" | "selected";
   disabled?: boolean;
   lessonId?: number;
@@ -20,13 +18,13 @@ type FooterProps = {
   allQuestionsAnswered?: boolean;
   userId: string;
   wrongQuestions?: any[];
-  isPracticeMode?: boolean;
 };
 
 export const Footer = ({
   onCheck,
   onBack,
   onNext,
+  onSubmitQuiz,
   quizId,
   showNavigationButtons = false,
   isLastQuestion = false,
@@ -34,7 +32,6 @@ export const Footer = ({
   userId,
   wrongQuestions = [],
 }: FooterProps) => {
-  const router = useRouter();
   const isMobile = useMedia("(max-width: 768px)");
 
   useKey("Enter", onNext, {}, [onNext]);
@@ -44,23 +41,6 @@ export const Footer = ({
   useKey("ArrowRight", () => {
     if (onNext) onNext();
   }, {}, [onNext]);
-
-  const handleSubmitQuiz = async () => {
-    try {
-      // Call onCheck to validate final answer if needed
-      onCheck();
-      
-      // Navigate to results page with quiz ID
-      if (quizId) {
-        router.push(`/results?quizId=${quizId}`);
-      } else {
-        toast.error("Quiz ID is missing");
-      }
-    } catch (error) {
-      console.error("Error submitting quiz:", error);
-      toast.error("Failed to submit quiz");
-    }
-  };
 
   const showSubmitButton = allQuestionsAnswered || isLastQuestion;
 
@@ -81,7 +61,7 @@ export const Footer = ({
         </div>
         {showSubmitButton ? (
           <Button
-            onClick={handleSubmitQuiz}
+            onClick={onSubmitQuiz}
             size={isMobile ? "sm" : "lg"}
             variant="secondary"
             className="min-w-[120px]"

@@ -8,8 +8,10 @@ export interface QuizAnswer {
 
 export interface QuizSubmissionResponse {
     success: boolean;
-    message?: string;
-    score?: number;
+    totalQuestions?: number;
+    correctAnswers?: number;
+    wrongQuestions?: number[];
+    quizId?: number;
 }
 
 export interface QuizData {
@@ -37,6 +39,45 @@ export interface QuizOption {
     imageSrc?: string | null;
     audioSrc?: string | null;
 }
+
+// Function to submit quiz answers to backend
+export const submitQuizAnswers = async (
+    userId: string, 
+    quizId: number, 
+    answers: QuizAnswer[]
+): Promise<QuizSubmissionResponse> => {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/submit-quiz`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userId,
+                quizId,
+                answers,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error submitting quiz:', errorText);
+            throw new Error('Failed to submit quiz answers');
+        }
+
+        const result = await response.json();
+        
+        // Store results in localStorage for retrieval in results page
+        if (result.success && typeof window !== 'undefined') {
+            localStorage.setItem('quizResults', JSON.stringify(result));
+        }
+        
+        return result;
+    } catch (error) {
+        console.error('Error submitting quiz answers:', error);
+        throw error;
+    }
+};
 
 export const lessonApi = {
     async submitQuizAnswers(userId: string, lessonId: number, answers: QuizAnswer[]): Promise<QuizSubmissionResponse> {

@@ -280,9 +280,6 @@ async def submit_quiz(submission: QuizSubmission):
                         VALUES (%s, %s, %s, %s)
                     """, (submission.userId, answer.questionId, answer.userAnswer, is_correct))
                 
-                # Update user hearts if needed (implement your logic here)
-                # For now, we'll just return the results
-                
             conn.commit()
             
             # Store results in localStorage via frontend

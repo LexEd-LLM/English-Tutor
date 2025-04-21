@@ -10,6 +10,8 @@ import { Challenge } from "./challenge";
 import { Footer } from "./footer";
 import { Header } from "./header";
 
+import { submitQuizAnswers } from "./api";
+
 type Challenge = {
   id: number;
   quizId: number;
@@ -77,34 +79,6 @@ export const Quiz = ({
 
   const challenge = challenges[activeIndex];
   const options = challenge?.challengeOptions ?? [];
-
-  // Debug logs
-  useEffect(() => {
-    console.log('Debug - Initial Questions:', initialQuestions);
-    console.log('Debug - Challenges State:', challenges);
-  }, [initialQuestions, challenges]);
-
-  useEffect(() => {
-    if (challenge) {
-      console.log('Debug - Current Challenge:', {
-        id: challenge.id,
-        type: challenge.type,
-        question: challenge.question,
-        options: challenge.challengeOptions
-      });
-      
-      // Log Challenge Props before render
-      console.log('Debug - Challenge Props:', {
-        id: challenge.id,
-        type: challenge.type,
-        question: challenge.question,
-        options: challenge.challengeOptions,
-        selectedOption,
-        status
-      });
-    }
-  }, [challenge, selectedOption, status]);
-
   const isLastQuestion = activeIndex === challenges.length - 1;
 
   useEffect(() => {
@@ -169,15 +143,7 @@ export const Quiz = ({
       if (typeof window !== 'undefined') {
         localStorage.setItem('quizUserAnswers', JSON.stringify(newAnswers));
       }
-      
-      console.log('Debug - Selected Answer:', {
-        questionId: challenge.id,
-        selectedOptionId: optionId,
-        allAnswers: newAnswers,
-        currentQuestion: activeIndex + 1,
-        totalQuestions: challenges.length
-      });
-      
+     
       return newAnswers;
     });
 
@@ -209,14 +175,6 @@ export const Quiz = ({
   }, []);
 
   const handleSubmitQuiz = async () => {
-    // Debug log before submission
-    console.log('Debug - Submitting Quiz:', {
-      allQuestionsAnswered,
-      userAnswers,
-      totalQuestions: challenges.length,
-      answeredQuestions: Object.keys(userAnswers).length
-    });
-
     if (!allQuestionsAnswered) {
       toast.error("Please answer all questions before submitting");
       return;
@@ -225,10 +183,16 @@ export const Quiz = ({
     setIsSubmitting(true);
 
     try {
-      const answers = Object.entries(userAnswers).map(([questionId, answerId]) => ({
-        questionId: parseInt(questionId),
-        userAnswer: answerId.toString()
-      }));
+      const answers = Object.entries(userAnswers).map(([questionId, answerId]) => {
+        // Find the question and get the selected option's text
+        const question = challenges.find(q => q.id === parseInt(questionId));
+        const selectedOption = question?.challengeOptions.find(opt => opt.id === answerId);
+        
+        return {
+          questionId: parseInt(questionId),
+          userAnswer: selectedOption?.text || ""
+        };
+      });
 
       // Debug log submission data
       console.log('Debug - Submission Data:', {
@@ -288,6 +252,7 @@ export const Quiz = ({
         onCheck={isLastQuestion ? handleSubmitQuiz : onNext}
         onBack={activeIndex > 0 ? onBack : undefined}
         onNext={onNext}
+        onSubmitQuiz={handleSubmitQuiz}
         status={status}
         quizId={quizId}
         showNavigationButtons={true}
