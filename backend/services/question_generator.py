@@ -8,10 +8,12 @@ import re
 from .voice_quiz_generator import generate_audio
 from .image_generator import generate_image
 from langchain.prompts import ChatPromptTemplate
+import eng_to_ipa as ipa
+
 
 # Base prompt template for question generation without strengths/weaknesses
 BASE_FIB_QUESTION_TEMPLATE = """
-    Generate {count} different {question_type} multiple-choice questions from the following content.
+    You are helping Vietnamese learners review English. Generate {count} different fill_in_blank multiple-choice questions from the following content.
     Make sure questions cover different aspects and concepts from the content.
     Content: {content}
 
@@ -21,16 +23,16 @@ BASE_FIB_QUESTION_TEMPLATE = """
     3. Mark the correct answer
 
     Return the questions in JSON format with these fields:
-    - question: the {question_type} question
+    - question: the fill in blank question
     - options: array of 4 possible answers
     - correct_answer: the correct option
-    - type: "{question_type}"
+    - type: fill_in_blank
 
     Generate exactly {count} questions.
 """
 
 BASE_TRANSLATION_QUESTION_TEMPLATE = """
-    Generate {count} Vietnamese-English translation multiple-choice questions based on the following content.
+    You are helping Vietnamese learners review English. Generate {count} Vietnamese-English translation multiple-choice questions based on the following content.
     Content: {content}
     {custom_prompt}
 
@@ -51,7 +53,7 @@ BASE_TRANSLATION_QUESTION_TEMPLATE = """
 
 # Template for practice questions with strengths/weaknesses
 PRACTICE_QUESTION_TEMPLATE = """
-    You are a language learning expert. Generate {count} {question_type} questions focused on improving the student's weak areas while occasionally reinforcing their strengths.
+    You are a language learning expert helping **Vietnamese learners** improve their English. Generate {count} {question_type} questions focused on improving the student's weak areas while occasionally reinforcing their strengths.
 
     Student Profile:
     Strengths: {strengths}
@@ -232,8 +234,7 @@ def generate_voice_questions(
                 1. Select a word from the content that may be confusing in pronunciation
                 2. Find another real English word that sounds similar but has a different meaning
                 3. Create a question that helps learners distinguish them by sound
-                4. Show the phonetic transcription of both words **in the question text only**
-                5. Do **not** include phonetic transcriptions in the `options` or `correct_answer` fields
+                4. Do **not** include phonetic transcriptions in the `options` or `correct_answer` fields
             
             Return the questions in JSON format with these fields:
             - question: "Which word did you hear?"
@@ -261,6 +262,49 @@ def generate_voice_questions(
         for q in questions
     ]
 
+def generate_pronunciation_questions(
+    content: str,
+    count: int,
+    custom_prompt: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    if count < 1:
+        return []
+    
+    prompt_template = PromptTemplate(
+        template="""
+            Generate {count} pronunciation practice questions from the following content.
+            Content: {content}
+            
+            For each question:
+                1. Select a word for pronunciation practice
+                2. Create a question asking the user to pronounce it correctly
+                3. Include the word/phrase as both the option and correct answer
+                4. Focus on commonly mispronounced words by Vietnamese learners
+            
+            Return the questions in JSON format with these fields:
+            - question: "Please pronounce this word correctly: word"
+            - correct_answer: word
+            - type: "pronunciation"
+            
+            Generate exactly {count} questions.
+        """
+    )
+    
+    prompt = prompt_template.format(content=content, count=count)
+    response = llm.complete(prompt)
+    questions = parse_json_questions(response.text)
+    
+    # Generate audio for each question using gTTS
+    return [
+        {
+            "question": q["question"],
+            "correct_answer": ipa.convert(q["correct_answer"]).replace(" ", ""),
+            "type": QuestionType.PRONUNCIATION.value,
+            "audio_url": generate_audio(q["correct_answer"])
+        }
+        for q in questions
+    ]
+
 def generate_questions_batch(
     text_chunks: List[str],
     multiple_choice_count: int,
@@ -278,6 +322,10 @@ def generate_questions_batch(
     # Split multiple choice questions between types
     fill_blank_count = multiple_choice_count // 2
     translation_count = multiple_choice_count - fill_blank_count
+    
+    # Split voice questions between voice and pronunciation
+    pronunciation_count = voice_count // 2
+    voice_count = voice_count - pronunciation_count
     
     # Generate questions
     fill_blank_questions = generate_fill_in_blank_questions(
@@ -298,11 +346,13 @@ def generate_questions_batch(
     
     image_questions = generate_image_questions(combined_content, image_count, custom_prompt)
     voice_questions = generate_voice_questions(combined_content, voice_count, custom_prompt)
+    pronunciation_questions = generate_pronunciation_questions(combined_content, pronunciation_count, custom_prompt)
     
     return {
         "multiple_choice_questions": fill_blank_questions + translation_questions,
         "image_questions": image_questions,
-        "voice_questions": voice_questions
+        "voice_questions": voice_questions,
+        "pronunciation_questions": pronunciation_questions
     }
 
 def generate_explanation(question: str, correct_answer: str, user_answer: str) -> str:
