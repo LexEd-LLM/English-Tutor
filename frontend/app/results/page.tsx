@@ -7,9 +7,12 @@ import Image from "next/image";
 import { useWindowSize } from "react-use";
 import Confetti from "react-confetti";
 import { useAudio } from "react-use";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { ResultCard } from "./result-card";
+import { Footer } from "./footer";
+import { generatePracticeQuiz } from "./api";
 
 interface QuizResult {
   success: boolean;
@@ -17,6 +20,7 @@ interface QuizResult {
   correctAnswers: number;
   wrongQuestions: number[];
   quizId: number;
+  userId: string;
 }
 
 export default function ResultPage() {
@@ -58,9 +62,38 @@ export default function ResultPage() {
     console.log("View explanations clicked");
   };
 
-  const startPracticeMode = () => {
-    // TODO: Implement practice mode
-    console.log("Practice again clicked");
+  const handlePracticeAgain = async () => {
+    if (!result) return;
+
+    try {
+      if (!result.userId) {
+        console.error('UserId is required but not provided');
+        return;
+      }
+
+      if (!result.quizId) {
+        console.error('QuizId is required but not provided');
+        toast.error("Cannot start practice - missing quiz ID");
+        return;
+      }
+
+      // Call API to generate practice quiz
+      await generatePracticeQuiz(result.userId, result.quizId);
+      
+      // Force a hard reload when redirecting to practice page
+      window.location.href = '/practice';
+    } catch (error: any) {
+      console.error("[DEBUG] Practice Again - Full Error:", {
+        error,
+        message: error.message,
+        stack: error.stack
+      });
+      toast.error("Failed to start practice session");
+    }
+  };
+
+  const handleReturnToLearn = () => {
+    router.push("/learn");
   };
 
   if (loading) {
@@ -76,8 +109,8 @@ export default function ResultPage() {
       <div className="flex h-screen flex-col items-center justify-center gap-4">
         <h1 className="text-2xl font-bold">No Results Found</h1>
         <p>We couldn't find any results for this quiz.</p>
-        <Link href="/dashboard">
-          <Button variant="default">Go to Dashboard</Button>
+        <Link href="/learn">
+          <Button variant="default">Return to Learn</Button>
         </Link>
       </div>
     );
@@ -96,7 +129,7 @@ export default function ResultPage() {
         width={width}
         height={height}
       />
-      <div className="flex min-h-screen flex-col items-center justify-center gap-8 py-10">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-8 py-10 pb-24">
         <div className="mx-auto flex max-w-lg flex-col items-center justify-center gap-y-4 text-center lg:gap-y-8">
           <Image
             src="/finish.svg"
@@ -126,7 +159,7 @@ export default function ResultPage() {
                 total: result.totalQuestions
               }}
               showPracticeButton={wrongQuestions.length > 0}
-              onPractice={startPracticeMode}
+              onPractice={handlePracticeAgain}
             />
             <ResultCard
               variant="hearts"
@@ -142,17 +175,15 @@ export default function ResultPage() {
             >
               View Explanations
             </Button>
-            
-            <Button 
-              className="w-full"
-              variant="ghost"
-              onClick={() => router.push("/learn")}
-            >
-              Return to Learn
-            </Button>
           </div>
         </div>
       </div>
+      <Footer 
+        onPracticeAgain={handlePracticeAgain}
+        onReturnToLearn={handleReturnToLearn}
+        userId={result.userId}
+        quizId={result.quizId}
+      />
     </>
   );
 } 

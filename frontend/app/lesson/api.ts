@@ -69,7 +69,11 @@ export const submitQuizAnswers = async (
         
         // Store results in localStorage for retrieval in results page
         if (result.success && typeof window !== 'undefined') {
-            localStorage.setItem('quizResults', JSON.stringify(result));
+            const resultWithUserId = {
+                ...result,
+                userId, // thêm userId vào dữ liệu lưu trữ
+            };
+            localStorage.setItem('quizResults', JSON.stringify(resultWithUserId));
         }
         
         return result;

@@ -35,7 +35,6 @@ type QuizProps = {
   initialQuizId: number;
   initialQuestions: Challenge[];
   userId: string;
-  isPracticeMode?: boolean;
 };
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -47,7 +46,6 @@ export const Quiz = ({
   initialQuizId,
   initialQuestions = [],
   userId,
-  isPracticeMode = false,
 }: QuizProps) => {
   const { width, height } = useWindowSize();
   const router = useRouter();
@@ -259,7 +257,6 @@ export const Quiz = ({
         isLastQuestion={isLastQuestion}
         allQuestionsAnswered={allQuestionsAnswered}
         userId={userId}
-        isPracticeMode={isPracticeMode}
       />
     </div>
   );
