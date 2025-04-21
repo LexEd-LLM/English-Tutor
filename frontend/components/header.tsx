@@ -3,6 +3,7 @@
 import { ArrowLeft, Heart, InfinityIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +30,7 @@ export const Header = ({
   showBackButton = true,
   isVIP = false,
 }: HeaderProps) => {
-  const router = useRouter();
+  const { signOut } = useClerk();
 
   return (
     <header className="sticky top-0 h-14 bg-white border-b z-50">
@@ -81,7 +82,11 @@ export const Header = ({
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-rose-500"
-                onClick={() => router.push("/sign-out")}
+                onClick={async () => {
+                  await signOut(() => {
+                    window.location.href = "/";
+                  });
+                }}
               >
                 Đăng xuất
               </DropdownMenuItem>

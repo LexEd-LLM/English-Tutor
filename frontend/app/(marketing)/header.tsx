@@ -61,19 +61,6 @@ export const Header = () => {
             <SignedIn>
               <div className="flex items-center gap-x-4">
                 <UserButton afterSignOutUrl="/" />
-                <Link
-                  href={links.sourceCode}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="pt-1.5"
-                >
-                  <Image
-                    src="/github.svg"
-                    alt="Source Code"
-                    height={20}
-                    width={20}
-                  />
-                </Link>
               </div>
             </SignedIn>
 
@@ -88,19 +75,6 @@ export const Header = () => {
                     Login
                   </Button>
                 </SignInButton>
-                <Link
-                  href={links.sourceCode}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="pt-3"
-                >
-                  <Image
-                    src="/github.svg"
-                    alt="Source Code"
-                    height={20}
-                    width={20}
-                  />
-                </Link>
               </div>
             </SignedOut>
           </ClerkLoaded>
