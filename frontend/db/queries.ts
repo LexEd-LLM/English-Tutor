@@ -50,8 +50,6 @@ export type Unit = InferSelectModel<typeof units>;
 export type UserQuiz = InferSelectModel<typeof userQuizzes>;
 export type QuizQuestion = InferSelectModel<typeof quizQuestions>;
 
-const DAY_IN_MS = 86_400_000;
-
 export const getCurriculums = cache(async () => {
   const data = await db.query.curriculums.findMany();
   return data;

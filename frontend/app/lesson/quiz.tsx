@@ -31,6 +31,7 @@ type Challenge = {
 type QuizProps = {
   initialPercentage: number;
   initialHearts: number;
+  initialActiveSubscription: boolean;
   initialLessonId: number;
   initialQuizId: number;
   initialQuestions: Challenge[];
@@ -40,18 +41,15 @@ type QuizProps = {
 export const Quiz = ({
   initialPercentage,
   initialHearts,
+  initialActiveSubscription,
   initialLessonId,
   initialQuizId,
   initialQuestions = [],
   userId,
 }: QuizProps) => {
-  const { width, height } = useWindowSize();
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
   
-  const [lessonId] = useState(initialLessonId);
   const [quizId] = useState(initialQuizId);
-  const [hearts] = useState(initialHearts);
   const [percentage, setPercentage] = useState(() => {
     return initialPercentage === 100 ? 0 : initialPercentage;
   });
@@ -60,7 +58,6 @@ export const Quiz = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number>();
   const [status, setStatus] = useState<"none" | "selected">("none");
-  const [showQuestionsNav] = useState(true);
   const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
   const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -221,6 +218,7 @@ export const Quiz = ({
       <Header
         percentage={percentage}
         hearts={initialHearts}
+        hasActiveSubscription={initialActiveSubscription}
         showQuestionsNav={true}
         totalQuestions={challenges.length}
         currentQuestionIndex={activeIndex}

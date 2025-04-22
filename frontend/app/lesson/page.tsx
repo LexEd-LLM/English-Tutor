@@ -38,6 +38,9 @@ const LessonPage = async ({ searchParams }: PageProps) => {
       return redirect("/learn");
     }
 
+    const isActive = userSubscription?.isActive ?? false;
+    const hearts =  userProgress.hearts;
+
     // Fetch quiz data using the new API
     const quizData = await lessonApi.fetchQuizById(parseInt(quizId));
     
@@ -61,7 +64,8 @@ const LessonPage = async ({ searchParams }: PageProps) => {
         initialLessonId={1}
         initialQuizId={parseInt(quizId)}
         initialQuestions={challenges}
-        initialHearts={userProgress.hearts}
+        initialActiveSubscription={isActive}
+        initialHearts={hearts}
         initialPercentage={0}
         userId={userProgress.userId}
       />

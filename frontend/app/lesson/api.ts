@@ -121,33 +121,4 @@ export const lessonApi = {
 
         return response.json();
     }
-}; 
-
-// Get user profile
-export type Role = "USER" | "VIP" | "ADMIN";
-
-export interface UserProfile {
-    id: string;
-    name: string;
-    imageSrc: string;
-    role: Role;
-    hearts: number;
-    subscriptionStatus: Role;
-    subscriptionStartDate?: string;
-    subscriptionEndDate?: string;
-}
-
-export const getUserProfile = async (userId: string): Promise<UserProfile> => {
-    try {
-        const response = await fetch(`${BACKEND_URL}/api/user/${userId}`);
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Error fetching user profile:", errorText);
-            throw new Error("Failed to fetch user profile");
-        }
-        return await response.json();
-    } catch (error) {
-        console.error("Error fetching user profile:", error);
-        throw error;
-    }
 };
