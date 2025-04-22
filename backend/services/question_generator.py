@@ -1,5 +1,4 @@
 from llama_index.core.prompts import PromptTemplate
-from llama_index.core.output_parsers import PydanticOutputParser
 from ..config.settings import llm
 from ..schemas.quiz import QuestionType
 from typing import List, Dict, Any, Optional
@@ -7,7 +6,6 @@ import json
 import re
 from .voice_quiz_generator import generate_audio
 from .image_generator import generate_image
-from langchain.prompts import ChatPromptTemplate
 import eng_to_ipa as ipa
 
 
