@@ -38,12 +38,11 @@ interface APIResponse {
   voice_questions: VoiceQuestion[];
 }
 
-// Helper to normalize type and add quizId
-const withQuizIdAndType = <T extends { type: string }>(q: T, quizId: number): T & { quizId: number; type: BaseQuestion["type"] } => {
+// Helper to add quizId
+const withQuizIdAndType = <T extends { type: string }>(q: T, quizId: number): T & { quizId: number; } => {
   return {
     ...q,
     quizId,
-    type: q.type.toUpperCase() as BaseQuestion["type"]
   };
 };
 

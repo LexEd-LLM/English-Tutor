@@ -9,6 +9,17 @@ interface PageProps {
   };
 }
 
+const validTypes = ["FILL_IN_BLANK", "TRANSLATION", "PRONUNCIATION", "VOICE", "IMAGE"] as const;
+type ChallengeType = typeof validTypes[number];
+
+function normalizeType(type: string): ChallengeType {
+  const upper = type.toUpperCase();
+  if (validTypes.includes(upper as ChallengeType)) {
+    return upper as ChallengeType;
+  }
+  throw new Error(`Invalid challenge type: ${type}`);
+}
+
 const LessonPage = async ({ searchParams }: PageProps) => {
   try {
     const quizId = searchParams.quizId;
@@ -38,6 +49,7 @@ const LessonPage = async ({ searchParams }: PageProps) => {
       ...quizData.pronunc_questions
     ].map((q, index) => ({
       ...q,
+      type: normalizeType(q.type),
       order: index + 1,
       quizId: parseInt(quizId),
       lessonId: 1,
