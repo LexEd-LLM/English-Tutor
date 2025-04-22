@@ -1,3 +1,4 @@
+import psycopg2
 from fastapi import APIRouter, HTTPException
 from typing import List
 
@@ -8,7 +9,6 @@ from backend.schemas.quiz import (
     QuizRequest,
     QuizResponse,
     ExplanationRequest,
-    QuizAgainRequest,
     QuizSubmission,
     QuestionType
 )
@@ -17,6 +17,7 @@ from backend.services.quiz_service import quiz_service
 from backend.services.unit_service import get_unit_chunks
 from backend.services.practice_service import practice_service
 from backend.database import get_db
+from backend.services.voice_quiz_generator import process_user_audio
 
 router = APIRouter(tags=["quiz"])
 
@@ -183,32 +184,49 @@ async def submit_quiz(submission: QuizSubmission):
             total_questions = len(submission.answers)
             correct_answers = 0
             
-            with conn.cursor() as cur:
-                # Get correct answers for all questions
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                # Get correct answers and types for all questions
                 question_ids = [ans.questionId for ans in submission.answers]
                 placeholders = ','.join(['%s'] * len(question_ids))
                 cur.execute(f"""
-                    SELECT id, correct_answer 
+                    SELECT id, correct_answer, type, audio_url
                     FROM quiz_questions 
                     WHERE id IN ({placeholders})
                 """, question_ids)
-                correct_answers_map = {row['id']: row['correct_answer'] for row in cur.fetchall()}
+                question_map = {row['id']: row for row in cur.fetchall()}
                 
                 # Process each answer
                 for answer in submission.answers:
-                    is_correct = str(answer.userAnswer) == str(correct_answers_map.get(answer.questionId))
+                    q = question_map.get(answer.questionId)
+                    if not q:
+                        continue
+                    
+                    question_type = q['type']
+                    correct_answer = q['correct_answer']
+                    is_correct = str(answer.userAnswer) == str(correct_answer)
+                    user_phonemes = None
+
+                    if question_type == "PRONUNCIATION":
+                        user_phonemes = process_user_audio(answer.userAnswer)  # userAnswer = path to user recording
+                        is_correct = True # Pronunciation questions are always correct
+                        
                     if is_correct:
                         correct_answers += 1
-                        
+                    
                     # Save answer to database
                     cur.execute("""
-                        INSERT INTO user_answers (user_id, question_id, user_answer, is_correct)
-                        VALUES (%s, %s, %s, %s)
-                    """, (submission.userId, answer.questionId, answer.userAnswer, is_correct))
+                        INSERT INTO user_answers (user_id, question_id, user_answer, is_correct, user_phonemes)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (
+                        submission.userId,
+                        answer.questionId,
+                        answer.userAnswer,
+                        is_correct,
+                        user_phonemes
+                    ))
                 
             conn.commit()
             
-            # Store results in localStorage via frontend
             results = {
                 "success": True,
                 "totalQuestions": total_questions,

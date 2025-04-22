@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
-import { ChallengeProps } from "./types";
+import { MultipleChoiceChallengeProps } from "./types";
 import { cn } from "@/lib/utils";
 
 export const VoiceChallenge = ({
@@ -12,7 +12,7 @@ export const VoiceChallenge = ({
   status,
   onSelect,
   audioUrl,
-}: ChallengeProps) => {
+}: MultipleChoiceChallengeProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
