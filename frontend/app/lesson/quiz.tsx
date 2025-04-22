@@ -129,8 +129,8 @@ export const Quiz = ({
     if (typeof answer === "number") {
       setSelectedOption(answer);
     }
-
-    setStatus("selected");
+    // Only None for choosing option many time!!!
+    setStatus("none");
 
     setUserAnswers(prev => {
       const newAnswers = {
