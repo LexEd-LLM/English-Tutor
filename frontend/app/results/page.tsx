@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ResultCard } from "./result-card";
 import { Footer } from "./footer";
-import { generatePracticeQuiz } from "./api";
+import { generatePracticeQuiz, getUserProfile, Role } from "./api";
 
 interface QuizResult {
   success: boolean;
@@ -26,13 +26,47 @@ interface QuizResult {
 export default function ResultPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
   const [result, setResult] = useState<QuizResult | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [userRole, setUserRole] = useState<Role | null>(null);
+  const [userHearts, setUserHearts] = useState<number>(5);
+
   const { width, height } = useWindowSize();
   const [finishAudio] = useAudio({
     src: "/finish.mp3",
     autoPlay: true,
   });
+
+  useEffect(() => {
+    const quizResults = localStorage.getItem("quizResults");
+    const quizId = searchParams.get("quizId");
+
+    if (quizResults) {
+      try {
+        const parsedResults = JSON.parse(quizResults);
+        setResult(parsedResults);
+
+        if (parsedResults.userId) {
+          getUserProfile(parsedResults.userId)
+            .then((profile) => {
+              setUserRole(profile.role);
+              setUserHearts(profile.hearts);
+            })
+            .catch((err) => {
+              console.error("Error loading user profile:", err);
+            });
+        }
+      } catch (e) {
+        console.error("Error parsing quiz results:", e);
+      }
+    } else if (quizId) {
+      console.log(`No results found for quiz ${quizId}`);
+    }
+
+    setLoading(false);
+  }, [searchParams]);
 
   useEffect(() => {
     // Get results from localStorage
@@ -92,6 +126,7 @@ export default function ResultPage() {
     }
   };
 
+
   const handleReturnToLearn = () => {
     router.push("/learn");
   };
@@ -115,9 +150,6 @@ export default function ResultPage() {
       </div>
     );
   }
-
-  // Giả định wrongQuestions từ result
-  const wrongQuestions = result.wrongQuestions || [];
 
   return (
     <>
@@ -158,12 +190,10 @@ export default function ResultPage() {
                 correct: result.correctAnswers,
                 total: result.totalQuestions
               }}
-              showPracticeButton={wrongQuestions.length > 0}
-              onPractice={handlePracticeAgain}
             />
             <ResultCard
               variant="hearts"
-              value={5} // Sample value as requested
+              value={userRole === "VIP" || userRole === "ADMIN" ? "∞" : userHearts}
               label="Quota Left"
             />
           </div>
@@ -178,7 +208,7 @@ export default function ResultPage() {
           </div>
         </div>
       </div>
-      <Footer 
+      <Footer
         onPracticeAgain={handlePracticeAgain}
         onReturnToLearn={handleReturnToLearn}
         userId={result.userId}

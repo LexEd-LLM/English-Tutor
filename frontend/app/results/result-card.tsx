@@ -20,8 +20,6 @@ export const ResultCard = ({
   value, 
   variant, 
   label,
-  showPracticeButton = false,
-  onPractice
 }: ResultCardProps) => {
   const imageSrc = variant === "score" ? "/points.svg" : "/heart.svg";
 

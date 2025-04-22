@@ -26,6 +26,7 @@ from backend.schemas.quiz import (
     QuizSubmission,
     QuestionType
 )
+from backend.schemas.user import UserProfile, Role
 from backend.services.practice_service import practice_service
 from backend.services.quiz_service import quiz_service
 from backend.services.unit_service import get_unit_chunks
@@ -41,14 +42,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Mount static directories to serve files from frontend/public
-frontend_public_dir = Path("../frontend/public")
-# Tạo thư mục nếu chưa tồn tại
-(frontend_public_dir / "images").mkdir(parents=True, exist_ok=True)
-(frontend_public_dir / "audio").mkdir(parents=True, exist_ok=True)
-app.mount("/images", StaticFiles(directory=frontend_public_dir / "images"), name="images")
-app.mount("/audio", StaticFiles(directory=frontend_public_dir / "audio"), name="audio")
 
 # Chuyển đổi định dạng từ backend sang frontend
 def convert_to_quiz_items(questions: List[dict], start_id: int = 0) -> List[QuizItem]:
@@ -253,7 +246,6 @@ async def submit_quiz(submission: QuizSubmission):
         try:
             total_questions = len(submission.answers)
             correct_answers = 0
-            wrong_questions = []
             
             with conn.cursor() as cur:
                 # Get correct answers for all questions
@@ -271,8 +263,6 @@ async def submit_quiz(submission: QuizSubmission):
                     is_correct = str(answer.userAnswer) == str(correct_answers_map.get(answer.questionId))
                     if is_correct:
                         correct_answers += 1
-                    else:
-                        wrong_questions.append(answer.questionId)
                         
                     # Save answer to database
                     cur.execute("""
@@ -287,7 +277,6 @@ async def submit_quiz(submission: QuizSubmission):
                 "success": True,
                 "totalQuestions": total_questions,
                 "correctAnswers": correct_answers,
-                "wrongQuestions": wrong_questions,
                 "quizId": submission.quizId
             }
             
@@ -338,6 +327,45 @@ async def get_quiz_by_id(quiz_id: int):
 
     except Exception as e:
         print(f"Error fetching quiz {quiz_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/user/{user_id}", response_model=UserProfile)
+async def get_user_profile(user_id: str):
+    """
+    Get detailed user profile information
+    """
+    try:
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id, name, image_src, role, hearts, 
+                           subscription_status, subscription_start_date, subscription_end_date
+                    FROM users
+                    WHERE id = %s
+                """, (user_id,))
+                result = cur.fetchone()
+                
+                if not result:
+                    raise HTTPException(status_code=404, detail="User not found")
+                
+                # Map database fields to UserProfile model
+                user_profile = UserProfile(
+                    id=result['id'],
+                    name=result['name'],
+                    imageSrc=result['image_src'],
+                    role=result['role'],
+                    hearts=result['hearts'] if result['hearts'] is not None else 5,
+                    subscriptionStatus=result['subscription_status'],
+                    subscriptionStartDate=result['subscription_start_date'],
+                    subscriptionEndDate=result['subscription_end_date']
+                )
+                
+                return user_profile
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f"Error getting user profile: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Chạy với uvicorn

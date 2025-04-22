@@ -10,7 +10,6 @@ export interface QuizSubmissionResponse {
     success: boolean;
     totalQuestions?: number;
     correctAnswers?: number;
-    wrongQuestions?: number[];
     quizId?: number;
 }
 
