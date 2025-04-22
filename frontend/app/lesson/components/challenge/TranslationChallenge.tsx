@@ -1,6 +1,7 @@
 "use client";
 
 import { ChallengeProps } from "./types";
+import { cn } from "@/lib/utils";
 
 export const TranslationChallenge = ({
   question,
@@ -17,7 +18,11 @@ export const TranslationChallenge = ({
           <button
             key={option.id}
             onClick={() => onSelect(option.id)}
-            className="rounded-xl border-2 border-neutral-200 p-4 text-neutral-700 font-bold hover:bg-neutral-100"
+            className={cn(
+                "rounded-xl border-2 border-neutral-200 p-4 text-neutral-700 font-bold hover:bg-neutral-100",
+                selectedOption === option.id && status === "none" && "border-blue-300 bg-blue-50 hover:bg-blue-50",
+                status !== "none" && selectedOption !== option.id && "opacity-50"
+            )}
           >
             {option.text}
           </button>
