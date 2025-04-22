@@ -131,45 +131,47 @@ async def generate_explanation_api(request: ExplanationRequest):
         print(f"Error generating explanation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/generate-again", response_model=QuizResponse)
-async def generate_quiz_again(request: QuizAgainRequest):
+@router.get("/{quiz_id}", response_model=QuizResponse)
+async def get_quiz_by_id(quiz_id: int):
+    """
+    Get quiz data by ID.
+    Returns all questions and metadata for the specified quiz.
+    """
     try:
-        print("Start generate quiz again")
-        # Get relevant chunks for the original prompt
-        text_chunks = []
-        for unit_id in request.unit_ids:
-            unit_chunks = get_unit_chunks(unit_id)
-            text_chunks.extend(unit_chunks)
-        
-        # Generate new questions based on practice history
-        questions_data = await practice_service.generate_practice_questions(
-            request.userId,
-            request.wrongQuestions,
-            request.originalPrompt,
-            text_chunks
+        # Get quiz questions from database
+        questions = quiz_service.get_quiz_questions(quiz_id)
+        if not questions:
+            raise HTTPException(status_code=404, detail="Quiz not found")
+
+        # Convert questions to QuizItems
+        multiple_choice_questions = []
+        image_questions = []
+        voice_questions = []
+        pronunc_questions = []
+
+        for question in questions:
+            quiz_item = quiz_service.convert_db_question_to_quiz_item(question)
+            if quiz_item.type == QuestionType.PRONUNCIATION:
+                pronunc_questions.append(quiz_item)
+            elif quiz_item.type == QuestionType.IMAGE:
+                image_questions.append(quiz_item)
+            elif quiz_item.type == QuestionType.VOICE:
+                voice_questions.append(quiz_item)
+            else:
+                multiple_choice_questions.append(quiz_item)
+
+        return QuizResponse(
+            quiz_id=quiz_id,
+            multiple_choice_questions=multiple_choice_questions,
+            image_questions=image_questions,
+            voice_questions=voice_questions,
+            pronunc_questions=pronunc_questions
         )
-
-        # Convert each question type to QuizItems
-        multiple_choice_items = convert_to_quiz_items(questions_data["multiple_choice_questions"], 0)
-        image_items = convert_to_quiz_items(questions_data["image_questions"], len(multiple_choice_items))
-        voice_items = convert_to_quiz_items(questions_data["voice_questions"], len(multiple_choice_items) + len(image_items))
-        
-        # Save new questions to database
-        quiz_service.save_new_questions(request.quizId, multiple_choice_items + image_items + voice_items)
-
-        # Return only new questions
-        result = QuizResponse(
-            multiple_choice_questions=multiple_choice_items,
-            image_questions=image_items,
-            voice_questions=voice_items
-        )
-
-        print(f"Generated questions - MC: {len(multiple_choice_items)}, Image: {len(image_items)}, Voice: {len(voice_items)}")
-        return result
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
+        print(f"Error fetching quiz {quiz_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e)) 
+    
 @router.post("/submit")
 async def submit_quiz(submission: QuizSubmission):
     """
@@ -221,44 +223,3 @@ async def submit_quiz(submission: QuizSubmission):
     except Exception as e:
         print(f"Error submitting quiz: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/{quiz_id}", response_model=QuizResponse)
-async def get_quiz_by_id(quiz_id: int):
-    """
-    Get quiz data by ID.
-    Returns all questions and metadata for the specified quiz.
-    """
-    try:
-        # Get quiz questions from database
-        questions = quiz_service.get_quiz_questions(quiz_id)
-        if not questions:
-            raise HTTPException(status_code=404, detail="Quiz not found")
-
-        # Convert questions to QuizItems
-        multiple_choice_questions = []
-        image_questions = []
-        voice_questions = []
-        pronunc_questions = []
-
-        for question in questions:
-            quiz_item = quiz_service.convert_db_question_to_quiz_item(question)
-            if quiz_item.type == QuestionType.PRONUNCIATION:
-                pronunc_questions.append(quiz_item)
-            elif quiz_item.type == QuestionType.IMAGE:
-                image_questions.append(quiz_item)
-            elif quiz_item.type == QuestionType.VOICE:
-                voice_questions.append(quiz_item)
-            else:
-                multiple_choice_questions.append(quiz_item)
-
-        return QuizResponse(
-            quiz_id=quiz_id,
-            multiple_choice_questions=multiple_choice_questions,
-            image_questions=image_questions,
-            voice_questions=voice_questions,
-            pronunc_questions=pronunc_questions
-        )
-
-    except Exception as e:
-        print(f"Error fetching quiz {quiz_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e)) 
