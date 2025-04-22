@@ -83,32 +83,6 @@ export const submitQuizAnswers = async (
 };
 
 export const lessonApi = {
-    async submitQuizAnswers(userId: string, lessonId: number, answers: QuizAnswer[]): Promise<QuizSubmissionResponse> {
-        try {
-            const response = await fetch(`${API_BASE_URL}/quiz/submit`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    userId,
-                    lessonId,
-                    answers,
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to submit quiz answers');
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error('Error submitting quiz answers:', error);
-            throw error;
-        }
-    },
-
-
     async fetchQuizById(quizId: number): Promise<QuizData> {
         const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/quiz/${quizId}`, {
             cache: "no-store",
