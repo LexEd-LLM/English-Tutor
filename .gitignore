@@ -328,3 +328,5 @@ backend/static
 frontend/.env.example
 frontend/public/audio
 frontend/public/images
+frontend/public/users
+
