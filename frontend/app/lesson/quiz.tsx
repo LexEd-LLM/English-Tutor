@@ -245,16 +245,12 @@ export const Quiz = ({
         </div>
       </div>
       <Footer
-        onCheck={isLastQuestion ? handleSubmitQuiz : onNext}
         onBack={activeIndex > 0 ? onBack : undefined}
         onNext={onNext}
         onSubmitQuiz={handleSubmitQuiz}
-        status={status}
-        quizId={quizId}
         showNavigationButtons={true}
         isLastQuestion={isLastQuestion}
         allQuestionsAnswered={allQuestionsAnswered}
-        userId={userId}
       />
     </div>
   );

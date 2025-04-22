@@ -5,32 +5,21 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 type FooterProps = {
-  onCheck: () => void;
   onBack?: () => void;
   onNext?: () => void;
   onSubmitQuiz?: () => void;
-  status: "none" | "selected";
-  disabled?: boolean;
-  lessonId?: number;
-  quizId?: number;
   showNavigationButtons?: boolean;
   isLastQuestion?: boolean;
   allQuestionsAnswered?: boolean;
-  userId: string;
-  wrongQuestions?: any[];
 };
 
 export const Footer = ({
-  onCheck,
   onBack,
   onNext,
   onSubmitQuiz,
-  quizId,
   showNavigationButtons = false,
   isLastQuestion = false,
   allQuestionsAnswered = false,
-  userId,
-  wrongQuestions = [],
 }: FooterProps) => {
   const isMobile = useMedia("(max-width: 768px)");
 
