@@ -1,6 +1,6 @@
 "use client";
 
-import { ChallengeProps } from "./types";
+import { MultipleChoiceChallengeProps  } from "./types";
 import { cn } from "@/lib/utils";
 
 export const TranslationChallenge = ({
@@ -9,7 +9,7 @@ export const TranslationChallenge = ({
   selectedOption,
   status,
   onSelect,
-}: ChallengeProps) => {
+}: MultipleChoiceChallengeProps ) => {
   return (
     <div className="space-y-4">
       <div className="text-xl font-bold text-neutral-700">{question}</div>

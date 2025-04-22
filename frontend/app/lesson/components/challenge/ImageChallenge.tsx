@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ChallengeProps } from "./types";
+import { MultipleChoiceChallengeProps  } from "./types";
 import { cn } from "@/lib/utils";
 
 export const ImageChallenge = ({
@@ -12,7 +12,7 @@ export const ImageChallenge = ({
   status,
   onSelect,
   imageUrl,
-}: ChallengeProps) => {
+}: MultipleChoiceChallengeProps ) => {
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
 

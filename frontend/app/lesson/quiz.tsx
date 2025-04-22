@@ -58,7 +58,7 @@ export const Quiz = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number>();
   const [status, setStatus] = useState<"none" | "selected">("none");
-  const [userAnswers, setUserAnswers] = useState<Record<number, number>>({});
+  const [userAnswers, setUserAnswers] = useState<Record<number, number | string>>({});
   const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -89,61 +89,67 @@ export const Quiz = ({
 
   const onNext = () => {
     if (activeIndex < challenges.length - 1) {
+      const nextAnswer = userAnswers[challenges[activeIndex + 1]?.id];
       setActiveIndex((current) => current + 1);
-      setSelectedOption(userAnswers[challenges[activeIndex + 1]?.id]);
+      setSelectedOption(typeof nextAnswer === "number" ? nextAnswer : undefined);
       setStatus("none");
     }
   };
-
+  
   const onBack = () => {
     if (activeIndex > 0) {
+      const prevAnswer = userAnswers[challenges[activeIndex - 1]?.id];
       setActiveIndex((current) => current - 1);
-      setSelectedOption(userAnswers[challenges[activeIndex - 1]?.id]);
+      setSelectedOption(typeof prevAnswer === "number" ? prevAnswer : undefined);
       setStatus("none");
     }
   };
-
+  
   const goToQuestion = (index: number) => {
+    const answer = userAnswers[challenges[index]?.id];
     setActiveIndex(index);
-    setSelectedOption(userAnswers[challenges[index]?.id]);
+    setSelectedOption(typeof answer === "number" ? answer : undefined);
     setStatus("none");
   };
 
-  const onSelect = (optionId: number) => {
-    // Validate optionId before setting
-    if (optionId === undefined) {
-      console.error('Invalid option id:', optionId);
+  const onSelect = (answer: number | string) => {
+    if (answer === undefined || answer === null) {
+      console.error('Invalid answer:', answer);
       return;
     }
 
-    console.log('Debug - Selected Option:', {
+    console.log('Debug - Selected Answer:', {
       questionType: challenge.type,
-      selectedOptionId: optionId,
+      answer,
       questionId: challenge.id,
       allOptions: options
     });
 
-    // Always allow selecting a new option
-    setSelectedOption(optionId);
-    setStatus("none");
-    
+    // For multiple choice, update selectedOption (for UI highlighting)
+    if (typeof answer === "number") {
+      setSelectedOption(answer);
+    }
+
+    setStatus("selected");
+
     setUserAnswers(prev => {
       const newAnswers = {
         ...prev,
-        [challenge.id]: optionId
+        [challenge.id]: answer
       };
-      
-      if (typeof window !== 'undefined') {
+
+      if (typeof window !== "undefined") {
         localStorage.setItem('quizUserAnswers', JSON.stringify(newAnswers));
       }
-     
+
       return newAnswers;
     });
 
     const answeredCount = Object.keys({
       ...userAnswers,
-      [challenge.id]: optionId
+      [challenge.id]: answer
     }).length;
+  
     const progressPercentage = (answeredCount / challenges.length) * 100;
     setPercentage(progressPercentage);
   };
@@ -153,12 +159,14 @@ export const Quiz = ({
     const savedAnswers = localStorage.getItem('quizUserAnswers');
     if (savedAnswers) {
       try {
-        const parsed = JSON.parse(savedAnswers);
+        const parsed: Record<number, number | string> = JSON.parse(savedAnswers);
         setUserAnswers(parsed);
-        
-        // If there's an answer for current question, select it
-        if (challenge && parsed[challenge.id]) {
-          setSelectedOption(parsed[challenge.id]);
+  
+        const savedAnswer = parsed[challenge?.id];
+        if (savedAnswer !== undefined) {
+          if (typeof savedAnswer === "number") {
+            setSelectedOption(savedAnswer);
+          }
           setStatus("selected");
         }
       } catch (e) {
@@ -176,14 +184,21 @@ export const Quiz = ({
     setIsSubmitting(true);
 
     try {
-      const answers = Object.entries(userAnswers).map(([questionId, answerId]) => {
+      const answers = Object.entries(userAnswers).map(([questionId, answer]) => {
         // Find the question and get the selected option's text
         const question = challenges.find(q => q.id === parseInt(questionId));
-        const selectedOption = question?.challengeOptions.find(opt => opt.id === answerId);
-        
+        let userAnswer = "";
+
+        if (typeof answer === "number") {
+          const selectedOption = question?.challengeOptions.find(opt => opt.id === answer);
+          userAnswer = selectedOption?.text || "";
+        } else if (typeof answer === "string") {
+          userAnswer = answer; // e.g. URL to user's audio
+        }
+
         return {
           questionId: parseInt(questionId),
-          userAnswer: selectedOption?.text || ""
+          userAnswer
         };
       });
 
@@ -233,7 +248,7 @@ export const Quiz = ({
               type={challenge.type}
               question={challenge.question}
               options={challenge.challengeOptions}
-              selectedOption={selectedOption}
+              selectedOption={typeof userAnswers[challenge.id] === "number" ? userAnswers[challenge.id] as number : undefined}
               status={status}
               onSelect={onSelect}
               imageUrl={challenge.imageUrl}

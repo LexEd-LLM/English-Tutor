@@ -1,9 +1,18 @@
 import { questionTypeEnum } from "@/db/schema";
 
-export type ChallengeProps = {
+// Dùng chung cho mọi challenge
+export type BaseChallengeProps = {
   id: number;
   type: typeof questionTypeEnum.enumValues[number];
   question: string;
+  status: "none" | "selected";
+  onSelect: (answer: number | string) => void;
+  imageUrl?: string;
+  audioUrl?: string;
+};
+
+// Dạng câu hỏi trắc nghiệm
+export type MultipleChoiceChallengeProps  = BaseChallengeProps & {
   options: {
     id: number;
     challengeId?: number;
@@ -13,8 +22,13 @@ export type ChallengeProps = {
     audioSrc?: string | null;
   }[];
   selectedOption?: number;
-  status: "none" | "selected";
-  onSelect: (id: number) => void;
-  imageUrl?: string;
-  audioUrl?: string;
 };
+
+// Dạng phát âm (không có option, không selectedOption)
+export type PronunciationChallengeProps = BaseChallengeProps & {
+  options?: undefined;
+  selectedOption?: undefined;
+};
+
+// Gộp lại để dùng chung
+export type ChallengeProps = MultipleChoiceChallengeProps | PronunciationChallengeProps;

@@ -1,28 +1,30 @@
 "use client";
 
-import { questionTypeEnum } from "@/db/schema";
 import { FillInBlankChallenge } from "./components/challenge/FillInBlankChallenge";
 import { TranslationChallenge } from "./components/challenge/TranslationChallenge";
 import { ImageChallenge } from "./components/challenge/ImageChallenge";
 import { VoiceChallenge } from "./components/challenge/VoiceChallenge";
-// import { PronunciationChallenge } from "./components/challenge/PronunciationChallenge";
-import { ChallengeProps } from "./components/challenge/types";
-
+import { PronunciationChallenge } from "./components/challenge/PronunciationChallenge";
+import {
+  ChallengeProps,
+  MultipleChoiceChallengeProps,
+  PronunciationChallengeProps,
+} from "./components/challenge/types";
 
 export const Challenge = (props: ChallengeProps) => {
   const { type } = props;
 
   switch (type) {
     case "FILL_IN_BLANK":
-      return <FillInBlankChallenge {...props} />;
+      return <FillInBlankChallenge {...props as MultipleChoiceChallengeProps} />;
     case "TRANSLATION":
-      return <TranslationChallenge {...props} />;
+      return <TranslationChallenge {...props as MultipleChoiceChallengeProps} />;
     case "IMAGE":
-      return <ImageChallenge {...props} />;
+      return <ImageChallenge {...props as MultipleChoiceChallengeProps} />;
     case "VOICE":
-      return <VoiceChallenge {...props} />;
-    // case "PRONUNCIATION":
-    //   return <PronunciationChallenge {...props} />;
+      return <VoiceChallenge {...props as MultipleChoiceChallengeProps} />;
+    case "PRONUNCIATION":
+      return <PronunciationChallenge {...props as PronunciationChallengeProps} />;
     default:
       return <div>Unknown challenge type</div>;
   }
