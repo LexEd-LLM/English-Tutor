@@ -139,7 +139,6 @@ export const userAnswers = pgTable("user_answers", {
   questionId: integer("question_id").references(() => quizQuestions.id, { onDelete: "cascade" }).notNull(),
   userAnswer: text("user_answer").notNull(),
   isCorrect: boolean("is_correct").notNull(),
-  userAudioUrl: text("user_audio_url"), // Added: URL to the user's pronunciation recording (MP3) - nullable
   userPhonemes: text("user_phonemes"), // Added: IPA phonemes derived from the user's recording - nullable
 });
 
