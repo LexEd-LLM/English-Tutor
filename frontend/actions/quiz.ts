@@ -2,12 +2,6 @@
 
 import { auth } from "@clerk/nextjs";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { getUserQuizQuestions, setUserQuizQuestions } from "@/db/queries";
-
-import db from "@/db/drizzle";
-import { updateUserCurriculumProgress } from "@/db/queries";
-import { userQuizzes, userUnitProgress, type QuizQuestion as DBQuizQuestion } from "@/db/schema";
 
 // Type definitions for API response
 interface ChallengeOption {
@@ -44,6 +38,15 @@ interface APIResponse {
   voice_questions: VoiceQuestion[];
 }
 
+// Helper to normalize type and add quizId
+const withQuizIdAndType = <T extends { type: string }>(q: T, quizId: number): T & { quizId: number; type: BaseQuestion["type"] } => {
+  return {
+    ...q,
+    quizId,
+    type: q.type.toUpperCase() as BaseQuestion["type"]
+  };
+};
+
 // Generate new quiz questions
 export const generateQuiz = async (
   unitIds: number[],
@@ -59,9 +62,9 @@ export const generateQuiz = async (
     }
 
     console.log(`Calling API with units: ${unitIds}, prompt: ${prompt}, MC: ${multipleChoiceCount}, Image: ${imageCount}, Voice: ${voiceCount}`);
-    
+
     const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
-    
+
     const requestBody = {
       user_id: userId,
       unit_ids: unitIds,
@@ -71,7 +74,7 @@ export const generateQuiz = async (
       voice_count: voiceCount,
     };
     console.log(`Request body: ${JSON.stringify(requestBody)}`);
-    
+
     const response = await fetch(`${backendUrl}/api/generate-quiz`, {
       method: "POST",
       headers: {
@@ -82,7 +85,7 @@ export const generateQuiz = async (
     });
 
     console.log(`Response status: ${response.status}`);
-    
+
     if (!response.ok) {
       const error = await response.text();
       console.error(`Fetch error: ${error}`);
@@ -91,7 +94,7 @@ export const generateQuiz = async (
 
     const responseText = await response.text();
     console.log(`Raw response: ${responseText.substring(0, 2000)}...`);
-    
+
     let data: APIResponse;
     try {
       data = JSON.parse(responseText) as APIResponse;
@@ -102,37 +105,32 @@ export const generateQuiz = async (
         error: "Invalid JSON response from server"
       };
     }
-    
-    console.log(`Parsed response data keys: ${Object.keys(data).join(', ')}`);
-    
-    // Combine all question types into a single array and add quizId
-    const allQuestions = [
-      ...data.multiple_choice_questions,
-      ...data.image_questions,
-      ...data.voice_questions
-    ].map(q => ({
-      ...q,
-      quizId: data.quiz_id // Use quiz_id from response
-    }));
-    
+
+    const mcQuestions: BaseQuestion[] = data.multiple_choice_questions.map(q => withQuizIdAndType(q, data.quiz_id));
+    const imageQuestions: ImageQuestion[] = data.image_questions.map(q => withQuizIdAndType(q, data.quiz_id));
+    const voiceQuestions: VoiceQuestion[] = data.voice_questions.map(q => withQuizIdAndType(q, data.quiz_id));
+    // TODO: const pronunciationQuestions: PronunciationQuestion[] = data.pronunciation_questions.map(...)
+
+    const allQuestions: APIQuizQuestion[] = [...mcQuestions, ...imageQuestions, ...voiceQuestions];
+
     if (allQuestions.length === 0) {
       console.error("No questions received from backend");
-      return { 
-        success: false, 
-        error: "No questions generated" 
+      return {
+        success: false,
+        error: "No questions generated"
       };
     }
-    
+
     console.log(`Received total ${allQuestions.length} questions from backend`);
     if (allQuestions.length > 0) {
-      console.log(`First question: ${JSON.stringify(allQuestions[0]).substring(0, 200)}...`);
+      console.log(`First question: ${JSON.stringify(allQuestions[0]).substring(0, 2000)}...`);
     }
 
     revalidatePath("/learn");
-    return { 
-      success: true, 
-      quizId: data.quiz_id, // Use quiz_id from response
-      questions: allQuestions 
+    return {
+      success: true,
+      quizId: data.quiz_id,
+      questions: allQuestions
     };
   } catch (error) {
     console.error(`Fetch failed: ${error instanceof Error ? error.message : String(error)}`);
