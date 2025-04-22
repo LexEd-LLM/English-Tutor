@@ -19,7 +19,7 @@ export const FillInBlankChallenge = ({
             key={option.id}
             onClick={() => onSelect(option.id)}
             className={cn(
-                "rounded-xl border-2 border-neutral-200 p-4 text-neutral-700 font-bold hover:bg-neutral-100",
+                "rounded-xl border-2 border-neutral-200 p-4 text-neutral-700 font-bold hover:bg-neutral-100 text-left",
                 selectedOption === option.id && status === "none" && "border-blue-300 bg-blue-50 hover:bg-blue-50",
                 status !== "none" && selectedOption !== option.id && "opacity-50"
             )}
