@@ -53,8 +53,7 @@ export default function ExplanationPage() {
         for (const q of quizData) {
           if (q.type === "PRONUNCIATION") {
             try {
-              const correctPhonemes = JSON.parse(q.correctAnswer)["en-us"];
-              const result = await calculatePhonemeScore(q.userPhonemes!, correctPhonemes);
+              const result = await calculatePhonemeScore(q.userPhonemes!, q.correctAnswer);
               scores[q.id] = result.score;
             } catch (e) {
               console.error("Error calculating phoneme score:", e);
@@ -171,32 +170,38 @@ export default function ExplanationPage() {
                   } catch (err) {
                     return <div className="text-red-500">Invalid phoneme data</div>;
                   }
-
                   return (
-                    <div className="grid grid-cols-2 gap-y-2 text-sm mt-2">
-                      <div className="font-semibold">Phiên âm đúng (US)</div>
-                      <div className="font-mono text-gray-800">{phonemes["en-us"]}</div>
-
-                      <div className="font-semibold">Phiên âm đúng (UK)</div>
-                      <div className="font-mono text-gray-800">{phonemes["en-gb"]}</div>
-
-                      <div className="font-semibold">Phiên âm của bạn</div>
-                      <div className="font-mono">
-                        {renderColoredPhonemes(phonemes["en-us"], q.userPhonemes)}
-                        {phonemeScores[q.id] !== undefined && (
-                        <span className={`font-bold px-2 py-1 rounded ${
-                          phonemeScores[q.id] >= 0.8
-                            ? 'bg-green-100 text-green-700'
-                            : phonemeScores[q.id] >= 0.5
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : 'bg-red-100 text-red-700'
-                        }`}>
-                          Điểm: {(phonemeScores[q.id] * 100).toFixed(0)}%
-                        </span>
-                      )}
+                    <>
+                      <div className="grid grid-cols-2 gap-y-2 text-sm mt-2">
+                        <div className="font-semibold">Phiên âm đúng (US)</div>
+                        <div className="font-mono text-gray-800">{phonemes["en-us"]}</div>
+                  
+                        <div className="font-semibold">Phiên âm đúng (UK)</div>
+                        <div className="font-mono text-gray-800">{phonemes["en-gb"]}</div>
+                  
+                        <div className="font-semibold">Phiên âm của bạn</div>
+                        <div className="font-mono">
+                          {renderColoredPhonemes(phonemes["en-us"], q.userPhonemes)}
+                        </div>
                       </div>
-                    </div>
-                  );
+                  
+                      {phonemeScores[q.id] !== undefined && (
+                        <div className="flex justify-center mt-2">
+                          <span
+                            className={`font-bold px-3 py-1 rounded text-sm ${
+                              phonemeScores[q.id] >= 0.8
+                                ? 'bg-green-100 text-green-700'
+                                : phonemeScores[q.id] >= 0.5
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            Điểm: {(phonemeScores[q.id] * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  );                  
                 })()}
                 {q.userAudioUrl && (
                   <audio controls src={q.userAudioUrl} className="w-full h-10" />

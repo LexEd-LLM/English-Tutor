@@ -287,7 +287,6 @@ async def get_quiz_with_user_answers(quiz_id: int) -> List[QuizQuestionWithUserA
                 ORDER BY q.id
             """, (quiz_id,))
             rows = cur.fetchall()
-            print(rows)
             return [
                 QuizQuestionWithUserAnswer(
                     id=i,
