@@ -24,6 +24,7 @@ export const questionTypeEnum = pgEnum("question_type", [
   "VOICE",
   "PRONUNCIATION",
 ]);
+export const dokLevelEnum = pgEnum("dok_level", ["RECALL", "SKILL_CONCEPT", "STRATEGIC_THINKING"]);
 
 // Type definitions
 export type Unit = InferSelectModel<typeof units>;
@@ -113,6 +114,7 @@ export const userQuizzes = pgTable("user_quizzes", {
   .references(() => units.id, { onDelete: "cascade" })
   .notNull(),
   prompt: text("prompt"), // câu lệnh yêu cầu AI tạo quiz
+  depthOfKnowledge: dokLevelEnum("depth_of_knowledge").array(),
   strengths: text("strengths"),      // điểm mạnh của user trong quiz
   weaknesses: text("weaknesses"),    // điểm yếu của user trong quiz
   createdAt: timestamp("created_at").defaultNow().notNull(),
