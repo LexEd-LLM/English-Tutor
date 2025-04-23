@@ -1,9 +1,8 @@
 from gtts import gTTS 
-import os
-import uuid
 from pathlib import Path
-import eng_to_ipa as ipa
 from ..config.settings import asr_model
+from phonemizer import phonemize
+import json
 
 def generate_audio(text: str, language: str = 'en') -> str:
     """
@@ -57,8 +56,22 @@ def process_user_audio(audio_path: str) -> tuple[str, bool]:
     except Exception as e:
         print(f"Error processing audio: {e}")
         return "", False
+    
+def get_phonemes(text: str) -> str:
+    phoneme_dict = {}
+    languages = ['en-gb', 'en-us']
+    for language in languages:
+        ipa = phonemize(text, language=language, backend='espeak', strip=True, with_stress=False)
+        phoneme_dict[language] = ipa
+    return json.dumps(phoneme_dict, ensure_ascii=False)
 
-if __name__ == "__main__":
-    # Test the function
-    audio_path = generate_audio("Hello, this is a test!")
-    print(f"Generated audio at: {audio_path}")
+def calculate_pronunciation_score(user_phonemes: str, correct_phonemes_json: str) -> float:
+    correct_dict = json.loads(correct_phonemes_json)
+    max_score = 0.0
+
+    for lang, correct_ipa in correct_dict.items():
+        matches = sum(1 for u, c in zip(user_phonemes, correct_ipa) if u == c)
+        score = matches / max(len(correct_ipa), 1)  # tránh chia 0
+        max_score = max(max_score, score)
+
+    return max_score
