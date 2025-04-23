@@ -10,7 +10,8 @@ from backend.schemas.quiz import (
     QuizResponse,
     ExplanationRequest,
     QuizSubmission,
-    QuestionType
+    QuestionType,
+    QuizQuestionWithUserAnswer
 )
 from backend.services.question_generator import generate_questions_batch
 from backend.services.quiz_service import quiz_service
@@ -117,22 +118,6 @@ async def generate_quiz(request: QuizRequest):
     print(f"Generated questions - MC: {len(multiple_choice_items)}, Image: {len(image_items)}, Voice: {len(voice_items)}, pronunc: {len(pronunc_items)}")
     return result
 
-@router.post("/generate-explanation")
-async def generate_explanation_api(request: ExplanationRequest):
-    print(f"Received request for explanation - question: {request.question}")
-    try:
-        explanation = generate_explanation_mcq(
-            question=request.question, 
-            correct_answer=request.correct_answer, 
-            user_answer=request.user_answer
-        )
-        print(f"Generated explanation: {explanation[:100]}...")
-        
-        return {"explanation": explanation}
-    except Exception as e:
-        print(f"Error generating explanation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
 @router.get("/{quiz_id}", response_model=QuizResponse)
 async def get_quiz_by_id(quiz_id: int):
     """
@@ -235,6 +220,10 @@ async def submit_quiz(submission: QuizSubmission):
                 cur.execute("""
                     INSERT INTO user_answers (user_id, question_id, user_answer, is_correct, user_phonemes)
                     VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (user_id, question_id) DO UPDATE SET
+                        user_answer = EXCLUDED.user_answer,
+                        is_correct = EXCLUDED.is_correct,
+                        user_phonemes = EXCLUDED.user_phonemes
                 """, (
                     submission.userId,
                     answer.questionId,
@@ -242,6 +231,7 @@ async def submit_quiz(submission: QuizSubmission):
                     is_correct,
                     user_phonemes
                 ))
+
                 cur.execute("""
                     UPDATE quiz_questions 
                     SET explanation = %s 
@@ -259,5 +249,67 @@ async def submit_quiz(submission: QuizSubmission):
         
         return results
         
+    finally:
+        conn.close()
+        
+@router.post("/generate-explanation")
+async def generate_explanation_api(request: ExplanationRequest):
+    try:
+        explanation = generate_explanation_mcq(
+            question=request.question_text, 
+            correct_answer=request.correct_answer, 
+            user_answer=request.user_answer
+        )
+        
+        return {"explanation": explanation}
+    except Exception as e:
+        print(f"Error generating explanation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{quiz_id}/explanations")
+async def get_quiz_with_user_answers(quiz_id: int) -> List[QuizQuestionWithUserAnswer]:
+    conn = get_db()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("""
+                SELECT 
+                    q.id AS question_id,
+                    q.question_text,
+                    q.type,
+                    q.options,
+                    q.correct_answer,
+                    q.explanation,
+                    q.image_url,
+                    q.audio_url,
+                    ua.user_answer,
+                    ua.is_correct,
+                    ua.user_phonemes
+                FROM quiz_questions q
+                LEFT JOIN user_answers ua ON ua.question_id = q.id
+                WHERE q.quiz_id = %s
+                ORDER BY q.id
+            """, (quiz_id,))
+            rows = cur.fetchall()
+            print(rows)
+            return [
+                QuizQuestionWithUserAnswer(
+                    id=i,
+                    questionId=row["question_id"],
+                    questionText=row["question_text"],
+                    type=row["type"],
+                    options=row.get("options"),
+                    correctAnswer=row["correct_answer"],
+                    explanation=row.get("explanation"),
+                    imageUrl=row.get("image_url"),
+                    audioUrl=row.get("audio_url"),
+                    userAnswer=row.get("user_answer"),
+                    isCorrect=row.get("is_correct"),
+                    userPhonemes=row.get("user_phonemes")
+                )
+                for i, row in enumerate(rows, start=1)
+            ]
+    except Exception as e:
+        print(f"[ERROR] Failed to fetch quiz explanations: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch quiz explanations")
     finally:
         conn.close()

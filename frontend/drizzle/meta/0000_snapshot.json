@@ -1,5 +1,5 @@
 {
-  "id": "4d0856ec-e07f-44b9-8e5c-efce511d76a4",
+  "id": "89810267-c61c-4a56-b919-0e866c036645",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -70,7 +70,7 @@
           "name": "options",
           "type": "json",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "correct_answer": {
           "name": "correct_answer",
@@ -251,6 +251,12 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": true
+        },
+        "user_phonemes": {
+          "name": "user_phonemes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -283,7 +289,16 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {
+        "user_question_unique": {
+          "name": "user_question_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "question_id"
+          ]
+        }
+      }
     },
     "user_curriculum_progress": {
       "name": "user_curriculum_progress",
@@ -574,7 +589,8 @@
         "FILL_IN_BLANK": "FILL_IN_BLANK",
         "TRANSLATION": "TRANSLATION",
         "IMAGE": "IMAGE",
-        "VOICE": "VOICE"
+        "VOICE": "VOICE",
+        "PRONUNCIATION": "PRONUNCIATION"
       }
     },
     "role": {

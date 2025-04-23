@@ -8,6 +8,7 @@ import {
   text,
   timestamp,
   json,
+  unique,
 } from "drizzle-orm/pg-core";
 import { InferSelectModel } from "drizzle-orm";
 
@@ -139,8 +140,10 @@ export const userAnswers = pgTable("user_answers", {
   questionId: integer("question_id").references(() => quizQuestions.id, { onDelete: "cascade" }).notNull(),
   userAnswer: text("user_answer").notNull(),
   isCorrect: boolean("is_correct").notNull(),
-  userPhonemes: text("user_phonemes"), // Added: IPA phonemes derived from the user's recording - nullable
-});
+  userPhonemes: text("user_phonemes"), // nullable
+}, (table) => ({
+  userQuestionUnique: unique("user_question_unique").on(table.userId, table.questionId),
+}));
 
 // Relations
 export const curriculumRelations = relations(curriculums, ({ many }) => ({

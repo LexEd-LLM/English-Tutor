@@ -59,13 +59,6 @@ class QuizResponse(BaseModel):
     image_questions: List[QuizItem]
     voice_questions: List[QuizItem]
     pronunc_questions: List[QuizItem]
-
-class ExplanationRequest(BaseModel):
-    question: str
-    correct_answer: str
-    question_type: Optional[str] = None
-    question_id: Optional[int] = None
-    user_answer: str
     
 class QuizAgainRequest(BaseModel):
     userId: str
@@ -81,3 +74,27 @@ class QuizSubmission(BaseModel):
     userId: str
     quizId: int 
     answers: List[QuizAnswer]
+    
+class ExplanationRequest(BaseModel):
+    question_id: int = Field(alias="questionId")
+    question_text: str = Field(alias="questionText")
+    correct_answer: str = Field(alias="correctAnswer")
+    user_answer: str = Field(alias="userAnswer")
+    type: str
+
+    class Config:
+        populate_by_name = True
+
+class QuizQuestionWithUserAnswer(BaseModel):
+    id: int
+    questionId: int
+    questionText: str
+    type: str
+    options: Optional[List[dict]]
+    correctAnswer: str
+    explanation: Optional[str]
+    imageUrl: Optional[str]
+    audioUrl: Optional[str]
+    userAnswer: Optional[str]
+    isCorrect: Optional[bool]
+    userPhonemes: Optional[str]

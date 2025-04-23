@@ -1,5 +1,5 @@
 DO $$ BEGIN
- CREATE TYPE "question_type" AS ENUM('FILL_IN_BLANK', 'TRANSLATION', 'IMAGE', 'VOICE');
+ CREATE TYPE "question_type" AS ENUM('FILL_IN_BLANK', 'TRANSLATION', 'IMAGE', 'VOICE', 'PRONUNCIATION');
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS "quiz_questions" (
 	"quiz_id" integer NOT NULL,
 	"question_text" text NOT NULL,
 	"type" "question_type" NOT NULL,
-	"options" json NOT NULL,
+	"options" json,
 	"correct_answer" text NOT NULL,
 	"explanation" text,
 	"image_url" text,
@@ -55,7 +55,9 @@ CREATE TABLE IF NOT EXISTS "user_answers" (
 	"user_id" text NOT NULL,
 	"question_id" integer NOT NULL,
 	"user_answer" text NOT NULL,
-	"is_correct" boolean NOT NULL
+	"is_correct" boolean NOT NULL,
+	"user_phonemes" text,
+	CONSTRAINT "user_question_unique" UNIQUE("user_id","question_id")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "user_curriculum_progress" (

@@ -92,8 +92,9 @@ export default function ResultPage() {
   }, [searchParams]);
 
   const goToExplanations = () => {
-    // TODO: Implement explanations view
-    console.log("View explanations clicked");
+    if (result?.quizId) {
+      router.push(`/explanation?quizId=${result.quizId}`);
+    }
   };
 
   const handlePracticeAgain = async () => {
