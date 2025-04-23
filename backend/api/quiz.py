@@ -12,10 +12,11 @@ from backend.schemas.quiz import (
     QuizSubmission,
     QuestionType
 )
-from backend.services.question_generator import generate_questions_batch, generate_explanation
+from backend.services.question_generator import generate_questions_batch
 from backend.services.quiz_service import quiz_service
 from backend.services.unit_service import get_unit_chunks
 from backend.services.practice_service import practice_service
+from backend.services.explanation_generator import generate_explanation_mcq, generate_explanation_pronunciation
 from backend.database import get_db
 from backend.services.voice_quiz_generator import process_user_audio, calculate_pronunciation_score
 
@@ -120,7 +121,7 @@ async def generate_quiz(request: QuizRequest):
 async def generate_explanation_api(request: ExplanationRequest):
     print(f"Received request for explanation - question: {request.question}")
     try:
-        explanation = generate_explanation(
+        explanation = generate_explanation_mcq(
             question=request.question, 
             correct_answer=request.correct_answer, 
             user_answer=request.user_answer
@@ -202,11 +203,13 @@ async def submit_quiz(submission: QuizSubmission):
                         continue
                     
                     question_type = q['type']
+                    question_text = q['question_text']
                     correct_answer = q['correct_answer']
                     user_answer = answer.userAnswer
                     is_correct = False
                     score = 0.0
                     user_phonemes = None
+                    explanation = None
 
                     # ==== Handle PRONUNCIATION questions ====
                     if question_type == "PRONUNCIATION":
@@ -216,6 +219,11 @@ async def submit_quiz(submission: QuizSubmission):
                         correct_answers += score  # fractional point
                         # Define a threshold for what is "correct"
                         is_correct = score >= 0.8
+                        explanation = generate_explanation_pronunciation(
+                            question=question_text,
+                            correct_answer=correct_phonemes,
+                            user_answer=user_phonemes
+                        )
 
                     # ==== Handle OTHER question types ====
                     else:
@@ -223,17 +231,23 @@ async def submit_quiz(submission: QuizSubmission):
                         if is_correct:
                             score = 1.0
                             correct_answers += 1.0
+                        explanation = generate_explanation_mcq(
+                            question=question_text,
+                            correct_answer=correct_answer,
+                            user_answer=user_answer
+                        )
                     
                     # Save answer to database
                     cur.execute("""
-                        INSERT INTO user_answers (user_id, question_id, user_answer, is_correct, user_phonemes)
+                        INSERT INTO user_answers (user_id, question_id, user_answer, is_correct, user_phonemes, explanation)
                         VALUES (%s, %s, %s, %s, %s)
                     """, (
                         submission.userId,
                         answer.questionId,
                         answer.userAnswer,
                         is_correct,
-                        user_phonemes
+                        user_phonemes,
+                        explanation
                     ))
                 
             conn.commit()

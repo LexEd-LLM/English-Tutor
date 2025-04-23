@@ -4,10 +4,8 @@ from ..schemas.quiz import QuestionType
 from typing import List, Dict, Any, Optional
 import json
 import re
-from .voice_quiz_generator import generate_audio
+from .voice_quiz_generator import generate_audio, get_phonemes
 from .image_generator import generate_image
-import eng_to_ipa as ipa
-
 
 # Base prompt template for question generation without strengths/weaknesses
 BASE_FIB_QUESTION_TEMPLATE = """
@@ -296,7 +294,7 @@ def generate_pronunciation_questions(
     return [
         {
             "question": q["question"],
-            "correct_answer": ipa.convert(q["correct_answer"]).replace(" ", ""),
+            "correct_answer": get_phonemes(q["correct_answer"]),
             "type": QuestionType.PRONUNCIATION.value,
             "audio_url": generate_audio(q["correct_answer"])
         }
@@ -352,29 +350,6 @@ def generate_questions_batch(
         "voice_questions": voice_questions,
         "pronunciation_questions": pronunciation_questions
     }
-
-def generate_explanation(question: str, correct_answer: str, user_answer: str) -> str:
-    """Generate explanation for a question."""
-    template = PromptTemplate(
-        template=(
-        "Bạn là một giáo viên tận tâm, hướng dẫn học sinh lớp 12 ôn tập môn tiếng Anh. "
-        "Hãy giải thích ngắn gọn, đi thẳng vào nội dung chính để giúp học sinh hiểu rõ kiến thức.\n\n"
-        "- Luôn giải thích vì sao đáp án đúng là {correct_answer}.\n"
-        "- Nếu đáp án của học sinh ({user_answer}) khác đáp án đúng, hãy phân tích lý do sai và đưa ví dụ minh họa.\n"
-        "- Nếu học sinh đã chọn đúng, hãy củng cố bằng cách giải thích rõ vì sao đó là lựa chọn tốt nhất và đưa ví dụ tương tự để học sinh ghi nhớ.\n\n"
-        "Câu hỏi: {question}\n"
-        "Đáp án đúng: {correct_answer}\n"
-        "Đáp án của học sinh: {user_answer}\n\n"
-        "Giải thích:"
-        )
-    )
-    prompt = template.format(
-        question=question,
-        correct_answer=correct_answer,
-        user_answer=user_answer
-    )
-    response = llm.complete(prompt)
-    return "\n".join(response.text.splitlines()[1:])
 
 def parse_json_questions(response_text: str) -> List[Dict[str, Any]]:
     """Parse generated questions from JSON response"""

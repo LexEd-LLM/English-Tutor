@@ -50,7 +50,7 @@ def process_user_audio(audio_path: str) -> tuple[str, bool]:
         
         # Get ASR transcription
         result = asr_model(audio_path).replace(" ", "")
-        
+        result = f"/{result}/"
         return result
         
     except Exception as e:
@@ -62,14 +62,16 @@ def get_phonemes(text: str) -> str:
     languages = ['en-gb', 'en-us']
     for language in languages:
         ipa = phonemize(text, language=language, backend='espeak', strip=True, with_stress=False)
-        phoneme_dict[language] = ipa
+        phoneme_dict[language] = f"/{ipa}/"
     return json.dumps(phoneme_dict, ensure_ascii=False)
 
 def calculate_pronunciation_score(user_phonemes: str, correct_phonemes_json: str) -> float:
     correct_dict = json.loads(correct_phonemes_json)
     max_score = 0.0
+    user_phonemes = user_phonemes.strip("/")
 
     for lang, correct_ipa in correct_dict.items():
+        correct_ipa = correct_ipa.strip("/")
         matches = sum(1 for u, c in zip(user_phonemes, correct_ipa) if u == c)
         score = matches / max(len(correct_ipa), 1)  # tránh chia 0
         max_score = max(max_score, score)
