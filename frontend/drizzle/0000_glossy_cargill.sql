@@ -11,7 +11,7 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- CREATE TYPE "unit_content_type" AS ENUM('BOOKMAP', 'VOCABULARY', 'DIALOGUE', 'EXERCISE');
+ CREATE TYPE "unit_content_type" AS ENUM('BOOKMAP', 'VOCABULARY', 'TEXT_CONTENT');
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

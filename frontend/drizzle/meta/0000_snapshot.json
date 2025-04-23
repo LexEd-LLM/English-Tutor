@@ -1,5 +1,5 @@
 {
-  "id": "3720b7ed-cf0c-4328-ab88-5a3eb86ac866",
+  "id": "86056365-abd4-4750-b027-d2d43c1fd088",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -613,8 +613,7 @@
       "values": {
         "BOOKMAP": "BOOKMAP",
         "VOCABULARY": "VOCABULARY",
-        "DIALOGUE": "DIALOGUE",
-        "EXERCISE": "EXERCISE"
+        "TEXT_CONTENT": "TEXT_CONTENT"
       }
     }
   },
