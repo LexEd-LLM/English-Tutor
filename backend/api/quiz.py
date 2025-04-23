@@ -181,88 +181,83 @@ async def submit_quiz(submission: QuizSubmission):
     """
     try:
         conn = get_db()
-        try:
-            total_questions = len(submission.answers)
-            correct_answers = 0
+        total_questions = len(submission.answers)
+        correct_answers = 0
+        
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            # Get correct answers and types for all questions
+            question_ids = [ans.questionId for ans in submission.answers]
+            placeholders = ','.join(['%s'] * len(question_ids))
+            cur.execute(f"""
+                SELECT id, question_text, correct_answer, type, audio_url
+                FROM quiz_questions 
+                WHERE id IN ({placeholders})
+            """, question_ids)
+            question_map = {row['id']: row for row in cur.fetchall()}
             
-            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                # Get correct answers and types for all questions
-                question_ids = [ans.questionId for ans in submission.answers]
-                placeholders = ','.join(['%s'] * len(question_ids))
-                cur.execute(f"""
-                    SELECT id, correct_answer, type, audio_url
-                    FROM quiz_questions 
-                    WHERE id IN ({placeholders})
-                """, question_ids)
-                question_map = {row['id']: row for row in cur.fetchall()}
-                
-                # Process each answer
-                for answer in submission.answers:
-                    q = question_map.get(answer.questionId)
-                    if not q:
-                        continue
-                    
-                    question_type = q['type']
-                    question_text = q['question_text']
-                    correct_answer = q['correct_answer']
-                    user_answer = answer.userAnswer
-                    is_correct = False
-                    score = 0.0
-                    user_phonemes = None
-                    explanation = None
+            # Process each answer
+            for answer in submission.answers:
+                q = question_map.get(answer.questionId)
+                if not q:
+                    continue
 
-                    # ==== Handle PRONUNCIATION questions ====
-                    if question_type == "PRONUNCIATION":
-                        user_phonemes = process_user_audio(user_answer)  # return phoneme string
-                        correct_phonemes = correct_answer  # stringified JSON
-                        score = calculate_pronunciation_score(user_phonemes, correct_phonemes)
-                        correct_answers += score  # fractional point
-                        # Define a threshold for what is "correct"
-                        is_correct = score >= 0.8
-                        explanation = generate_explanation_pronunciation(
-                            question=question_text,
-                            correct_answer=correct_phonemes,
-                            user_answer=user_phonemes
-                        )
+                question_type = q['type']
+                question_text = q['question_text']
+                correct_answer = q['correct_answer']
+                user_answer = answer.userAnswer
+                is_correct = False
+                score = 0.0
+                user_phonemes = None
+                explanation = None
 
-                    # ==== Handle OTHER question types ====
-                    else:
-                        is_correct = str(user_answer) == str(correct_answer)
-                        if is_correct:
-                            score = 1.0
-                            correct_answers += 1.0
-                        explanation = generate_explanation_mcq(
-                            question=question_text,
-                            correct_answer=correct_answer,
-                            user_answer=user_answer
-                        )
-                    
-                    # Save answer to database
-                    cur.execute("""
-                        INSERT INTO user_answers (user_id, question_id, user_answer, is_correct, user_phonemes, explanation)
-                        VALUES (%s, %s, %s, %s, %s)
-                    """, (
-                        submission.userId,
-                        answer.questionId,
-                        answer.userAnswer,
-                        is_correct,
-                        user_phonemes,
-                        explanation
-                    ))
-                
-            conn.commit()
-            
-            results = {
-                "success": True,
-                "totalQuestions": total_questions,
-                "correctAnswers": correct_answers,
-                "quizId": submission.quizId
-            }
-            
-            return results
-            
-        finally:
-            conn.close()
-    except Exception as e:
-        print(f"Error submitting quiz: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+                # ==== Handle PRONUNCIATION questions ====
+                if question_type == "PRONUNCIATION":
+                    user_phonemes = process_user_audio(user_answer)  # return phoneme string
+                    correct_phonemes = correct_answer  # stringified JSON
+                    score = calculate_pronunciation_score(user_phonemes, correct_phonemes)
+                    correct_answers += score  # fractional point
+                    # Define a threshold for what is "correct"
+                    is_correct = score >= 0.8
+                    explanation = generate_explanation_pronunciation(
+                        question=question_text,
+                        correct_answer=correct_phonemes,
+                        user_answer=user_phonemes
+                    )
+
+                # ==== Handle OTHER question types ====
+                else:
+                    is_correct = str(user_answer) == str(correct_answer)
+                    if is_correct:
+                        score = 1.0
+                        correct_answers += 1.0
+
+                # Save answer to database
+                cur.execute("""
+                    INSERT INTO user_answers (user_id, question_id, user_answer, is_correct, user_phonemes)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (
+                    submission.userId,
+                    answer.questionId,
+                    answer.userAnswer,
+                    is_correct,
+                    user_phonemes
+                ))
+                cur.execute("""
+                    UPDATE quiz_questions 
+                    SET explanation = %s 
+                    WHERE id = %s
+                """, (explanation, answer.questionId))
+
+        conn.commit()
+        
+        results = {
+            "success": True,
+            "totalQuestions": total_questions,
+            "correctAnswers": correct_answers,
+            "quizId": submission.quizId
+        }
+        
+        return results
+        
+    finally:
+        conn.close()

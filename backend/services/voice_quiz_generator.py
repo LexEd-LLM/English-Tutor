@@ -47,15 +47,15 @@ def process_user_audio(audio_path: str) -> tuple[str, bool]:
     try:
         # Convert audio path to absolute path
         audio_path = str(Path("../frontend/public").resolve() / audio_path.lstrip("/"))
-        
+
         # Get ASR transcription
-        result = asr_model(audio_path).replace(" ", "")
+        result = asr_model(audio_path)['text'].replace(" ", "")
         result = f"/{result}/"
         return result
         
     except Exception as e:
         print(f"Error processing audio: {e}")
-        return "", False
+        return ""
     
 def get_phonemes(text: str) -> str:
     phoneme_dict = {}
@@ -76,4 +76,4 @@ def calculate_pronunciation_score(user_phonemes: str, correct_phonemes_json: str
         score = matches / max(len(correct_ipa), 1)  # tránh chia 0
         max_score = max(max_score, score)
 
-    return max_score
+    return round(max_score, 1)
