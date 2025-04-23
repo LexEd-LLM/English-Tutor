@@ -44,3 +44,14 @@ export async function generateExplanation(question: {
   );
   return res.data.explanation;
 }
+
+export const calculatePhonemeScore = async (userPhonemes: string, correctPhonemes: string) => {
+  const res = await fetch("/api/calculate-phoneme-score", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userPhonemes, correctPhonemes }),
+  });
+
+  if (!res.ok) throw new Error("Failed to calculate phoneme score");
+  return res.json();
+};

@@ -8,7 +8,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import Image from "next/image";
-import { getQuizWithAnswers, generateExplanation } from "./api";
+import { getQuizWithAnswers, generateExplanation, calculatePhonemeScore } from "./api";
 
 const renderColoredPhonemes = (correct: string, user: string = "") => {
   const output = [];
@@ -41,11 +41,31 @@ export default function ExplanationPage() {
   const [generatingExplanations, setGeneratingExplanations] = useState<Record<number, boolean>>({});
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
+  const [phonemeScores, setPhonemeScores] = useState<Record<number, number>>({});
+
   useEffect(() => {
     if (quizId) {
-      getQuizWithAnswers(Number(quizId)).then(setQuestions);
+      getQuizWithAnswers(Number(quizId)).then(async (quizData) => {
+        setQuestions(quizData);
+  
+        const scores: Record<number, number> = {};
+  
+        for (const q of quizData) {
+          if (q.type === "PRONUNCIATION") {
+            try {
+              const correctPhonemes = JSON.parse(q.correctAnswer)["en-us"];
+              const result = await calculatePhonemeScore(q.userPhonemes!, correctPhonemes);
+              scores[q.id] = result.score;
+            } catch (e) {
+              console.error("Error calculating phoneme score:", e);
+            }
+          }
+        }
+  
+        setPhonemeScores(scores);
+      });
     }
-  }, [quizId]);
+  }, [quizId]);  
 
   const toggleExplanation = (id: number) => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -163,6 +183,17 @@ export default function ExplanationPage() {
                       <div className="font-semibold">Phiên âm của bạn</div>
                       <div className="font-mono">
                         {renderColoredPhonemes(phonemes["en-us"], q.userPhonemes)}
+                        {phonemeScores[q.id] !== undefined && (
+                        <span className={`font-bold px-2 py-1 rounded ${
+                          phonemeScores[q.id] >= 0.8
+                            ? 'bg-green-100 text-green-700'
+                            : phonemeScores[q.id] >= 0.5
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : 'bg-red-100 text-red-700'
+                        }`}>
+                          Điểm: {(phonemeScores[q.id] * 100).toFixed(0)}%
+                        </span>
+                      )}
                       </div>
                     </div>
                   );
