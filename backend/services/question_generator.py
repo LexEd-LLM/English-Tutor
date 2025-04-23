@@ -12,7 +12,8 @@ BASE_FIB_QUESTION_TEMPLATE = """
     You are helping Vietnamese learners review English. Generate {count} different fill_in_blank multiple-choice questions from the following content.
     Make sure questions cover different aspects and concepts from the content.
     Content: {content}
-
+    {custom_prompt}
+    
     For each question:
     1. Create a question in the specified format
     2. Generate 4 options with only one correct answer

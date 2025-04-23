@@ -8,7 +8,7 @@ from backend.schemas.quiz import (
 from backend.schemas.quiz import PracticeHistory
 from backend.services.practice_service import practice_service
 from backend.services.quiz_service import quiz_service
-from backend.services.unit_service import get_unit_chunks
+from backend.services.unit_service import get_unit_main_chunks, get_unit_subordinate_chunks
 from backend.api.quiz import convert_to_quiz_items
 
 router = APIRouter(prefix="/api/practice", tags=["practice"])
@@ -28,7 +28,7 @@ async def generate_quiz_again(request: QuizAgainRequest):
         # Get relevant chunks for the original prompt
         text_chunks = []
         for unit_id in request.unit_ids:
-            unit_chunks = get_unit_chunks(unit_id)
+            unit_chunks = get_unit_main_chunks(unit_id)
             text_chunks.extend(unit_chunks)
         
         # Generate new questions based on practice history

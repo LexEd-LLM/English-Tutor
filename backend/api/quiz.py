@@ -16,7 +16,7 @@ from backend.schemas.quiz import (
 )
 from backend.services.question_generator import generate_questions_batch
 from backend.services.quiz_service import quiz_service
-from backend.services.unit_service import get_unit_chunks
+from backend.services.unit_service import get_unit_main_chunks, get_unit_subordinate_chunks
 from backend.services.practice_service import practice_service
 from backend.services.explanation_generator import generate_explanation_mcq
 from backend.database import get_db
@@ -86,7 +86,7 @@ async def generate_quiz(request: QuizRequest):
     # Lấy text chunks liên quan đến unit
     text_chunks = []
     for unit_id in request.unit_ids:
-        unit_chunks = get_unit_chunks(unit_id)
+        unit_chunks = get_unit_main_chunks(unit_id)
         text_chunks.extend(unit_chunks)
 
     # Generate questions from chunks
