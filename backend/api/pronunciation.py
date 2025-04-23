@@ -1,10 +1,14 @@
+import psycopg2
+import json
 from pathlib import Path
 import uuid
 import os
 from pydub import AudioSegment
-from fastapi import APIRouter
-from fastapi import File, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, File, UploadFile, Form, HTTPException
+from backend.services.voice_quiz_generator import process_user_audio, calculate_pronunciation_score
+from backend.database import get_db
+from backend.services.explanation_generator import generate_explanation_pronunciation
+from backend.schemas.pronunciation import PronunciationAnalysisResult
 
 router = APIRouter(tags=["pronunciation"])
 
@@ -12,30 +16,138 @@ FRONTEND_PUBLIC_DIR = Path("../frontend/public").resolve()
 UPLOAD_DIR = FRONTEND_PUBLIC_DIR / "users"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-@router.post("/upload-audio")
-async def upload_audio(file: UploadFile = File(...)):
+@router.post("/upload-audio", response_model=PronunciationAnalysisResult)
+async def upload_audio(
+    id: int = Form(...),
+    user_id: str = Form(...),
+    file: UploadFile = File(...)
+):
+    conn = None
     try:
-        file_extension = Path(file.filename).suffix
+        # --- File Handling ---
+        file_extension = Path(file.filename).suffix.lower()
+        if not file_extension:
+             # Assume webm if no extension given by browser recording
+             file_extension = ".webm"
 
-        # Tạo tên file ngẫu nhiên
-        filename = f"{uuid.uuid4().hex}.wav"
-        temp_path = UPLOAD_DIR / f"temp{file_extension}"
+        filename = f"{uuid.uuid4().hex}.wav" # Always save as wav eventually
+        temp_id = uuid.uuid4().hex
+        temp_path = UPLOAD_DIR / f"temp_{temp_id}{file_extension}"
         output_path = UPLOAD_DIR / filename
+        relative_output_url = f"/users/{filename}" # URL for frontend
 
-        # Ghi tạm file upload để chuyển định dạng
+        # Write temporary file
         with open(temp_path, "wb") as f:
             content = await file.read()
             f.write(content)
 
-        # Chuyển đổi sang .wav nếu không phải wav
+        # Convert to WAV if necessary
         if file_extension != ".wav":
-            audio = AudioSegment.from_file(temp_path)
-            audio.export(output_path, format="wav")
-            os.remove(temp_path)
+            try:
+                audio = AudioSegment.from_file(temp_path)
+                 # Ensure mono and standard sample rate if needed by analysis tool
+                 # audio = audio.set_channels(1).set_frame_rate(16000)
+                audio.export(output_path, format="wav")
+                os.remove(temp_path) # Clean up temp file
+            except Exception as convert_err:
+                 # Cleanup even if conversion fails
+                 if temp_path.exists():
+                     os.remove(temp_path)
+                 raise HTTPException(status_code=500, detail=f"Audio conversion failed: {convert_err}")
         else:
-            os.rename(temp_path, output_path)
+            os.rename(temp_path, output_path) # If already wav, just rename
 
-        # Trả lại URL mà frontend có thể truy cập được (ví dụ: /users/abc.wav)
-        return JSONResponse(content={"url": f"/users/{filename}"})
+        # --- Analysis ---
+        # Fetch question data from DB
+        conn = get_db()
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("""
+                SELECT question_text, correct_answer 
+                FROM quiz_questions 
+                    WHERE id = %s AND type = 'PRONUNCIATION'
+            """, (id,))
+            question_data = cur.fetchone()
+
+        if not question_data:
+            # Clean up saved audio file if question not found or not pronunciation type
+            if output_path.exists():
+                os.remove(output_path)
+            raise HTTPException(status_code=404, detail=f"Pronunciation question with ID {id} not found.")
+
+        correct_answer_json = question_data['correct_answer']
+        question_text = question_data['question_text']
+        correct_phonemes_dict = {}
+        try:
+            correct_phonemes_dict = json.loads(correct_answer_json)
+        except json.JSONDecodeError:
+             # Clean up saved audio file if correct answer format is bad
+             if output_path.exists():
+                 os.remove(output_path)
+             raise HTTPException(status_code=500, detail=f"Invalid format for correct answer phonemes for question ID {id}.")
+
+
+        # Process the saved WAV audio file
+        user_phonemes = process_user_audio(output_path)
+
+        # Calculate score
+        score = calculate_pronunciation_score(user_phonemes, correct_answer_json)
+        is_correct = score >= 0.8
+        
+        # Generate explanation (optional here, can be regenerated on submit)
+        explanation = generate_explanation_pronunciation(question_text, correct_answer_json, user_phonemes)
+
+        # Save user_phonemes and explanation to DB
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            # Update user_answers: lưu userPhonemes
+            cur.execute("""
+                INSERT INTO user_answers (user_id, question_id, user_answer, user_phonemes, is_correct)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (user_id, question_id) DO UPDATE SET
+                    user_phonemes = EXCLUDED.user_phonemes,
+                    submitted_at = NOW()
+            """, (
+                user_id,
+                id,
+                relative_output_url,
+                user_phonemes,
+                is_correct
+            ))
+
+            # Update quiz_questions: lưu explanation
+            cur.execute("""
+                UPDATE quiz_questions 
+                SET explanation = %s 
+                WHERE id = %s
+            """, (
+                explanation,
+                id
+            ))
+
+        conn.commit()
+
+        # Return results including the analysis
+        return PronunciationAnalysisResult(
+            url=relative_output_url,
+            userPhonemes=user_phonemes,
+            score=score,
+            explanation=explanation,
+            correctPhonemes=correct_phonemes_dict
+        )
+
+    except HTTPException as http_exc:
+        # Re-raise HTTP exceptions directly
+        raise http_exc
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        # Log the error details for debugging
+        print(f"Error during audio upload/analysis for question {id}: {e}")
+        # Generic error for the client
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
+    finally:
+        if conn:
+            conn.close()
+        # Ensure temporary file is removed in case of early exit/error
+        if 'temp_path' in locals() and temp_path.exists():
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass # Ignore if already removed or permissions issue

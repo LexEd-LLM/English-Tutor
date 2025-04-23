@@ -1,5 +1,5 @@
 {
-  "id": "89810267-c61c-4a56-b919-0e866c036645",
+  "id": "3720b7ed-cf0c-4328-ab88-5a3eb86ac866",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -257,6 +257,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
         }
       },
       "indexes": {},

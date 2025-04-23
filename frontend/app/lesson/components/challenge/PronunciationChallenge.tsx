@@ -1,58 +1,117 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-// Removed Button import as we're using standard buttons now for simplicity
-import { PronunciationChallengeProps } from "./types"; // Assuming types file exists
+import { PronunciationChallengeProps } from "./types"; 
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import remarkGfm from "remark-gfm";
 import Image from "next/image"; // For using icons
 
 // Define the type for recording state
 type RecordingState = "idle" | "recording" | "processing" | "done" | "error";
-
+// Type for the analysis result received from the backend
+type AnalysisResult = {
+    url: string;
+    userPhonemes: string | null;
+    score: number;
+    explanation: string | null;
+    correctPhonemes: Record<string, string>; // e.g., { "en-us": "...", "en-gb": "..." }
+};
 // Define the maximum recording time in seconds
 const MAX_RECORDING_TIME = 120; // 02:00
 
+// --- Helper Function for Display ---
+const renderColoredPhonemes = (correct: string = "", user: string = "") => {
+    const output = [];
+    const userPhonemesArray = user.split(/\s+/); // Split by space
+    const correctPhonemesArray = correct.split(/\s+/); // Split by space
+  
+    // Simple alignment (can be improved with more sophisticated algorithms like Needleman-Wunsch if needed)
+    const maxLength = Math.max(correctPhonemesArray.length, userPhonemesArray.length);
+  
+    for (let i = 0; i < maxLength; i++) {
+      const cPhoneme = correctPhonemesArray[i] || "";
+      const uPhoneme = userPhonemesArray[i] || "";
+  
+      // Treat empty strings (padding) as non-matches unless both are empty
+      const isMatch = cPhoneme && uPhoneme && cPhoneme === uPhoneme;
+      const isMissing = !uPhoneme && cPhoneme;
+      const isExtra = uPhoneme && !cPhoneme;
+      const isWrong = uPhoneme && cPhoneme && uPhoneme !== cPhoneme;
+  
+      let colorClass = "text-gray-400"; // Default for padding/empty
+      let displayChar = "·"; // Placeholder for missing phoneme
+  
+      if (isMatch) {
+        colorClass = "text-green-600";
+        displayChar = uPhoneme;
+      } else if (isWrong) {
+        colorClass = "text-red-500";
+         // Show user phoneme, maybe strike-through correct one? For simplicity, just show user's wrong one.
+        displayChar = uPhoneme;
+      } else if (isMissing) {
+        colorClass = "text-orange-500"; // Indicate missing phoneme
+        displayChar = "·"; // Show placeholder for missing
+        // Alternatively display correct: displayChar = cPhoneme;
+      } else if (isExtra) {
+         colorClass = "text-purple-500"; // Indicate extra phoneme
+         displayChar = uPhoneme;
+      } else if (uPhoneme) {
+          // If user has phoneme but correct doesn't (due to length diff), mark as extra
+          colorClass = "text-purple-500";
+          displayChar = uPhoneme;
+      }
+  
+  
+      output.push(
+        <span key={i} className={`mr-1 ${colorClass}`}>
+          {displayChar}
+        </span>
+      );
+    }
+  
+    // Add visual indicator for the correct phoneme string as well
+     const correctDisplay = (
+      <div className="font-mono text-gray-800">
+        {correctPhonemesArray.join(' ')}
+      </div>
+     );
+  
+  
+    return { userDisplay: output, correctDisplay }; // Return both parts if needed separately
+  };
+
 export const PronunciationChallenge = ({
+    id,
     question,
     audioUrl, // Original audio for the question
     status,   // External status affecting interaction (e.g., 'correct', 'wrong')
     onSelect, // Callback with the uploaded user audio URL
+    userId
 }: PronunciationChallengeProps) => {
     const [recordingState, setRecordingState] = useState<RecordingState>("idle");
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-    // State specifically for the temporary blob URL for the player
-    const [blobUrl, setBlobUrl] = useState<string | null>(null);
+    const [blobUrl, setBlobUrl] = useState<string | null>(null); // For local playback
     const [recordingError, setRecordingError] = useState<string | null>(null);
     const [timeLeft, setTimeLeft] = useState(MAX_RECORDING_TIME);
-    // No need to store userAudioUrl state here anymore if onSelect handles it
-    // const [userAudioUrl, setUserAudioUrl] = useState<string | null>(null);
+    const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null); // Store analysis results
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
-    const userAudioRef = useRef<HTMLAudioElement>(null); // Ref for the user's recording player
-    const originalAudioRef = useRef<HTMLAudioElement>(null); // Ref for the original audio playback
+    const userAudioRef = useRef<HTMLAudioElement>(null);
+    const originalAudioRef = useRef<HTMLAudioElement>(null);
 
     // --- Blob URL Management ---
     useEffect(() => {
-        // Effect to create and revoke the blob URL
         if (audioBlob) {
             const url = URL.createObjectURL(audioBlob);
             setBlobUrl(url);
-            console.log("Created blob URL:", url); // For debugging
-
-            // Return cleanup function
-            return () => {
-                console.log("Revoking blob URL:", url); // For debugging
-                URL.revokeObjectURL(url);
-                setBlobUrl(null); // Ensure state is also cleared
-            };
+            return () => { URL.revokeObjectURL(url); setBlobUrl(null); };
         } else {
-            // If audioBlob becomes null, ensure blobUrl is also null
             setBlobUrl(null);
         }
-        // Dependency: run this effect when audioBlob changes
     }, [audioBlob]);
-
 
     // --- Timer Logic ---
     const stopTimer = () => {
@@ -99,20 +158,64 @@ export const PronunciationChallenge = ({
             };
 
             mediaRecorderRef.current.onstop = () => {
-                const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-                // Set the blob first, the useEffect will handle creating the URL
-                setAudioBlob(blob);
-                setRecordingState("processing");
-                submitRecording(blob); // Submit after setting blob
-                stream.getTracks().forEach(track => track.stop());
+                console.log("onstop event fired"); // <-- Check if this logs
+                try {
+                    // Check if chunks exist
+                    if (!audioChunksRef.current || audioChunksRef.current.length === 0) {
+                        console.error("No audio chunks recorded!");
+                        setRecordingError("Ghi âm không thành công (không có dữ liệu).");
+                        setRecordingState("error");
+                        // Stop stream tracks here too
+                        try {
+                            mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+                        } catch(e) { console.warn("Error stopping stream tracks on empty chunks:", e); }
+                        return; // Stop execution here
+                    }
+            
+                    const blob = new Blob(audioChunksRef.current, { type: "audio/webm" }); // Or appropriate mime type
+                    console.log("Blob created, size:", blob.size); // <-- Check size
+            
+                    if (blob.size === 0) {
+                        console.error("Blob created but size is 0!");
+                        setRecordingError("Ghi âm không thành công (kích thước 0 byte).");
+                        setRecordingState("error");
+                         try {
+                            mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+                        } catch(e) { console.warn("Error stopping stream tracks on zero size blob:", e); }
+                        return; // Stop execution
+                    }
+            
+                    setAudioBlob(blob); // For local playback URL generation
+                    setRecordingState("processing"); // <-- This is happening
+                    console.log("Calling submitRecording..."); // <-- Check if this logs
+                    submitRecording(blob); // Call the async function
+            
+                    // Stop the stream tracks *after* processing starts
+                    try {
+                        mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+                    } catch(e) { console.warn("Error stopping stream tracks after submit:", e); }
+            
+            
+                } catch (error) {
+                    console.error("Error inside onstop handler:", error); // <-- Catch potential errors
+                    setRecordingError("Lỗi xử lý bản ghi âm.");
+                    setRecordingState("error");
+                     try {
+                        mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+                    } catch(e) { console.warn("Error stopping stream tracks in catch block:", e); }
+                }
             };
-
+            
+            // Add onerror handler too, just in case
             mediaRecorderRef.current.onerror = (event) => {
-                console.error("MediaRecorder error:", event);
-                setRecordingError("Đã xảy ra lỗi trong quá trình ghi âm.");
+                console.error("MediaRecorder error event:", event);
+                // Add specific error check if possible, e.g., event.error.name
+                setRecordingError(`Lỗi MediaRecorder: ${event.error.name || 'Unknown error'}`);
                 setRecordingState("error");
                 stopTimer();
-                stream.getTracks().forEach(track => track.stop());
+                try {
+                     mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+                } catch(e) { console.warn("Error stopping stream tracks in onerror:", e); }
             };
 
             mediaRecorderRef.current.start();
@@ -138,7 +241,14 @@ export const PronunciationChallenge = ({
 
     const submitRecording = async (blob: Blob) => {
         const formData = new FormData();
-        formData.append("file", blob, `recording-${Date.now()}.webm`);
+        const fixedBlob = new Blob([blob], { type: "audio/webm" });
+        formData.append("file", fixedBlob, `recording-${Date.now()}.webm`);
+        formData.append("id", id.toString()); // Send id
+        formData.append("user_id", userId.toString());
+
+        setRecordingState("processing"); // Show processing state immediately
+        setRecordingError(null);
+        setAnalysisResult(null); // Clear previous results
 
         try {
             const response = await fetch("/api/upload-audio", {
@@ -146,27 +256,36 @@ export const PronunciationChallenge = ({
                 body: formData,
             });
 
+            const data = await response.json(); // Read response body once
+
             if (!response.ok) {
-                const errorData = await response.text();
-                console.error("Upload failed:", response.status, errorData);
-                throw new Error(`Upload failed with status ${response.status}`);
+                console.error("Upload/Analysis failed:", response.status, data);
+                 // Use error message from backend if available
+                const errorDetail = data?.detail || `Upload failed with status ${response.status}`;
+                throw new Error(errorDetail);
             }
 
-            const data = await response.json();
-            if (!data.url) {
-                console.error("Upload response missing URL:", data);
-                throw new Error("Server response did not include audio URL.");
+            // Assuming response matches PronunciationAnalysisResult Pydantic model
+            if (!data.url || data.score === undefined || !data.correctPhonemes) {
+                console.error("Invalid analysis response:", data);
+                throw new Error("Server response did not include expected analysis data.");
             }
 
-            const generatedUserAudioUrl = data.url;
-            setRecordingState("done"); // Set state to done AFTER successful upload
-            onSelect(generatedUserAudioUrl);
+            // Store the full analysis result
+            setAnalysisResult(data as AnalysisResult);
+            setRecordingState("done");
 
-        } catch (error) {
-            console.error("Error uploading audio:", error);
-            setRecordingError("Gửi âm thanh thất bại. Vui lòng thử lại.");
+            // Pass necessary info for final submission
+            onSelect({
+                userAudioUrl: data.url,
+                userPhonemes: data.userPhonemes // Pass phonemes back
+            });
+
+        } catch (error: any) {
+            console.error("Error uploading/analyzing audio:", error);
+            setRecordingError(error.message || "Gửi và phân tích âm thanh thất bại.");
             setRecordingState("error");
-            setAudioBlob(null); // Clear blob on error, triggers URL revoke via useEffect
+            setAudioBlob(null); // Clear blob on error
         }
     };
 
@@ -175,6 +294,7 @@ export const PronunciationChallenge = ({
         setRecordingError(null);
         setTimeLeft(MAX_RECORDING_TIME);
         stopTimer();
+        setAnalysisResult(null); // Clear analysis results
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
             mediaRecorderRef.current.stop();
             try {
@@ -193,7 +313,6 @@ export const PronunciationChallenge = ({
                 await originalAudioRef.current.play();
             } catch (error) {
                 console.error("Error playing original audio:", error);
-                // Optional: show a small error message to the user
             }
         }
     };
@@ -221,6 +340,14 @@ export const PronunciationChallenge = ({
 
     // Determine if interaction should be disabled
     const isDisabled = status !== "none" || recordingState === "processing";
+
+    // --- Render Colored Phonemes based on Analysis Result ---
+    const renderedPhonemes = analysisResult?.userPhonemes !== undefined // Check if analysis is done
+        ? renderColoredPhonemes(
+            analysisResult.correctPhonemes["en-us"] ?? analysisResult.correctPhonemes["en-gb"] ?? "", // Prioritize US, fallback UK
+            analysisResult.userPhonemes ?? ""
+          )
+        : null;
 
     return (
         <div className="space-y-4">
@@ -293,14 +420,51 @@ export const PronunciationChallenge = ({
                     </div>
                 )}
 
-                {/* Use blobUrl state for conditional rendering and src */}
-                {recordingState === "done" && blobUrl && (
-                    <div className="w-full flex flex-col items-center">
-                        <div className="py-3 rounded-xl px-3 bg-white w-full my-4 shadow-sm">
-                            <audio ref={userAudioRef} controls src={blobUrl} className="w-full h-10">
+                {/* Display Analysis Results */}
+                {recordingState === "done" && analysisResult && (
+                    <div className="w-full flex flex-col items-center space-y-4">
+                        {/* User Audio Player */}
+                         <div className="py-3 rounded-xl px-3 bg-white w-full my-2 shadow-sm">
+                            {/* Use analysisResult.url for the player source */}
+                            <audio ref={userAudioRef} controls src={analysisResult.url} className="w-full h-10">
                                 Your browser does not support the audio element.
                             </audio>
                         </div>
+
+                        {/* Phoneme Comparison Display */}
+                        <div className="w-full p-3 border rounded-md bg-gray-50 text-xs md:text-sm">
+                           <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
+                               <div className="font-semibold text-gray-600">Phiên âm đúng (US):</div>
+                               <div className="font-mono text-gray-800 break-words">
+                                   {analysisResult.correctPhonemes["en-us"] || "-"}
+                               </div>
+
+                               <div className="font-semibold text-gray-600">Phiên âm đúng (UK):</div>
+                               <div className="font-mono text-gray-800 break-words">
+                                   {analysisResult.correctPhonemes["en-gb"] || "-"}
+                               </div>
+
+                               <div className="font-semibold text-gray-600 self-start">Phiên âm của bạn:</div>
+                               <div className="font-mono break-words">
+                                   {renderedPhonemes ? renderedPhonemes.userDisplay : (analysisResult.userPhonemes === null ? <span className="text-orange-600">Không thể xử lý</span> : "...")}
+                               </div>
+                           </div>
+                           {/* Display Score */}
+                           <div className="mt-3 text-center">
+                               <span className={`font-bold px-2 py-1 rounded ${analysisResult.score >= 0.8 ? 'bg-green-100 text-green-700' : analysisResult.score >= 0.5 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                                    Điểm: {(analysisResult.score * 100).toFixed(0)}%
+                                </span>
+                            </div>
+                           {/* Display Explanation */}
+                           {analysisResult.explanation && (
+                                <div className="mt-4 prose prose-sm sm:prose lg:prose-lg max-w-none text-gray-800 text-left">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                                        {analysisResult.explanation}
+                                    </ReactMarkdown>
+                                </div>
+                            )}
+                        </div>
+
                         <button
                             onClick={handleRerecord}
                             disabled={status !== 'none'}

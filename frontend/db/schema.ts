@@ -141,6 +141,7 @@ export const userAnswers = pgTable("user_answers", {
   userAnswer: text("user_answer").notNull(),
   isCorrect: boolean("is_correct").notNull(),
   userPhonemes: text("user_phonemes"), // nullable
+  submittedAt: timestamp("submitted_at").defaultNow(),
 }, (table) => ({
   userQuestionUnique: unique("user_question_unique").on(table.userId, table.questionId),
 }));

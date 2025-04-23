@@ -1,5 +1,6 @@
 import psycopg2
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from typing import List
 
 from backend.schemas.quiz import (
@@ -17,9 +18,9 @@ from backend.services.question_generator import generate_questions_batch
 from backend.services.quiz_service import quiz_service
 from backend.services.unit_service import get_unit_chunks
 from backend.services.practice_service import practice_service
-from backend.services.explanation_generator import generate_explanation_mcq, generate_explanation_pronunciation
+from backend.services.explanation_generator import generate_explanation_mcq
 from backend.database import get_db
-from backend.services.voice_quiz_generator import process_user_audio, calculate_pronunciation_score
+from backend.services.voice_quiz_generator import calculate_pronunciation_score
 
 router = APIRouter(tags=["quiz"])
 
@@ -167,17 +168,17 @@ async def submit_quiz(submission: QuizSubmission):
     try:
         conn = get_db()
         total_questions = len(submission.answers)
-        correct_answers = 0
+        correct_answers_score = 0.0
         
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             # Get correct answers and types for all questions
             question_ids = [ans.questionId for ans in submission.answers]
             placeholders = ','.join(['%s'] * len(question_ids))
             cur.execute(f"""
-                SELECT id, question_text, correct_answer, type, audio_url
+                SELECT id, question_text, correct_answer, type
                 FROM quiz_questions 
                 WHERE id IN ({placeholders})
-            """, question_ids)
+            """, tuple(question_ids))
             question_map = {row['id']: row for row in cur.fetchall()}
             
             # Process each answer
@@ -187,70 +188,66 @@ async def submit_quiz(submission: QuizSubmission):
                     continue
 
                 question_type = q['type']
-                question_text = q['question_text']
                 correct_answer = q['correct_answer']
-                user_answer = answer.userAnswer
-                is_correct = False
-                score = 0.0
-                user_phonemes = None
-                explanation = None
+                user_answer = answer.userAnswer # Answer (text, URL)
 
+                is_correct = False
+                user_phonemes = None
+                
                 # ==== Handle PRONUNCIATION questions ====
                 if question_type == "PRONUNCIATION":
-                    user_phonemes = process_user_audio(user_answer)  # return phoneme string
+                    user_phonemes = answer.userPhonemes # Phonemes from payload (for pronunciation)
                     correct_phonemes = correct_answer  # stringified JSON
                     score = calculate_pronunciation_score(user_phonemes, correct_phonemes)
-                    correct_answers += score  # fractional point
+                    correct_answers_score += score  # fractional point
                     # Define a threshold for what is "correct"
                     is_correct = score >= 0.8
-                    explanation = generate_explanation_pronunciation(
-                        question=question_text,
-                        correct_answer=correct_phonemes,
-                        user_answer=user_phonemes
-                    )
 
                 # ==== Handle OTHER question types ====
                 else:
                     is_correct = str(user_answer) == str(correct_answer)
                     if is_correct:
-                        score = 1.0
-                        correct_answers += 1.0
+                        correct_answers_score += 1.0
 
-                # Save answer to database
+                # --- Save answer details to user_answers table ---
                 cur.execute("""
                     INSERT INTO user_answers (user_id, question_id, user_answer, is_correct, user_phonemes)
                     VALUES (%s, %s, %s, %s, %s)
                     ON CONFLICT (user_id, question_id) DO UPDATE SET
                         user_answer = EXCLUDED.user_answer,
                         is_correct = EXCLUDED.is_correct,
-                        user_phonemes = EXCLUDED.user_phonemes
+                        user_phonemes = EXCLUDED.user_phonemes,
+                        submitted_at = NOW() -- Optionally track submission time
                 """, (
                     submission.userId,
                     answer.questionId,
-                    answer.userAnswer,
+                    user_answer, # Ensure user_answer is stored as text (URL for pronunciation)
                     is_correct,
-                    user_phonemes
+                    user_phonemes # Save the submitted phonemes
                 ))
-
-                cur.execute("""
-                    UPDATE quiz_questions 
-                    SET explanation = %s 
-                    WHERE id = %s
-                """, (explanation, answer.questionId))
 
         conn.commit()
         
         results = {
             "success": True,
             "totalQuestions": total_questions,
-            "correctAnswers": correct_answers,
+            "correctAnswers": correct_answers_score,
             "quizId": submission.quizId
         }
         
         return results
         
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(f"Error during quiz submission: {error}")
+        if conn:
+            conn.rollback() # Rollback transaction on error
+        # Return an error response
+        # Consider more specific error handling
+        return JSONResponse(status_code=500, content={"success": False, "error": f"An error occurred processing the submission: {error}"})
+
     finally:
-        conn.close()
+        if conn:
+            conn.close()
         
 @router.post("/generate-explanation")
 async def generate_explanation_api(request: ExplanationRequest):

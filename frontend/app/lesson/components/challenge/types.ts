@@ -9,6 +9,7 @@ export type BaseChallengeProps = {
   onSelect: (answer: number | string) => void;
   imageUrl?: string;
   audioUrl?: string;
+  userId: string;
 };
 
 // Dạng câu hỏi trắc nghiệm
@@ -25,7 +26,8 @@ export type MultipleChoiceChallengeProps  = BaseChallengeProps & {
 };
 
 // Dạng phát âm (không có option, không selectedOption)
-export type PronunciationChallengeProps = BaseChallengeProps & {
+export type PronunciationChallengeProps = Omit<BaseChallengeProps, 'onSelect'> & {
+  onSelect: (result: { userAudioUrl: string; userPhonemes: string | null }) => void;
   options?: undefined;
   selectedOption?: undefined;
 };

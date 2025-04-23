@@ -69,6 +69,7 @@ class QuizAgainRequest(BaseModel):
 class QuizAnswer(BaseModel):
     questionId: int
     userAnswer: str
+    userPhonemes: Optional[str] = None
     
 class QuizSubmission(BaseModel):
     userId: str

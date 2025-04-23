@@ -58,7 +58,10 @@ export const Quiz = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number>();
   const [status, setStatus] = useState<"none" | "selected">("none");
-  const [userAnswers, setUserAnswers] = useState<Record<number, number | string>>({});
+  const [userAnswers, setUserAnswers] = useState<Record<number, number | string | {
+    userAudioUrl: string;
+    userPhonemes: string | null;
+  }>>({});
   const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -103,7 +106,7 @@ export const Quiz = ({
     setStatus("none");
   };
 
-  const onSelect = (answer: number | string) => {
+  const onSelect = (answer: number | string | { userAudioUrl: string; userPhonemes: string | null }) => {
     if (answer === undefined || answer === null) {
       console.error('Invalid answer:', answer);
       return;
@@ -172,17 +175,22 @@ export const Quiz = ({
         // Find the question and get the selected option's text
         const question = challenges.find(q => q.id === parseInt(questionId));
         let userAnswer = "";
+        let userPhonemes: string | undefined = undefined;
 
         if (typeof answer === "number") {
           const selectedOption = question?.challengeOptions.find(opt => opt.id === answer);
           userAnswer = selectedOption?.text || "";
         } else if (typeof answer === "string") {
           userAnswer = answer; // e.g. URL to user's audio
+        } else if (typeof answer === "object" && "userAudioUrl" in answer) {
+          userAnswer = answer.userAudioUrl; // you may also pass phonemes if your backend accepts it
+          userPhonemes = answer.userPhonemes ?? undefined;
         }
 
         return {
           questionId: parseInt(questionId),
-          userAnswer
+          userAnswer,
+          ...(userPhonemes ? { userPhonemes } : {})
         };
       });
 
@@ -220,7 +228,6 @@ export const Quiz = ({
         <div className="mx-auto h-full max-w-[1140px] px-6 pb-[100px] pt-8 lg:px-10">
           {challenge && (
             <Challenge
-              key={challenge.id}
               id={challenge.id}
               type={challenge.type}
               question={challenge.question}
@@ -230,6 +237,7 @@ export const Quiz = ({
               onSelect={onSelect}
               imageUrl={challenge.imageUrl}
               audioUrl={challenge.audioUrl}
+              userId={userId}
             />
           )}
         </div>

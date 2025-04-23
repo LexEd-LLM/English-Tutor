@@ -39,15 +39,16 @@ def generate_audio(text: str, language: str = 'en') -> str:
         print(f"Error generating audio: {e}")
         return ""
 
-def process_user_audio(audio_path: str) -> tuple[str, bool]:
+def process_user_audio(audio_path: str) -> str:
     """
     Process user's audio submission and compare with correct pronunciation
     Returns: (user_phonemes, is_correct)
     """
     try:
-        # Convert audio path to absolute path
-        audio_path = str(Path("../frontend/public").resolve() / audio_path.lstrip("/"))
-
+        # Convert Path object to str if needed
+        if isinstance(audio_path, Path):
+            audio_path = str(audio_path)
+        
         # Get ASR transcription
         result = asr_model(audio_path)['text'].replace(" ", "")
         result = f"/{result}/"

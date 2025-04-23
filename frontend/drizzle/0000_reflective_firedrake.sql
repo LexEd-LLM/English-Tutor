@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS "user_answers" (
 	"user_answer" text NOT NULL,
 	"is_correct" boolean NOT NULL,
 	"user_phonemes" text,
+	"submitted_at" timestamp DEFAULT now(),
 	CONSTRAINT "user_question_unique" UNIQUE("user_id","question_id")
 );
 --> statement-breakpoint
