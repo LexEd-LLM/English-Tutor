@@ -8,24 +8,36 @@ from .voice_quiz_generator import generate_audio, get_phonemes
 from .image_generator import generate_image
 
 # Base prompt template for question generation without strengths/weaknesses
-BASE_FIB_QUESTION_TEMPLATE = """
-    You are helping Vietnamese learners review English. Generate {count} different fill_in_blank multiple-choice questions from the following content.
-    Make sure questions cover different aspects and concepts from the content.
-    Content: {content}
-    {custom_prompt}
-    
-    For each question:
-    1. Create a question in the specified format
-    2. Generate 4 options with only one correct answer
-    3. Mark the correct answer
+BASE_FIB_QUESTION_TEMPLATE = """ 
+You are helping Vietnamese students improve their English through creative and varied fill-in-the-blank questions.
 
-    Return the questions in JSON format with these fields:
-    - question: the fill in blank question
-    - options: array of 4 possible answers
-    - correct_answer: the correct option
-    - type: fill_in_blank
+Use the following English learning materials as your inspiration. You are NOT restricted to the exact words or sentences in the content. Feel free to synthesize, combine, or transform ideas into realistic classroom or exam-style questions.
 
-    Generate exactly {count} questions.
+Base your questions on:
+- Main topics and skills: {content}
+- Sample textbook snippets: {text_chunks}
+{custom_prompt}
+
+Create {count} unique fill-in-the-blank multiple-choice questions.
+
+Make sure:
+1. Each question tests a **different aspect** of English (e.g., grammar, vocabulary, reading inference, pronunciation, functional language).
+2. Use a variety of **common school-level question formats**, including:
+    - Sentence completion (with grammar or word choice)
+    - Mini-dialogues or functional language
+    - Short context-based cloze tests
+    - Sound or stress discrimination
+    - Lexical meaning in context (synonyms, phrasal verbs, etc.)
+3. The content should feel like it belongs in a **Vietnamese English textbook or exam paper**.
+4. Avoid repetition and overly simple structures.
+
+Format (in JSON array):
+- question: the sentence with a blank (use ___)
+- options: list of 4 options (A, B, C, D), only one correct
+- correct_answer: the correct option string
+- type: "fill_in_blank"
+
+Return exactly {count} questions.
 """
 
 BASE_TRANSLATION_QUESTION_TEMPLATE = """
@@ -75,6 +87,7 @@ PRACTICE_QUESTION_TEMPLATE = """
 
 def generate_fill_in_blank_questions(
     content: str,
+    text_chunks: str,
     count: int,
     custom_prompt: Optional[str] = None,
     strengths: Optional[List[str]] = None,
@@ -101,6 +114,7 @@ def generate_fill_in_blank_questions(
         prompt_template = PromptTemplate(template=template)
         prompt = prompt_template.format(
             content=content,
+            text_chunks=text_chunks,
             custom_prompt=custom_prompt,
             count=count,
         )
