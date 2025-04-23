@@ -77,16 +77,7 @@ export const Quiz = ({
   useEffect(() => {
     const answeredCount = Object.keys(userAnswers).length;
     setAllQuestionsAnswered(answeredCount === challenges.length);
-    
-    // Debug log for answers status
-    console.log('Debug - Answer Status:', {
-      totalQuestions: challenges.length,
-      answeredCount,
-      userAnswers,
-      isAllAnswered: answeredCount === challenges.length
-    });
   }, [userAnswers, challenges.length]);
-
   const onNext = () => {
     if (activeIndex < challenges.length - 1) {
       const nextAnswer = userAnswers[challenges[activeIndex + 1]?.id];
@@ -117,13 +108,6 @@ export const Quiz = ({
       console.error('Invalid answer:', answer);
       return;
     }
-
-    console.log('Debug - Selected Answer:', {
-      questionType: challenge.type,
-      answer,
-      questionId: challenge.id,
-      allOptions: options
-    });
 
     // For multiple choice, update selectedOption (for UI highlighting)
     if (typeof answer === "number") {
@@ -200,13 +184,6 @@ export const Quiz = ({
           questionId: parseInt(questionId),
           userAnswer
         };
-      });
-
-      // Debug log submission data
-      console.log('Debug - Submission Data:', {
-        userId,
-        quizId,
-        answers
       });
 
       const response = await submitQuizAnswers(userId, quizId, answers);
