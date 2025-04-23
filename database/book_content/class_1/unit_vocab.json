@@ -1,0 +1,98 @@
+[
+    {
+        "id": "unit_1",
+        "unit": "Unit 1: In the school playground",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\nball \n/bɔːl/\nquả bóng\nbike \n/baɪk/\nxe đạp\nbook \n/bʊk/\nquyển sách"
+    },
+    {
+        "id": "unit_2",
+        "unit": "Unit 2: In the dining room",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\ncake\n/keɪk/\ncái bánh\ncar\n/kɑː(r)/\nxe ô tô\ncat \n/kæt/ \ncon mèo\ncup\n/kʌp/ \ncái chén, tách"
+    },
+    {
+        "id": "unit_3",
+        "unit": "Unit 3: At the street market",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\napple\n/ˈæpl/ \nquả táo\nbag \n/bæɡ/ \ncái túi\ncan\n/kæn/ \nlon đồ uống\nhat\n/hæt/ \ncái mũ"
+    },
+    {
+        "id": "unit_4",
+        "unit": "Unit 4: In the bedroom",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\ndesk\n/desk/ \ncái bàn học sinh\ndog\n/dɒɡ/ \ncon chó\ndoor\n/dɔː(r)/ \ncửa ra vào\nduck\n/dʌk/ \ncon vịt"
+    },
+    {
+        "id": "unit_5",
+        "unit": "Unit 5: At the fish and chip shop",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\nchicken\n/ˈtʃɪkɪn/ \nthịt gà\nchips\n/tʃɪps/ \nkhoai tây chiên\nfish\n/fɪʃ/ \ncá\nmilk\n/mɪlk/ \nsữa\nfish and chips\n/fɪʃ ən tʃɪps/ \nmón cá tẩm bột và khoai tây chiên"
+    },
+    {
+        "id": "unit_6",
+        "unit": "Unit 6: In the classroom",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\nbell\n/bel/ \ncái chuông\npen\n/pen/ \nbút mực\npencil\n/ˈpensl/ \nbút chì\nred\n/red/ \nmàu đỏ"
+    },
+    {
+        "id": "unit_7",
+        "unit": "Unit 7: In the garden",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\ngarden\n/ˈɡɑːdn/ \nkhu vườn\ngate\n/ɡeɪt/ \ncổng ra vào\ngirl\n/ɡɜːl/ \ncô bé\ngoat\n/ɡəʊt/ \ncon dê"
+    },
+    {
+        "id": "unit_8",
+        "unit": "Unit 8: In the park",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\nhair\n/heə(r)/\ntóc\nhand\n/hænd/ \nbàn tay\nhead\n/hed/ \ncái đầu\nhorse\n/hɔːs/ \ncon ngựa"
+    },
+    {
+        "id": "unit_9",
+        "unit": "Unit 9: In the shop",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\nclock\n/klɒk/ \ncái đồng hồ\nlock\n/lɒk/ \nổ khoá\nmop\n/mɒp/ \ncây lau nhà\npot\n/pɒt/ \ncái nồi"
+    },
+    {
+        "id": "unit_10",
+        "unit": "Unit 10: At the zoo",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\nmango\n/ˈmæŋɡəʊ/ \nquả xoài\nmonkey\n/ˈmʌŋki/ \ncon khỉ\nmother\n/ˈmʌðə(r)/ \nmẹ\nmouse\n/maʊs/ \ncon chuột"
+    },
+    {
+        "id": "unit_11",
+        "unit": "Unit 11: At the bus stop",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\nbus\n/bʌs/ \nxe ô tô buýt\nrun\n/rʌn/ \nchạy\nsun\n/sʌn/ \nmặt trời\ntruck\n/trʌk/ \nô tô tải"
+    },
+    {
+        "id": "unit_12",
+        "unit": "Unit 12: At the lake",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\nlake\n/leɪk/ \nhồ nước\nleaf\n/liːf/ \nlá cây\nlemon\n/ˈlemən/ \nquả chanh"
+    },
+    {
+        "id": "unit_13",
+        "unit": "Unit 13: In the school canteen",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\nbanana\n/bəˈnɑːnə/ \nquả chuối\nnoodles\n/ˈnuːdlz/ \nmì\nnut\n/nʌt/ \nhạt lạc"
+    },
+    {
+        "id": "unit_14",
+        "unit": "Unit 14: In the toy shop",
+        "type": "VOCABULARY",
+        "content": " WORD\nPRONUNCIATION\nMEANING\nteddy bear\n/ˈtedi beə(r)/ \ncon gấu bông\ntiger\n/ˈtaɪɡə(r)/ \ncon hổ\ntop\n/tɒp/ \ncon quay\nturtle\n/ˈtɜːtl/ \ncon rùa"
+    },
+    {
+        "id": "unit_15",
+        "unit": "Unit 15: At the football match",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\nface\n/feɪs/ \nmặt\nfather\n/ˈfɑːðə(r)/ \nbố\nfoot\n/fʊt/ \nbàn chân\nfootball\n/ˈfʊtbɔːl/ \nbóng đá/ quả bóng đá"
+    },
+    {
+        "id": "unit_16",
+        "unit": "Unit 16: At home",
+        "type": "VOCABULARY",
+        "content": "WORD\nPRONUNCIATION\nMEANING\nwash\n/wɒʃ/ \nlau\nwater\n/ˈwɔːtə(r)/ \nnước\nwindow\n/ˈwɪndəʊ/ \ncửa sổ"
+    }
+]
