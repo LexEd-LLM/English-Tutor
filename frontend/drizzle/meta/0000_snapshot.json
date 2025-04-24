@@ -1,5 +1,5 @@
 {
-  "id": "eeb18e22-8d6d-4285-9201-293b0e8cdc93",
+  "id": "c8d07bc6-dd6a-47a2-a591-66f678286140",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -411,6 +411,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "depth_of_knowledge": {
+          "name": "depth_of_knowledge",
+          "type": "dok_level[]",
+          "primaryKey": false,
+          "notNull": false
+        },
         "strengths": {
           "name": "strengths",
           "type": "text",
@@ -563,6 +569,12 @@
           "notNull": true,
           "default": 5
         },
+        "active_course_id": {
+          "name": "active_course_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "subscription_status": {
           "name": "subscription_status",
           "type": "role",
@@ -584,12 +596,34 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "users_active_course_id_curriculums_id_fk": {
+          "name": "users_active_course_id_curriculums_id_fk",
+          "tableFrom": "users",
+          "tableTo": "curriculums",
+          "columnsFrom": [
+            "active_course_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     }
   },
   "enums": {
+    "dok_level": {
+      "name": "dok_level",
+      "values": {
+        "RECALL": "RECALL",
+        "SKILL_CONCEPT": "SKILL_CONCEPT",
+        "STRATEGIC_THINKING": "STRATEGIC_THINKING"
+      }
+    },
     "question_type": {
       "name": "question_type",
       "values": {

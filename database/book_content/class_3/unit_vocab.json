@@ -3,126 +3,126 @@
         "id": "unit_0",
         "unit": "Unit: Starter",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\none (n) /wʌn/ số một (1)\ntwo (n) /tuː/ số hai (2)\nthree (n) /θriː/ số ba (3)\nfour (n) /fɔː(r)/ số bốn (4)\nfive (n) /faɪv/ số năm (5)\nsix (n) /sɪks/ số sáu (6)\nseven (n) /ˈsevn/ số bảy (7)\neight (n) /eɪt/ số tám (8)"
+        "content": "one (n) \t số một (1)\ntwo (n) \t số hai (2)\nthree (n) \t số ba (3)\nfour (n) \t số bốn (4)\nfive (n) \t số năm (5)\nsix (n) \t số sáu (6)\nseven (n) \t số bảy (7)\neight (n) \t số tám (8)"
     },
     {
         "id": "unit_1",
         "unit": "Unit 1: Hello",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nbye (n, int.) /baɪ/ chào tạm biệt\nfine (adj) /faɪn/ khoẻ, tốt\ngoodbye (n, int.) /ˌgʊdˈbaɪ/ chào tạm biệt\nhello (n, int.) /həˈləʊ/ xin chào\nhi (n, int.) /haɪ/ xin chào\nhow (adv) /haʊ/ như thế nào\nI (pro) /aɪ/ tôi\nthank you /ˈθæŋk juː/ cảm ơn\nyou (pro) /ju/ bạn, các bạn"
+        "content": "bye (n, int.) \t chào tạm biệt\nfine (adj) \t khoẻ, tốt\ngoodbye (n, int.) \t chào tạm biệt\nhello (n, int.) \t xin chào\nhi (n, int.) \t xin chào\nhow (adv) \t như thế nào\nI (pro) \t tôi\nthank you \t cảm ơn\nyou (pro) \t bạn, các bạn"
     },
     {
         "id": "unit_2",
         "unit": "Unit 2: Our names",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nmy (adj) /maɪ/ của tôi\nname (n) /neɪm/ tên\nold (adj) /əʊld/ già\nwhat (pro) /wɒt/ gì\nyour (adj) /jɔː/ của bạn, của các bạn"
+        "content": "my (adj) \t của tôi\nname (n) \t tên\nold (adj) \t già\nwhat (pro) \t gì\nyour (adj) \t của bạn, của các bạn"
     },
     {
         "id": "unit_3",
         "unit": "Unit 3: Our friends",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nfriend (n) /frend/ bạn, bạn bè\nit (pro) /ɪt/ nó, cái đó, điều đó\nMr (abbreviation) /ˈmɪstə/ ông\nMrs (abbreviation) /mɪz/ bà, cô\nno (int.) /nəʊ/ không\nteacher (n) /ˈtiːtʃə/ giáo viên\nthat (pro) /ðæt/ đó, kia\nthis (pro) /ðɪs/ đây"
+        "content": "friend (n) \t bạn, bạn bè\nit (pro) \t nó, cái đó, điều đó\nMr (abbreviation) \t ông\nMrs (abbreviation) \t bà, cô\nno (int.) \t không\nteacher (n) \t giáo viên\nthat (pro) \t đó, kia\nthis (pro) \t đây"
     },
     {
         "id": "unit_4",
         "unit": "Unit 4: Our bodies",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\near (n) /ɪə/ tai\neye (n) /aɪ/ mắt\nface (n) /feɪs/ mặt\nhair (n) /heə/ tóc\nhand (n) /hænd/ bàn tay\nmouth (n) /maʊθ/ miệng\nopen (v) /ˈəʊpən/ mở, há (miệng)\ntouch (v) /tʌtʃ/ chạm"
+        "content": "ear (n) \t tai\neye (n) \t mắt\nface (n) \t mặt\nhair (n) \t tóc\nhand (n) \t bàn tay\nmouth (n) \t miệng\nopen (v) \t mở, há (miệng)\ntouch (v) \t chạm"
     },
     {
         "id": "unit_5",
         "unit": "Unit 5: My hobbies",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\ncook (v) /kʊk/ nấu ăn\ndance (v) /dɑːns/ nhảy, múa\ndraw (v) /drɔː/ vẽ\npaint (v) /peɪnt/ vẽ, tô vẽ\nrun (v) /rʌn/ chạy\nsing (v) /sɪŋ/ hát\nswim (v) /swɪm/ bơi\nwalk (v) /wɔːk/ đi, đi bộ"
+        "content": "cook (v) \t nấu ăn\ndance (v) \t nhảy, múa\ndraw (v) \t vẽ\npaint (v) \t vẽ, tô vẽ\nrun (v) \t chạy\nsing (v) \t hát\nswim (v) \t bơi\nwalk (v) \t đi, đi bộ"
     },
     {
         "id": "unit_6",
         "unit": "Unit 6: Our school",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nart room (n) /ˈɑːt ruːm/ phòng mĩ thuật\nclassroom (n) /ˈklɑːsruːm/ lớp học\ncomputer room\n(n. phr.) /kəmˈpjuːtə ruːm/ phòng tin học\ngym (n) /dʒɪm/ nhà thể chất\nlibrary (n) /dʒɪm/ thư viện\nmusic room (n. phr.) /ˈmjuːzɪk ruːm/ phòng âm nhạc\nplayground (n) /ˈpleɪɡraʊnd/ sân chơi\nschool (n) /skuːl/ trường học"
+        "content": "art room (n) \t phòng mĩ thuật\nclassroom (n) \t lớp học\ncomputer room\n(n. phr.) \t phòng tin học\ngym (n) \t nhà thể chất\nlibrary (n) \t thư viện\nmusic room (n. phr.) \t phòng âm nhạc\nplayground (n) \t sân chơi\nschool (n) \t trường học"
     },
     {
         "id": "unit_7",
         "unit": "Unit 7: Classroom instructions",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nclose (v) /kləʊz/ đóng, gấp (sách)\ncome in (phr. v.) /kʌm ɪn/ đi vào\ngo out (phr. v.) /gəʊ ˈaʊt/ đi ra\nsit down (phr. v.) /sɪt ˈdaʊn/ ngồi xuống\nspeak (v) /spiːk/ nói\nstand up (phr. v.) /stænd ˈʌp/ đứng lên"
+        "content": "close (v) \t đóng, gấp (sách)\ncome in (phr. v.) \t đi vào\ngo out (phr. v.) \t đi ra\nsit down (phr. v.) \t ngồi xuống\nspeak (v) \t nói\nstand up (phr. v.) \t đứng lên"
     },
     {
         "id": "unit_8",
         "unit": "Unit 8: My school things",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nbook (n) /bʊk/ quyển sách\neraser (n) /ɪˈreɪzə/ cục tẩy\nnotebook (n) /ˈnəʊtbʊk/ vở viết\npen (n) /pen/ bút\npencil (n) /ˈpensl/ bút chì\npencil case (n) /ˈpensl keɪs/ hộp bút\nruler (n) /ˈruːlə/ thước kẻ\nschool bag (n) /ˈskuːl bæg/ cặp sách"
+        "content": "book (n) \t quyển sách\neraser (n) \t cục tẩy\nnotebook (n) \t vở viết\npen (n) \t bút\npencil (n) \t bút chì\npencil case (n) \t hộp bút\nruler (n) \t thước kẻ\nschool bag (n) \t cặp sách"
     },
     {
         "id": "unit_9",
         "unit": "Unit 9: Colours",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nblack (adj) /blæk/ màu đen\nblue (adj) /bluː/ màu xanh da trời\nbrown (adj) /braʊn/ màu nâu\ncolour (n) /ˈkʌlə/ màu sắc\ngreen (adj) /ɡriːn/ màu xanh lá cây\norange (adj) /ˈɒrɪndʒ/ màu da cam\nred (adj) /red/ màu đỏ\nthey (pro) /ðeɪ/ họ, chúng nó\nwhite (adj) /waɪt/ màu trắng\nyellow (adj) /ˈjeləʊ/ màu vàng"
+        "content": "black (adj) \t màu đen\nblue (adj) \t màu xanh da trời\nbrown (adj) \t màu nâu\ncolour (n) \t màu sắc\ngreen (adj) \t màu xanh lá cây\norange (adj) \t màu da cam\nred (adj) \t màu đỏ\nthey (pro) \t họ, chúng nó\nwhite (adj) \t màu trắng\nyellow (adj) \t màu vàng"
     },
     {
         "id": "unit_10",
         "unit": "Unit 10: Our break time activities",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nbreak time (n) /ˈbreɪk taɪm/ giờ ra chơi, giờ giải lao\nchat (v) /tʃæt/ nói chuyện\ndo word puzzles\n(v. phr.) /duː ˈwɜːd pʌzl/ chơi trò chơi ô chữ\nplay badminton\n(v. phr.)\n\n/pleɪ ˈbædmɪntən/ chơi cầu lông\nplay chess (v. phr.) /pleɪ tʃes/ chơi cờ\nplay football (v. phr.) /pleɪ ˈfʊtbɔːl/ chơi bóng đá\nplay table tennis\n(v. phr.)\n\n/pleɪ ˈteɪbl tenɪs/ chơi bóng bàn\n\nplay volleyball\n(v. phr.)\n\n/pleɪ ˈvɒlibɔːl/ chơi bóng chuyền"
+        "content": "break time (n) \t giờ ra chơi, giờ giải lao\nchat (v) \t nói chuyện\ndo word puzzles\n(v. phr.) \t chơi trò chơi ô chữ\nplay badminton\n(v. phr.)\n\n\t chơi cầu lông\nplay chess (v. phr.) \t chơi cờ\nplay football (v. phr.) \t chơi bóng đá\nplay table tennis\n(v. phr.)\n\n\t chơi bóng bàn\n\nplay volleyball\n(v. phr.)\n\n\t chơi bóng chuyền"
     },
     {
         "id": "unit_11",
         "unit": "Unit 11: My family",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nbrother (n) /ˈbrʌðə/ anh trai, em trai\nfather (n) /ˈfɑːðə/ bố\nmother (n) /ˈmʌðə/ mẹ\nsister (n) /ˈsɪstə/ chị gái, em gái\nsure (adj) /ʃʊə/ chắc chắn\neleven (n) /ɪˈlevn/ số mười một (11)\ntwelve (n) /twelv/ số mười hai (12)\nthirteen (n) /ˌθɜːˈtiːn/ số mười ba (13)\nfourteen (n) /ˌfɔːˈtiːn/ số mười bốn (14)\nfifteen (n) /ˌfɪfˈtiːn/ số mười lăm (15)\nsixteen (n) /ˌsɪksˈtiːn/ số mười sáu (16)\nseventeen (n) /ˌsevnˈtiːn/ số mười bảy (17)\neighteen (n) /ˌeɪˈtiːn/ số mười tám (18)\nnineteen (n) /ˌnaɪnˈtiːn/ số mười chín (19)\ntwenty (n) /ˈtwenti/ số hai mươi (20)"
+        "content": "brother (n) \t anh trai, em trai\nfather (n) \t bố\nmother (n) \t mẹ\nsister (n) \t chị gái, em gái\nsure (adj) \t chắc chắn\neleven (n) \t số mười một (11)\ntwelve (n) \t số mười hai (12)\nthirteen (n) \t số mười ba (13)\nfourteen (n) \t số mười bốn (14)\nfifteen (n) \t số mười lăm (15)\nsixteen (n) \t số mười sáu (16)\nseventeen (n) \t số mười bảy (17)\neighteen (n) \t số mười tám (18)\nnineteen (n) \t số mười chín (19)\ntwenty (n) \t số hai mươi (20)"
     },
     {
         "id": "unit_12",
         "unit": "Unit 12: Jobs",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\ncook (n) /kʊk/ đầu bếp\ndoctor (n) /ˈdɒktə/ bác sĩ\ndriver (n) /ˈdraɪvə/ tài xế\nfarmer (n) /ˈfɑːmə/ người nông dân\njob (n) /dʒɒb/ công việc\nnurse (n) /nɜːs/ y tá\nsinger (n) /ˈsɪŋə/ ca sĩ\nteacher (n) /ˈtiːtʃə(r)/ giáo viên\nworker (n) /ˈwɜːkə/ công nhân"
+        "content": "cook (n) \t đầu bếp\ndoctor (n) \t bác sĩ\ndriver (n) \t tài xế\nfarmer (n) \t người nông dân\njob (n) \t công việc\nnurse (n) \t y tá\nsinger (n) \t ca sĩ\nteacher (n) \t giáo viên\nworker (n) \t công nhân"
     },
     {
         "id": "unit_13",
         "unit": "Unit 13: My house",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nbathroom (n) /ˈbɑːθruːm/ phòng tắm\nbedroom (n) /ˈbedruːm/ phòng ngủ\nchair (n) /tʃeə/ cái ghế\nhouse (n) /haʊs/ ngôi nhà\nkitchen (n) /ˈkɪtʃɪn/ phòng bếp\nlamp (n) /læmp/ đèn\nliving room (n) /ˈlɪvɪŋ ruːm/ phòng khách\ntable (n) /ˈteɪbl/ cái bàn\nhere (adv) /hɪə/ ở đây\nthere (adv) /ðeə/ ở kia\nin (pre) /ɪn/ bên trong\non (pre) /ɒn/ bên trên"
+        "content": "bathroom (n) \t phòng tắm\nbedroom (n) \t phòng ngủ\nchair (n) \t cái ghế\nhouse (n) \t ngôi nhà\nkitchen (n) \t phòng bếp\nlamp (n) \t đèn\nliving room (n) \t phòng khách\ntable (n) \t cái bàn\nhere (adv) \t ở đây\nthere (adv) \t ở kia\nin (pre) \t bên trong\non (pre) \t bên trên"
     },
     {
         "id": "unit_14",
         "unit": "Unit 14: My bedroom",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nbed (n) /bed/ cái giường\nbig (n) /bɪɡ/ to, lớn\ndesk (n) /desk/ cái bàn (học sinh)\ndoor (n) /dɔː/ cửa ra vào\nnew (adj) /njuː/ mới\nold (adj) /əʊld/ cũ\nroom (n) /ruːm/ (căn) phòng\nsmall (adj) /smɔːl/ nhỏ\nwindow (n) /ˈwɪndəʊ/ cửa sổ"
+        "content": "bed (n) \t cái giường\nbig (n) \t to, lớn\ndesk (n) \t cái bàn (học sinh)\ndoor (n) \t cửa ra vào\nnew (adj) \t mới\nold (adj) \t cũ\nroom (n) \t (căn) phòng\nsmall (adj) \t nhỏ\nwindow (n) \t cửa sổ"
     },
     {
         "id": "unit_15",
         "unit": "Unit 15: At the dining table",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nbean (n) /biːn/ đậu quả, hạt đậu\nbread (n) /bred/ bánh mì\nchicken (n) /ˈtʃɪkɪn/ thịt gà\negg (n) /eɡ/ trứng\nfish (n) /fɪʃ/ cá\njuice (n) /dʒuːs/ nước hoa quả\nmeat (n) /miːt/ thịt\nmilk (n) /mɪlk/ sữa\nrice (n) /raɪs/ cơm\nwater (n) /ˈwɔːtə/ nước"
+        "content": "bean (n) \t đậu quả, hạt đậu\nbread (n) \t bánh mì\nchicken (n) \t thịt gà\negg (n) \t trứng\nfish (n) \t cá\njuice (n) \t nước hoa quả\nmeat (n) \t thịt\nmilk (n) \t sữa\nrice (n) \t cơm\nwater (n) \t nước"
     },
     {
         "id": "unit_16",
         "unit": "Unit 16: My pets",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nbird (n) /bɜːd/ con chim\ncat (n) /kæt/ con mèo\ndog (n) /dɒɡ/ con chó\ngoldfish (n) /ˈɡəʊldfɪʃ/ con cá vàng\nparrot (n) /ˈpærət/ con vẹt\nrabbit (n) /ˈræbɪt/ con thỏ\nmany (pro.) /ˈmeni/ nhiều\nsome (pro.) /sʌm/ một vài"
+        "content": "bird (n) \t con chim\ncat (n) \t con mèo\ndog (n) \t con chó\ngoldfish (n) \t con cá vàng\nparrot (n) \t con vẹt\nrabbit (n) \t con thỏ\nmany (pro.) \t nhiều\nsome (pro.) \t một vài"
     },
     {
         "id": "unit_17",
         "unit": "Unit 17: Our toys",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nbus (n) /bʌs/ xe buýt\ncar (n) /kɑ:/ xe ô tô\nkite (n) /kaɪt/ cái diều\nplane (n) /pleɪn/ máy bay\nship (n) /ʃɪp/ tàu thuỷ\nteddy bear (n) /ˈtedi beə/ con gấu bông\ntoy (n) /tɔɪ/ đồ chơi\ntrain (n) /treɪn/ tàu hoả\ntruck (n) /trʌk/ xe tải"
+        "content": "bus (n) \t xe buýt\ncar (n) \t xe ô tô\nkite (n) \t cái diều\nplane (n) \t máy bay\nship (n) \t tàu thuỷ\nteddy bear (n) \t con gấu bông\ntoy (n) \t đồ chơi\ntrain (n) \t tàu hoả\ntruck (n) \t xe tải"
     },
     {
         "id": "unit_18",
         "unit": "Unit 18: Playing and doing",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\ndance (v) /dɑːns/ nhảy múa, khiêu vũ\ndraw a picture\n(v .phr.) /drɔː ə ˈpɪktʃə/ vẽ tranh\nlisten to music\n(v. phr.) /ˈlɪsn tə ˈmjuːzɪk/ nghe nhạc\nplay basketball\n(v. phr.)\n\n/pleɪ ˈˈbɑːskɪtbɔːl/\n\nchơi bóng rổ\nread (v) /riːd/ đọc\nsing (v) /sɪŋ/ hát\nwatch TV\n(v. phr.) /wɒtʃ ˌtiːˈviː/ xem TV\nwrite (v) /raɪt/ viết"
+        "content": "dance (v) \t nhảy múa, khiêu vũ\ndraw a picture\n(v .phr.) \t vẽ tranh\nlisten to music\n(v. phr.) \t nghe nhạc\nplay basketball\n(v. phr.)\n\n\nchơi bóng rổ\nread (v) \t đọc\nsing (v) \t hát\nwatch TV\n(v. phr.) \t xem TV\nwrite (v) \t viết"
     },
     {
         "id": "unit_19",
         "unit": "Unit 19: Outdoor activities",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\ncycle (v) /ˈsaɪkl/ đạp xe đạp\nfly a kite (v. phr.) /flaɪ ə kaɪt/ thả diều\npaint (v) /peɪnt/ vẽ, tô màu\nplay badminton\n(v. phr.)\n\n/pleɪ ˈbædmɪntən/ chơi cầu lông\nrun (v) /rʌn/ chạy\nskate (v) /skeɪt/ trượt patanh (trượt ván)\nskip (v) /skɪp/ nhảy dây\nwalk (v) /wɔːk/ đi bộ"
+        "content": "cycle (v) \t đạp xe đạp\nfly a kite (v. phr.) \t thả diều\npaint (v) \t vẽ, tô màu\nplay badminton\n(v. phr.)\n\n\t chơi cầu lông\nrun (v) \t chạy\nskate (v) \t trượt patanh (trượt ván)\nskip (v) \t nhảy dây\nwalk (v) \t đi bộ"
     },
     {
         "id": "unit_20",
         "unit": "Unit 20: At the zoo",
         "type": "VOCABULARY",
-        "content": "WORD PRONUNCIATION MEANING\nclimb (v) /klaɪm/ leo, trèo\ncount (v) /kaʊnt/ đếm\nelephant (n) /ˈelɪfənt/ con voi\nhorse (n) /hɔːs/ con ngựa\nmonkey (n) /ˈmʌŋki/ con khỉ\npeacock (n) /ˈpiːkɒk/ con công\nswing (v) /swɪŋ/ đánh đu\ntiger (n) /ˈtaɪɡə/ con hổ"
+        "content": "climb (v) \t leo, trèo\ncount (v) \t đếm\nelephant (n) \t con voi\nhorse (n) \t con ngựa\nmonkey (n) \t con khỉ\npeacock (n) \t con công\nswing (v) \t đánh đu\ntiger (n) \t con hổ"
     }
 ]

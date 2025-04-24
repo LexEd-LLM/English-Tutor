@@ -94,7 +94,7 @@ async def generate_quiz(request: QuizRequest):
     for unit_id in request.unit_ids:
         unit_chunks = get_unit_subordinate_chunks(unit_id)
         text_chunks.extend(unit_chunks)
-    random_chunks = random.sample(text_chunks, 2)
+    random_chunks = random.sample(text_chunks, 2) if len(text_chunks) > 2 else text_chunks
 
     # Generate questions from chunks
     questions_data = generate_questions_batch(

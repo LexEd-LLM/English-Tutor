@@ -1,4 +1,10 @@
 DO $$ BEGIN
+ CREATE TYPE "dok_level" AS ENUM('RECALL', 'SKILL_CONCEPT', 'STRATEGIC_THINKING');
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
  CREATE TYPE "question_type" AS ENUM('FILL_IN_BLANK', 'TRANSLATION', 'IMAGE', 'VOICE', 'PRONUNCIATION');
 EXCEPTION
  WHEN duplicate_object THEN null;
@@ -75,6 +81,7 @@ CREATE TABLE IF NOT EXISTS "user_quizzes" (
 	"user_id" text NOT NULL,
 	"unit_id" integer NOT NULL,
 	"prompt" text,
+	"depth_of_knowledge" dok_level[],
 	"strengths" text,
 	"weaknesses" text,
 	"created_at" timestamp DEFAULT now() NOT NULL
@@ -93,6 +100,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"image_src" text DEFAULT '/default-user.png' NOT NULL,
 	"role" "role" DEFAULT 'USER' NOT NULL,
 	"hearts" integer DEFAULT 5 NOT NULL,
+	"active_course_id" integer,
 	"subscription_status" "role" DEFAULT 'USER' NOT NULL,
 	"subscription_start_date" timestamp,
 	"subscription_end_date" timestamp
@@ -160,6 +168,12 @@ END $$;
 --> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "user_unit_progress" ADD CONSTRAINT "user_unit_progress_unit_id_units_id_fk" FOREIGN KEY ("unit_id") REFERENCES "units"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "users" ADD CONSTRAINT "users_active_course_id_curriculums_id_fk" FOREIGN KEY ("active_course_id") REFERENCES "curriculums"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

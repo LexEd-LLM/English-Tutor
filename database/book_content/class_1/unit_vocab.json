@@ -3,13 +3,13 @@
         "id": "unit_1",
         "unit": "Unit 1: In the school playground",
         "type": "VOCABULARY",
-        "content": "WORD\nPRONUNCIATION\nMEANING\nball \n/bɔːl/\nquả bóng\nbike \n/baɪk/\nxe đạp\nbook \n/bʊk/\nquyển sách"
+        "content": "WORD\nPRONUNCIATION\nMEANING\nball \tquả bóng\nbike \txe đạp\nbook \tquyển sách"
     },
     {
         "id": "unit_2",
         "unit": "Unit 2: In the dining room",
         "type": "VOCABULARY",
-        "content": "WORD\nPRONUNCIATION\nMEANING\ncake\n/keɪk/\ncái bánh\ncar\n/kɑː(r)/\nxe ô tô\ncat \n/kæt/ \ncon mèo\ncup\n/kʌp/ \ncái chén, tách"
+        "content": "WORD\nPRONUNCIATION\nMEANING\ncake\tcái bánh\ncar\txe ô tô\ncat \n/kæt/ \ncon mèo\ncup\n/kʌp/ \ncái chén, tách"
     },
     {
         "id": "unit_3",
@@ -45,7 +45,7 @@
         "id": "unit_8",
         "unit": "Unit 8: In the park",
         "type": "VOCABULARY",
-        "content": "WORD\nPRONUNCIATION\nMEANING\nhair\n/heə(r)/\ntóc\nhand\n/hænd/ \nbàn tay\nhead\n/hed/ \ncái đầu\nhorse\n/hɔːs/ \ncon ngựa"
+        "content": "WORD\nPRONUNCIATION\nMEANING\nhair\ttóc\nhand\n/hænd/ \nbàn tay\nhead\n/hed/ \ncái đầu\nhorse\n/hɔːs/ \ncon ngựa"
     },
     {
         "id": "unit_9",

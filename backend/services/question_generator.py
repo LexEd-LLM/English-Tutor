@@ -16,8 +16,8 @@ You are helping Vietnamese students improve their English through creative and v
 Use the following English learning materials as your inspiration. You are NOT restricted to the exact words or sentences in the content. Feel free to synthesize, combine, or transform ideas into realistic classroom or exam-style questions.
 
 Base your questions on:
-- Main topics and skills: {content}
-- Sample textbook snippets: {text_chunks}
+- Main vocabs and skills: {content}
+{text_chunks}
 {custom_prompt}
 
 Create {count} unique fill-in-the-blank multiple-choice questions.
@@ -121,6 +121,7 @@ def generate_fill_in_blank_questions(
         custom_prompt = f"You should incorporate the following instruction when generating questions: {custom_prompt}"
         combined_custom_prompt = f"{custom_prompt}\n\n{dok_prompt}"
     
+        text_chunks = f"- Sample textbook snippets: {text_chunks}" if len(text_chunks) > 0 else ""
         template = BASE_FIB_QUESTION_TEMPLATE
         prompt_template = PromptTemplate(template=template)
         prompt = prompt_template.format(
@@ -129,7 +130,7 @@ def generate_fill_in_blank_questions(
             custom_prompt=combined_custom_prompt,
             count=count,
         )
-    
+
     response = llm.complete(prompt)
     questions = parse_json_questions(response.text)
     return [
@@ -341,8 +342,8 @@ def generate_questions_batch(
     """Generate a batch of questions."""
     
     # Combine chunks into one text
-    combined_content = "\n".join(contents)
-    combined_text_chunk = "\n".join(text_chunks)
+    combined_contents = "\n".join(contents)
+    combined_text_chunks = "\n".join(text_chunks)
     
     # Split multiple choice questions between types
     fill_blank_count = multiple_choice_count
@@ -353,8 +354,8 @@ def generate_questions_batch(
     
     # Generate questions
     fill_blank_questions = generate_fill_in_blank_questions(
-        combined_content,
-        combined_text_chunk,
+        combined_contents,
+        combined_text_chunks,
         fill_blank_count,
         custom_prompt,
         dok_level,
@@ -362,9 +363,9 @@ def generate_questions_batch(
         weaknesses=weaknesses
     )
        
-    image_questions = generate_image_questions(combined_content, image_count, custom_prompt)
-    voice_questions = generate_voice_questions(combined_content, voice_count, custom_prompt)
-    pronunciation_questions = generate_pronunciation_questions(combined_content, pronunciation_count, custom_prompt)
+    image_questions = generate_image_questions(combined_contents, image_count, custom_prompt)
+    voice_questions = generate_voice_questions(combined_contents, voice_count, custom_prompt)
+    pronunciation_questions = generate_pronunciation_questions(combined_contents, pronunciation_count, custom_prompt)
     
     return {
         "multiple_choice_questions": fill_blank_questions,

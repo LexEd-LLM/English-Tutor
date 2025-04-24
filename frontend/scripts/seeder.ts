@@ -49,8 +49,19 @@ export const seedClass = async (
 
   const textContent: TextContentUnit[] = fs
     .readdirSync(baseDir)
-    .filter((f) => /text_content\.json$/.test(f))
-    .flatMap((f) => readJSONSafe(path.join(baseDir, f)) || []);
+    .filter((f) => /^unit\d+_text_content\.json$/.test(f))
+    .flatMap((filename) => {
+      const match = filename.match(/^unit(\d+)_text_content\.json$/);
+      if (!match) return [];
+  
+      const unitId = `unit_${match[1]}`; // ví dụ: unit_1
+  
+      const entries = readJSONSafe(path.join(baseDir, filename)) || [];
+      return entries.map((entry) => ({
+        ...entry,
+        unit: unitId,
+      }));
+    });
 
   // Dùng map để gom tất cả unit IDs có mặt
   const allUnitIds = new Set<string>();
