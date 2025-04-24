@@ -108,7 +108,7 @@ export const generateQuiz = async (
     const mcQuestions: BaseQuestion[] = data.multiple_choice_questions.map(q => withQuizIdAndType(q, data.quiz_id));
     const imageQuestions: ImageQuestion[] = data.image_questions.map(q => withQuizIdAndType(q, data.quiz_id));
     const voiceQuestions: VoiceQuestion[] = data.voice_questions.map(q => withQuizIdAndType(q, data.quiz_id));
-    // TODO: const pronunciationQuestions: PronunciationQuestion[] = data.pronunciation_questions.map(...)
+    // const pronunciationQuestions: Không cần xử lí giống 3 dạng câu hỏi trên
 
     const allQuestions: APIQuizQuestion[] = [...mcQuestions, ...imageQuestions, ...voiceQuestions];
 
