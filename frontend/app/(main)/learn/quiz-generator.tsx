@@ -92,13 +92,16 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
           <Tooltip.Trigger asChild>
             <button
               data-testid={`dok-option-${level}`}
-              onClick={() =>
-                setDokLevel((prev) =>
-                  prev.includes(level)
-                    ? (prev.filter((l) => l !== level) as (1 | 2 | 3)[])
-                    : ([...prev, level] as (1 | 2 | 3)[])
-                )
-              }
+              onClick={() => {
+                setDokLevel((prev) => {
+                  const updated =
+                    prev.includes(level)
+                      ? (prev.filter((l) => l !== level) as (1 | 2 | 3)[])
+                      : ([...prev, level] as (1 | 2 | 3)[]);
+                  console.log("DOK Levels selected:", updated);
+                  return updated;
+                });
+              }}
               className={`text-xs font-semibold px-3 py-1 border flex items-center justify-center gap-1 rounded-full
                 ${selected ? "bg-purple-100 text-purple-600 border-purple-400" : "text-gray-500 border-gray-300"}
               `}
