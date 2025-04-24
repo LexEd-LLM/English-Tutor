@@ -31,6 +31,9 @@ export const List = ({
 
     startTransition(() => {
       upsertUserProgress(curriculumId)
+        .then(() => {
+          router.push('/learn');
+        })
         .catch(() => toast.error("Something went wrong"));
     });
   };

@@ -63,7 +63,6 @@ export const upsertUserProgress = async (curriculumId: number) => {
 
       revalidatePath("/courses");
       revalidatePath("/learn");
-      redirect("/learn");
     }
 
     await db.insert(userCurriculumProgress).values({
@@ -74,7 +73,6 @@ export const upsertUserProgress = async (curriculumId: number) => {
 
     revalidatePath("/courses");
     revalidatePath("/learn");
-    redirect("/learn");
   } catch (error) {
     console.error("Error in upsertUserProgress:", error);
     throw error;
