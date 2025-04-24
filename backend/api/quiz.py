@@ -90,6 +90,7 @@ async def generate_quiz(request: QuizRequest):
         unit_chunks = get_unit_main_chunks(unit_id)
         main_contents.extend(unit_chunks)
     
+    # Lấy VOCAB của tối đa 20 unit trước đó, TEXT_CONTENT của unit hiện tại
     vocab_chunks, text_chunks = [], []
     for unit_id in request.unit_ids:
         vocab_chunk, text_chunk = get_unit_subordinate_chunks(unit_id)
