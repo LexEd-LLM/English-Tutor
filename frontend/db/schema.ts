@@ -44,6 +44,8 @@ export const users = pgTable("users", {
   imageSrc: text("image_src").notNull().default("/default-user.png"),
   role: roleEnum("role").notNull().default("USER"),
   hearts: integer("hearts").notNull().default(MAX_HEARTS),
+  activeCourseId: integer("active_course_id")
+  .references(() => curriculums.id, { onDelete: "set null" }), // cho phép null khi curriculum bị xóa
   subscriptionStatus: roleEnum("subscription_status").notNull().default("USER"),
   subscriptionStartDate: timestamp("subscription_start_date"),
   subscriptionEndDate: timestamp("subscription_end_date"),
