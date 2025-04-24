@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from fastapi.responses import RedirectResponse
-from backend.api import quiz, adaptive_learning, user, health, pronunciation
+from backend.api import quiz, adaptive_learning, user, health, pronunciation, courses
 
 api_router = APIRouter()
 
@@ -10,12 +10,9 @@ api_router.include_router(adaptive_learning.router)
 api_router.include_router(user.router)
 api_router.include_router(health.router)
 api_router.include_router(pronunciation.router, prefix="/api")
+api_router.include_router(courses.router)
 
 # Thêm route chuyển hướng để giữ khả năng tương thích với đường dẫn cũ
-@api_router.post("/api/generate-quiz")
-async def legacy_generate_quiz():
-    return RedirectResponse(url="/api/quiz/generate", status_code=307)
-
 @api_router.post("/api/generate-explanation")
 async def legacy_generate_explanation():
     return RedirectResponse(url="/api/quiz/generate-explanation", status_code=307)

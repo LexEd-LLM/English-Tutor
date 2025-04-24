@@ -74,7 +74,7 @@ export const generateQuiz = async (
     };
     console.log(`Request body: ${JSON.stringify(requestBody)}`);
 
-    const response = await fetch(`${backendUrl}/api/generate-quiz`, {
+    const response = await fetch(`${backendUrl}/api/quiz/generate`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
