@@ -11,7 +11,7 @@ import { Card } from "./card";
 
 type ListProps = {
   courses: (typeof curriculums.$inferSelect)[];
-  activeCourseId?: typeof userCurriculumProgress.$inferSelect.curriculumId;
+  activeCourseId?: typeof userCurriculumProgress.$inferSelect.curriculumId | null;
 };
 
 export const List = ({

@@ -72,6 +72,7 @@ export const getUserProgress = cache(async () => {
       where: eq(users.id, userId),
       columns: {
         hearts: true,
+        activeCourseId: true
       },
     })
   ]);
@@ -81,6 +82,7 @@ export const getUserProgress = cache(async () => {
   return {
     ...progress,
     hearts: user.hearts,
+    activeCourseId: user.activeCourseId
   };
 });
 

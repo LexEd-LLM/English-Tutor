@@ -60,19 +60,26 @@ export const upsertUserProgress = async (curriculumId: number) => {
           updatedAt: new Date(),
         })
         .where(eq(userCurriculumProgress.userId, userId));
-
-      revalidatePath("/courses");
-      revalidatePath("/learn");
+    } else {
+      await db.insert(userCurriculumProgress).values({
+        userId,
+        curriculumId,
+        progressPercent: 0,
+      });
     }
 
-    await db.insert(userCurriculumProgress).values({
-      userId,
-      curriculumId,
-      progressPercent: 0,
-    });
+    // Cập nhật activeCourseId trong bảng users
+    await db
+      .update(users)
+      .set({
+        activeCourseId: curriculumId,
+      })
+      .where(eq(users.id, userId));
 
+    // ✅ Revalidate path sau cùng
     revalidatePath("/courses");
     revalidatePath("/learn");
+
   } catch (error) {
     console.error("Error in upsertUserProgress:", error);
     throw error;
