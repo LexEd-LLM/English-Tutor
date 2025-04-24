@@ -30,6 +30,7 @@ class QuizItem(BaseModel):
 class QuizRequest(BaseModel):
     user_id: str
     unit_ids: List[int]
+    dok_level: Optional[List[int]] = None
     prompt: Optional[str] = None
     multiple_choice_count: int = 3
     image_count: int = 1

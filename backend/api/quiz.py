@@ -1,4 +1,5 @@
 import psycopg2
+import random
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from typing import List
@@ -77,25 +78,33 @@ def convert_to_quiz_items(questions: List[dict], start_id: int = 0):
         
 @router.post("/generate", response_model=QuizResponse)
 async def generate_quiz(request: QuizRequest):
-    print(f"Received request - user: {request.user_id}, units: {request.unit_ids}, prompt: {request.prompt}, mc: {request.multiple_choice_count}, img: {request.image_count}, voice: {request.voice_count}")
+    print(f"Received request - user: {request.user_id}, units: {request.unit_ids}, prompt: {request.prompt}, mc: {request.multiple_choice_count}, img: {request.image_count}, voice: {request.voice_count}, dok_level: {request.dok_level}")
     
     # Create new quiz record first
     quiz_id = quiz_service.create_new_quiz(request.unit_ids[0], request.user_id, request.prompt)
     print(f"Created new quiz with ID: {quiz_id}")
     
     # Lấy text chunks liên quan đến unit
-    text_chunks = []
+    main_contents = []
     for unit_id in request.unit_ids:
         unit_chunks = get_unit_main_chunks(unit_id)
+        main_contents.extend(unit_chunks)
+    
+    text_chunks = []
+    for unit_id in request.unit_ids:
+        unit_chunks = get_unit_subordinate_chunks(unit_id)
         text_chunks.extend(unit_chunks)
+    random_chunks = random.sample(text_chunks, 2)
 
     # Generate questions from chunks
     questions_data = generate_questions_batch(
-        text_chunks=text_chunks,
+        contents=main_contents,
+        text_chunks=random_chunks,
         multiple_choice_count=request.multiple_choice_count,
         image_count=request.image_count,
         voice_count=request.voice_count,
-        custom_prompt=request.prompt
+        custom_prompt=request.prompt,
+        dok_level=request.dok_level
     )
     
     # Convert each question type

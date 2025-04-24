@@ -54,10 +54,11 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
 
       const result = await generateQuiz(
         [parseInt(selectedUnit)],
+        dokLevel,
         prompt || undefined,
         counts.multipleChoice,
         counts.image,
-        counts.voice
+        counts.voice,
       );
 
       clearInterval(interval);

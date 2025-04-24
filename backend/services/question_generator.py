@@ -1,3 +1,4 @@
+import random
 from llama_index.core.prompts import PromptTemplate
 from ..config.settings import llm
 from ..schemas.quiz import QuestionType
@@ -6,6 +7,7 @@ import json
 import re
 from .voice_quiz_generator import generate_audio, get_phonemes
 from .image_generator import generate_image
+from .prompt_banks import POSSIBLE_CUSTOM_PROMPTS, DOK_DESCRIPTIONS
 
 # Base prompt template for question generation without strengths/weaknesses
 BASE_FIB_QUESTION_TEMPLATE = """ 
@@ -90,6 +92,7 @@ def generate_fill_in_blank_questions(
     text_chunks: str,
     count: int,
     custom_prompt: Optional[str] = None,
+    dok_level: Optional[List[int]] = None,
     strengths: Optional[List[str]] = None,
     weaknesses: Optional[List[str]] = None
 ) -> List[Dict[str, Any]]:
@@ -109,13 +112,21 @@ def generate_fill_in_blank_questions(
             weaknesses=", ".join(weaknesses) if weaknesses else "None"
         )
     else:
-        custom_prompt = f"You should incorporate the following instruction when generating questions: {custom_prompt}" if custom_prompt else ""
+        dok_prompt = "The questions should match these levels of cognitive complexity:\n\n"
+        dok_prompt += "\n\n".join(DOK_DESCRIPTIONS[dok] for dok in dok_level)
+
+        if not custom_prompt:
+            custom_prompt = random.choice(POSSIBLE_CUSTOM_PROMPTS)
+            
+        custom_prompt = f"You should incorporate the following instruction when generating questions: {custom_prompt}"
+        combined_custom_prompt = f"{custom_prompt}\n\n{dok_prompt}"
+    
         template = BASE_FIB_QUESTION_TEMPLATE
         prompt_template = PromptTemplate(template=template)
         prompt = prompt_template.format(
             content=content,
             text_chunks=text_chunks,
-            custom_prompt=custom_prompt,
+            custom_prompt=combined_custom_prompt,
             count=count,
         )
     
@@ -317,22 +328,24 @@ def generate_pronunciation_questions(
     ]
 
 def generate_questions_batch(
+    contents: List[str],
     text_chunks: List[str],
     multiple_choice_count: int,
     image_count: int,
     voice_count: int,
     custom_prompt: Optional[str] = None,
+    dok_level: Optional[List[int]] = None,
     strengths: Optional[List[str]] = None,
     weaknesses: Optional[List[str]] = None
 ) -> Dict[str, List[Dict[str, Any]]]:
     """Generate a batch of questions."""
     
     # Combine chunks into one text
-    combined_content = "\n".join(text_chunks)
+    combined_content = "\n".join(contents)
+    combined_text_chunk = "\n".join(text_chunks)
     
     # Split multiple choice questions between types
-    fill_blank_count = multiple_choice_count // 2
-    translation_count = multiple_choice_count - fill_blank_count
+    fill_blank_count = multiple_choice_count
     
     # Split voice questions between voice and pronunciation
     pronunciation_count = voice_count // 2
@@ -341,26 +354,20 @@ def generate_questions_batch(
     # Generate questions
     fill_blank_questions = generate_fill_in_blank_questions(
         combined_content,
+        combined_text_chunk,
         fill_blank_count,
         custom_prompt,
+        dok_level,
         strengths=strengths,
         weaknesses=weaknesses
     )
-    
-    translation_questions = generate_translation_questions(
-        combined_content,
-        translation_count,
-        custom_prompt,
-        strengths=strengths,
-        weaknesses=weaknesses
-    )
-    
+       
     image_questions = generate_image_questions(combined_content, image_count, custom_prompt)
     voice_questions = generate_voice_questions(combined_content, voice_count, custom_prompt)
     pronunciation_questions = generate_pronunciation_questions(combined_content, pronunciation_count, custom_prompt)
     
     return {
-        "multiple_choice_questions": fill_blank_questions + translation_questions,
+        "multiple_choice_questions": fill_blank_questions,
         "image_questions": image_questions,
         "voice_questions": voice_questions,
         "pronunciation_questions": pronunciation_questions

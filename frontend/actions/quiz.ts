@@ -49,6 +49,7 @@ const withQuizIdAndType = <T extends { type: string }>(q: T, quizId: number): T 
 // Generate new quiz questions
 export const generateQuiz = async (
   unitIds: number[],
+  dokLevel: (1 | 2 | 3)[],
   prompt?: string,
   multipleChoiceCount: number = 3,
   imageCount: number = 1,
@@ -60,13 +61,14 @@ export const generateQuiz = async (
       throw new Error("Unauthorized");
     }
 
-    console.log(`Calling API with units: ${unitIds}, prompt: ${prompt}, MC: ${multipleChoiceCount}, Image: ${imageCount}, Voice: ${voiceCount}`);
-
+    console.log(`Calling API with units: ${unitIds}, prompt: ${prompt}, MC: ${multipleChoiceCount}, Image: ${imageCount}, Voice: ${voiceCount}, dokLevel: ${dokLevel}`);
+    
     const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
 
     const requestBody = {
       user_id: userId,
       unit_ids: unitIds,
+      dok_level: dokLevel,
       prompt,
       multiple_choice_count: multipleChoiceCount,
       image_count: imageCount,
