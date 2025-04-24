@@ -15,8 +15,11 @@ You are helping Vietnamese students improve their English through creative and v
 
 Use the following English learning materials as your inspiration. You are NOT restricted to the exact words or sentences in the content. Feel free to synthesize, combine, or transform ideas into realistic classroom or exam-style questions.
 
-Base your questions on:
-- Main vocabs and skills: {content}
+Base your questions primarily on:
+- The main vocabulary and skills from the current unit: {content}
+- You may occasionally draw on vocabulary or structures students are likely to have learned in earlier units, to reflect natural cumulative learning.
+{vocab_chunks}
+Ensure that most questions reflect the focus of the current unit, while a few can incorporate prior knowledge to increase realism and challenge.
 {text_chunks}
 {custom_prompt}
 
@@ -34,6 +37,7 @@ Make sure:
 4. Avoid repetition and overly simple structures.
 
 Format (in JSON array):
+- id: unique identifier
 - question: the sentence with a blank (use ___)
 - options: list of 4 options (A, B, C, D), only one correct
 - correct_answer: the correct option string
@@ -89,6 +93,7 @@ PRACTICE_QUESTION_TEMPLATE = """
 
 def generate_fill_in_blank_questions(
     content: str,
+    vocab_chunks: str,
     text_chunks: str,
     count: int,
     custom_prompt: Optional[str] = None,
@@ -126,6 +131,7 @@ def generate_fill_in_blank_questions(
         prompt_template = PromptTemplate(template=template)
         prompt = prompt_template.format(
             content=content,
+            vocab_chunks=vocab_chunks,
             text_chunks=text_chunks,
             custom_prompt=combined_custom_prompt,
             count=count,
@@ -330,6 +336,7 @@ def generate_pronunciation_questions(
 
 def generate_questions_batch(
     contents: List[str],
+    vocab_chunks: List[str],
     text_chunks: List[str],
     multiple_choice_count: int,
     image_count: int,
@@ -344,6 +351,7 @@ def generate_questions_batch(
     # Combine chunks into one text
     combined_contents = "\n".join(contents)
     combined_text_chunks = "\n".join(text_chunks)
+    combined_vocab_chunks = "\n".join(vocab_chunks)
     
     # Split multiple choice questions between types
     fill_blank_count = multiple_choice_count
@@ -355,6 +363,7 @@ def generate_questions_batch(
     # Generate questions
     fill_blank_questions = generate_fill_in_blank_questions(
         combined_contents,
+        combined_vocab_chunks,
         combined_text_chunks,
         fill_blank_count,
         custom_prompt,
