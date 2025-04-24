@@ -387,7 +387,7 @@ export const PronunciationChallenge = ({
                         className={`flex flex-col items-center justify-center text-blue-500 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity duration-200 p-4 rounded-lg ${isDisabled ? '' : 'hover:bg-blue-50'}`}
                         aria-label="Bắt đầu ghi âm"
                     >
-                        <Image src="/icons/microphone.svg" alt="" width={40} height={40} />
+                        <Image src="/icons/microphone.svg" alt="" width={40} height={40} style={{ filter: "invert(48%) sepia(80%) saturate(2476%) hue-rotate(200deg) brightness(118%) contrast(119%)" }}/>
                         <span className="mt-2 text-sm font-medium">Nhấn để bắt đầu ghi âm</span>
                         <span className="mt-1 text-xs text-gray-500">(Giới hạn: 02:00)</span>
                     </button>
@@ -399,7 +399,7 @@ export const PronunciationChallenge = ({
                         className="flex flex-col items-center justify-center text-red-500 hover:text-red-700 p-4 rounded-lg hover:bg-red-50 transition-colors duration-200"
                         aria-label="Dừng ghi âm"
                     >
-                        <Image src="/icons/stop.svg" alt="" width={40} height={40} />
+                        <Image src="/icons/stop.svg" alt="" width={40} height={40} style={{ filter: 'invert(13%) sepia(96%) saturate(7465%) hue-rotate(1deg) brightness(90%) contrast(120%)' }}/>
                         <span className="mt-2 text-sm font-medium">Dừng ghi âm</span>
                         <span className="mt-1 text-lg font-semibold text-gray-700 tabular-nums">
                             Còn lại: {formatTime(timeLeft)}
