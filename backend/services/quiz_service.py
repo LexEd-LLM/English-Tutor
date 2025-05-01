@@ -266,8 +266,8 @@ class QuizService:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO user_quizzes (user_id, unit_id, prompt, depthOfKnowledge)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO user_quizzes (user_id, unit_id, prompt, depth_of_knowledge)
+                VALUES (%s, %s, %s, %s::dok_level[])
                 RETURNING id
                 """,
                 (user_id, unit_id, prompt, dok_level)
