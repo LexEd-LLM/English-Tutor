@@ -3,7 +3,7 @@
 import { MultipleChoiceChallengeProps  } from "./types";
 import { cn } from "@/lib/utils";
 
-export const FillInBlankChallenge = ({
+export const TextChallenge = ({
   question,
   options,
   selectedOption,

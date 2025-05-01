@@ -9,7 +9,7 @@ interface PageProps {
   };
 }
 
-const validTypes = ["FILL_IN_BLANK", "TRANSLATION", "PRONUNCIATION", "VOICE", "IMAGE"] as const;
+const validTypes = ["TEXT", "PRONUNCIATION", "VOICE", "IMAGE"] as const;
 type ChallengeType = typeof validTypes[number];
 
 function normalizeType(type: string): ChallengeType {

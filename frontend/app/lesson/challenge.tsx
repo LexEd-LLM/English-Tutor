@@ -1,7 +1,6 @@
 "use client";
 
-import { FillInBlankChallenge } from "./components/challenge/FillInBlankChallenge";
-import { TranslationChallenge } from "./components/challenge/TranslationChallenge";
+import { TextChallenge } from "./components/challenge/TextChallenge";
 import { ImageChallenge } from "./components/challenge/ImageChallenge";
 import { VoiceChallenge } from "./components/challenge/VoiceChallenge";
 import { PronunciationChallenge } from "./components/challenge/PronunciationChallenge";
@@ -15,10 +14,8 @@ export const Challenge = (props: ChallengeProps) => {
   const { type } = props;
 
   switch (type) {
-    case "FILL_IN_BLANK":
-      return <FillInBlankChallenge {...props as MultipleChoiceChallengeProps} />;
-    case "TRANSLATION":
-      return <TranslationChallenge {...props as MultipleChoiceChallengeProps} />;
+    case "TEXT":
+      return <TextChallenge {...props as MultipleChoiceChallengeProps} />;
     case "IMAGE":
       return <ImageChallenge {...props as MultipleChoiceChallengeProps} />;
     case "VOICE":

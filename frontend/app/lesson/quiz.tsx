@@ -16,7 +16,7 @@ type Challenge = {
   id: number;
   quizId: number;
   question: string;
-  type: "FILL_IN_BLANK" | "TRANSLATION" | "PRONUNCIATION" | "VOICE" | "IMAGE";
+  type: "TEXT" | "IMAGE" | "VOICE" | "PRONUNCIATION";
   challengeOptions: {
     id: number;
     text: string;
