@@ -1,3 +1,4 @@
+import json
 import psycopg2
 from typing import List
 from ..database.database import get_db
@@ -51,9 +52,9 @@ def get_unit_subordinate_chunks(unit_id: int) -> List[str]:
                 """, (prev_unit_ids,))
                 vocab_chunks = [row["content"] for row in cur.fetchall()]
                 
-            # 3. Lấy BOOKMAP của tối đa 2 unit trước đó
+            # 3. Lấy GRAMMAR của tối đa 5 unit trước đó
             bookmap_chunks = []
-            prev_unit_ids = prev_unit_ids[:2] if len(prev_unit_ids) > 2 else prev_unit_ids
+            prev_unit_ids = prev_unit_ids[:5] if len(prev_unit_ids) > 5 else prev_unit_ids
             if prev_unit_ids:
                 cur.execute("""
                     SELECT unit_id, content
@@ -61,10 +62,10 @@ def get_unit_subordinate_chunks(unit_id: int) -> List[str]:
                     WHERE unit_id = ANY(%s) AND type = 'BOOKMAP'
                     ORDER BY unit_id DESC, "order"
                 """, (prev_unit_ids,))
-                for row in cur.fetchall():
-                    bookmap_chunks.append(row["content"])
-
-                bookmap_chunks.reverse()
+                bookmap_chunks = [
+                    json.loads(row["content"]).get("Grammar", "")
+                    for row in cur.fetchall()
+                ]
 
             return vocab_chunks, text_chunks, bookmap_chunks
     finally:
