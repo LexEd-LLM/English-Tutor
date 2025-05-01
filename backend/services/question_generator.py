@@ -7,7 +7,7 @@ import json
 import re
 from .voice_quiz_generator import generate_audio, get_phonemes
 from .image_generator import generate_image
-from .prompt_banks import POSSIBLE_CUSTOM_PROMPTS, DOK_DESCRIPTIONS
+from .prompt_banks import POSSIBLE_CUSTOM_PROMPTS, DOK_DESCRIPTIONS, QUESTION_TYPES
 
 # Base prompt template for question generation without strengths/weaknesses
 BASE_TEXT_QUESTION_TEMPLATE = """ 
@@ -16,30 +16,27 @@ You are helping Vietnamese students improve their English through creative and v
 Use the following English learning materials as your inspiration. You are NOT restricted to the exact words or sentences in the content. Feel free to synthesize, combine, or transform ideas into realistic classroom or exam-style questions.
 
 Base your questions primarily on:
-- The main vocabulary and skills from the current unit: {content}
+- The main vocabulary and skills from the current unit: <main knowledge>{content}</main knowledge>
 - You may occasionally draw on vocabulary or structures students are likely to have learned in earlier units, to reflect natural cumulative learning.
-{prior_contents}
+<prior knowledge>{prior_contents}</prior knowledge>
 Ensure that most questions reflect the focus of the current unit, while a few can incorporate prior knowledge to increase realism and challenge.
-{text_chunks}
-{custom_prompt}
+<content>{text_chunks}</content>
+<customized prompt>{custom_prompt}</customized prompt>
 
 Create {count} unique fill-in-the-blank multiple-choice questions.
 
 Make sure:
-1. Each question tests a **different aspect** of English (e.g., grammar, vocabulary, reading inference, pronunciation, functional language).
-2. Use a variety of **common school-level question formats**, including:
-    - Sentence completion (with grammar or word choice)
-    - Mini-dialogues or functional language
-    - Short context-based cloze tests
-    - Sound or stress discrimination
-    - Lexical meaning in context (synonyms, phrasal verbs, etc.)
-3. The content should feel like it belongs in a **Vietnamese English textbook or exam paper**.
-4. Avoid repetition and overly simple structures.
+1. Use a variety of school-level question formats. Try to avoid starting with the same type of question repeatedly.
+<question types>{question_types}</question types>
+2. The content should feel like it belongs in a Vietnamese English textbook or exam paper.
+3. Avoid repetition.
+4. Treat tags like <main knowledge>...</main knowledge> as structured data hints.
+5. The answer must not appear in the question.
 
 Format (in JSON array):
-- id: unique identifier
-- question: the sentence with a blank (use ___)
-- options: list of 4 options (A, B, C, D), only one correct
+- id: count from 1
+- question: the word, phrase or sentence (use ___ for blanks or underline specific words when needed)
+- options: list of 4 options, only one correct
 - correct_answer: the correct option string
 - type: "text"
 
@@ -100,13 +97,17 @@ def generate_text_questions(
         dok_prompt = "The questions should match these levels of cognitive complexity:\n\n"
         dok_prompt += "\n\n".join(DOK_DESCRIPTIONS[dok] for dok in dok_level)
 
-        if not custom_prompt:
-            custom_prompt = random.choice(POSSIBLE_CUSTOM_PROMPTS)
+        # if not custom_prompt:
+        #     custom_prompt = random.choice(POSSIBLE_CUSTOM_PROMPTS)
             
         custom_prompt = f"You should incorporate the following instruction when generating questions: {custom_prompt}"
         combined_custom_prompt = f"{custom_prompt}\n\n{dok_prompt}"
     
         text_chunks = f"- Sample textbook snippets: {text_chunks}" if len(text_chunks) > 0 else ""
+        
+        question_types = random.sample(QUESTION_TYPES, min(len(QUESTION_TYPES), random.randint(min(count//2, 5), count//2)))
+        question_types = "\n - ".join(question_types)
+
         template = BASE_TEXT_QUESTION_TEMPLATE
         prompt_template = PromptTemplate(template=template)
         prompt = prompt_template.format(
@@ -114,6 +115,7 @@ def generate_text_questions(
             prior_contents=prior_contents,
             text_chunks=text_chunks,
             custom_prompt=combined_custom_prompt,
+            question_types=question_types,
             count=count,
         )
 
