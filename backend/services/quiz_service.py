@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import json
 from ..database.database import get_db
 from ..schemas.quiz import QuizItem, QuizOption
@@ -251,17 +251,26 @@ class QuizService:
             "pronounc_questions": pronunciation_items
         }
 
-    def create_new_quiz(self, unit_id: int, user_id: str, prompt: str = None) -> int:
+    def create_new_quiz(self, unit_id: int, user_id: str, prompt: str = None, dok_level: Optional[List[int]] = None) -> int:
         """Create a new quiz record and return its ID"""
+        # Convert dok_level to string
+        DOK_ENUM = {
+            1: "RECALL",
+            2: "SKILL_CONCEPT",
+            3: "STRATEGIC_THINKING",
+        }
+
+        dok_level = [DOK_ENUM[i] for i in dok_level]
+
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO user_quizzes (user_id, unit_id, prompt)
-                VALUES (%s, %s, %s)
+                INSERT INTO user_quizzes (user_id, unit_id, prompt, depthOfKnowledge)
+                VALUES (%s, %s, %s, %s)
                 RETURNING id
                 """,
-                (user_id, unit_id, prompt)
+                (user_id, unit_id, prompt, dok_level)
             )
             quiz_id = cursor.fetchone()['id']
             conn.commit()

@@ -81,7 +81,7 @@ async def generate_quiz(request: QuizRequest):
     print(f"Received request - user: {request.user_id}, units: {request.unit_ids}, prompt: {request.prompt}, mc: {request.multiple_choice_count}, img: {request.image_count}, voice: {request.voice_count}, dok_level: {request.dok_level}")
     
     # Create new quiz record first
-    quiz_id = quiz_service.create_new_quiz(request.unit_ids[0], request.user_id, request.prompt)
+    quiz_id = quiz_service.create_new_quiz(request.unit_ids[0], request.user_id, request.prompt, request.dok_level)
     print(f"Created new quiz with ID: {quiz_id}")
     
     # Lấy text chunks liên quan đến unit

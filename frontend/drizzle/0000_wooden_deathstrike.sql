@@ -5,7 +5,7 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- CREATE TYPE "question_type" AS ENUM('FILL_IN_BLANK', 'TRANSLATION', 'IMAGE', 'VOICE', 'PRONUNCIATION');
+ CREATE TYPE "question_type" AS ENUM('TEXT', 'IMAGE', 'VOICE', 'PRONUNCIATION');
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

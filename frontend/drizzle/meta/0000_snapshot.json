@@ -1,5 +1,5 @@
 {
-  "id": "11b58560-c651-4e55-bbae-94801197c685",
+  "id": "455267a7-9ebd-4da6-92bd-611eddc84590",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -627,8 +627,7 @@
     "question_type": {
       "name": "question_type",
       "values": {
-        "FILL_IN_BLANK": "FILL_IN_BLANK",
-        "TRANSLATION": "TRANSLATION",
+        "TEXT": "TEXT",
         "IMAGE": "IMAGE",
         "VOICE": "VOICE",
         "PRONUNCIATION": "PRONUNCIATION"
