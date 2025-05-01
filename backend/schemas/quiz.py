@@ -4,8 +4,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 class QuestionType(str, Enum):
-    FILL_IN_BLANK = "fill_in_blank"
-    TRANSLATION = "translation"
+    TEXT = "text"
     IMAGE = "image"
     VOICE = "voice"
     PRONUNCIATION = "pronunciation"

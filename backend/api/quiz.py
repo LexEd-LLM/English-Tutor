@@ -90,21 +90,24 @@ async def generate_quiz(request: QuizRequest):
         unit_chunks = get_unit_main_chunks(unit_id)
         main_contents.extend(unit_chunks)
     
-    # Lấy VOCAB của tối đa 20 unit trước đó, TEXT_CONTENT của unit hiện tại
-    vocab_chunks, text_chunks = [], []
+    # Lấy VOCAB của 20 unit trước đó, BOOKMAP của 2 unit trước đó, TEXT_CONTENT của unit hiện tại
+    vocab_chunks, text_chunks, bookmap_chunks = [], [], []
     for unit_id in request.unit_ids:
-        vocab_chunk, text_chunk = get_unit_subordinate_chunks(unit_id)
+        vocab_chunk, text_chunk, bookmap_chunk = get_unit_subordinate_chunks(unit_id)
         vocab_chunks.extend(vocab_chunk)
         text_chunks.extend(text_chunk)
+        bookmap_chunks.extend(bookmap_chunk)
     random_text_chunks = random.sample(text_chunks, 2) if len(text_chunks) > 2 else text_chunks
     
     vocabs = [vocab.strip() for vocab_per_unit in vocab_chunks for vocab in vocab_per_unit.split("\n") if vocab.strip()]
     random_vocab_chunks = random.sample(vocabs, 30) if len(vocabs) > 30 else vocabs
 
+    prior_contents = random_vocab_chunks + bookmap_chunks
+
     # Generate questions from chunks
     questions_data = generate_questions_batch(
         contents=main_contents,
-        vocab_chunks=random_vocab_chunks,
+        prior_contents=prior_contents,
         text_chunks=random_text_chunks,
         multiple_choice_count=request.multiple_choice_count,
         image_count=request.image_count,

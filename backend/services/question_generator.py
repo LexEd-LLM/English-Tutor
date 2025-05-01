@@ -10,15 +10,15 @@ from .image_generator import generate_image
 from .prompt_banks import POSSIBLE_CUSTOM_PROMPTS, DOK_DESCRIPTIONS
 
 # Base prompt template for question generation without strengths/weaknesses
-BASE_FIB_QUESTION_TEMPLATE = """ 
-You are helping Vietnamese students improve their English through creative and varied fill-in-the-blank questions.
+BASE_TEXT_QUESTION_TEMPLATE = """ 
+You are helping Vietnamese students improve their English through creative and varied questions.
 
 Use the following English learning materials as your inspiration. You are NOT restricted to the exact words or sentences in the content. Feel free to synthesize, combine, or transform ideas into realistic classroom or exam-style questions.
 
 Base your questions primarily on:
 - The main vocabulary and skills from the current unit: {content}
 - You may occasionally draw on vocabulary or structures students are likely to have learned in earlier units, to reflect natural cumulative learning.
-{vocab_chunks}
+{prior_contents}
 Ensure that most questions reflect the focus of the current unit, while a few can incorporate prior knowledge to increase realism and challenge.
 {text_chunks}
 {custom_prompt}
@@ -41,29 +41,9 @@ Format (in JSON array):
 - question: the sentence with a blank (use ___)
 - options: list of 4 options (A, B, C, D), only one correct
 - correct_answer: the correct option string
-- type: "fill_in_blank"
+- type: "text"
 
 Return exactly {count} questions.
-"""
-
-BASE_TRANSLATION_QUESTION_TEMPLATE = """
-    You are helping Vietnamese learners review English. Generate {count} Vietnamese-English translation multiple-choice questions based on the following content.
-    Content: {content}
-    {custom_prompt}
-
-    For each question:
-    1. Create a question in Vietnamese asking for the English meaning of a word/phrase
-    2. The correct answer should be the English translation
-    3. Generate 3 other plausible but incorrect English translations
-    4. Provide a brief explanation in Vietnamese
-    
-    Return the questions in JSON format with these fields:
-    - question: the Vietnamese question
-    - options: array of 4 English options
-    - correct_answer: the correct English translation
-    - type: "translation"
-    
-    Generate exactly {count} questions.
 """
 
 # Template for practice questions with strengths/weaknesses
@@ -91,9 +71,9 @@ PRACTICE_QUESTION_TEMPLATE = """
     Generate exactly {count} questions.
 """
 
-def generate_fill_in_blank_questions(
+def generate_text_questions(
     content: str,
-    vocab_chunks: str,
+    prior_contents: str,
     text_chunks: str,
     count: int,
     custom_prompt: Optional[str] = None,
@@ -112,7 +92,7 @@ def generate_fill_in_blank_questions(
         prompt = prompt_template.format(
             content=content,
             count=count,
-            question_type=QuestionType.FILL_IN_BLANK.value,
+            question_type=QuestionType.TEXT.value,
             strengths=", ".join(strengths) if strengths else "None",
             weaknesses=", ".join(weaknesses) if weaknesses else "None"
         )
@@ -127,11 +107,11 @@ def generate_fill_in_blank_questions(
         combined_custom_prompt = f"{custom_prompt}\n\n{dok_prompt}"
     
         text_chunks = f"- Sample textbook snippets: {text_chunks}" if len(text_chunks) > 0 else ""
-        template = BASE_FIB_QUESTION_TEMPLATE
+        template = BASE_TEXT_QUESTION_TEMPLATE
         prompt_template = PromptTemplate(template=template)
         prompt = prompt_template.format(
             content=content,
-            vocab_chunks=vocab_chunks,
+            prior_contents=prior_contents,
             text_chunks=text_chunks,
             custom_prompt=combined_custom_prompt,
             count=count,
@@ -144,52 +124,7 @@ def generate_fill_in_blank_questions(
             "question": q["question"],
             "options": q["options"],
             "correct_answer": q["correct_answer"],
-            "type": QuestionType.FILL_IN_BLANK.value
-        }
-        for q in questions
-    ]
-
-def generate_translation_questions(
-    content: str,
-    count: int,
-    custom_prompt: Optional[str] = None,
-    strengths: Optional[List[str]] = None,
-    weaknesses: Optional[List[str]] = None
-) -> List[Dict[str, Any]]:
-    if count < 1:
-        return []
-    
-    """Generate translation questions."""
-    
-    if strengths or weaknesses:
-        template = PRACTICE_QUESTION_TEMPLATE
-        prompt_template = PromptTemplate(template=template)
-        
-        prompt = prompt_template.format(
-            content=content,
-            count=count,
-            question_type=QuestionType.TRANSLATION.value,
-            strengths=", ".join(strengths) if strengths else "None",
-            weaknesses=", ".join(weaknesses) if weaknesses else "None"
-        )
-    else:
-        template = BASE_TRANSLATION_QUESTION_TEMPLATE
-        custom_prompt = f"You should incorporate the following instruction when generating questions: {custom_prompt}" if custom_prompt else ""
-        prompt_template = PromptTemplate(template=template)
-        prompt = prompt_template.format(
-            content=content,
-            custom_prompt=custom_prompt,
-            count=count,
-        )
-    
-    response = llm.complete(prompt)
-    questions = parse_json_questions(response.text)
-    return [
-        {
-            "question": q["question"],
-            "options": q["options"],
-            "correct_answer": q["correct_answer"],
-            "type": QuestionType.TRANSLATION.value
+            "type": QuestionType.TEXT.value
         }
         for q in questions
     ]
@@ -336,7 +271,7 @@ def generate_pronunciation_questions(
 
 def generate_questions_batch(
     contents: List[str],
-    vocab_chunks: List[str],
+    prior_contents: List[str],
     text_chunks: List[str],
     multiple_choice_count: int,
     image_count: int,
@@ -351,21 +286,18 @@ def generate_questions_batch(
     # Combine chunks into one text
     combined_contents = "\n".join(contents)
     combined_text_chunks = "\n".join(text_chunks)
-    combined_vocab_chunks = "\n".join(vocab_chunks)
-    
-    # Split multiple choice questions between types
-    fill_blank_count = multiple_choice_count
-    
+    combined_prior_contents = "\n".join(prior_contents)
+       
     # Split voice questions between voice and pronunciation
     pronunciation_count = voice_count // 2
     voice_count = voice_count - pronunciation_count
     
     # Generate questions
-    fill_blank_questions = generate_fill_in_blank_questions(
+    text_questions = generate_text_questions(
         combined_contents,
-        combined_vocab_chunks,
+        combined_prior_contents,
         combined_text_chunks,
-        fill_blank_count,
+        multiple_choice_count,
         custom_prompt,
         dok_level,
         strengths=strengths,
@@ -377,7 +309,7 @@ def generate_questions_batch(
     pronunciation_questions = generate_pronunciation_questions(combined_contents, pronunciation_count, custom_prompt)
     
     return {
-        "multiple_choice_questions": fill_blank_questions,
+        "multiple_choice_questions": text_questions,
         "image_questions": image_questions,
         "voice_questions": voice_questions,
         "pronunciation_questions": pronunciation_questions

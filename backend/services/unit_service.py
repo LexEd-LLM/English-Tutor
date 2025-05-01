@@ -50,8 +50,23 @@ def get_unit_subordinate_chunks(unit_id: int) -> List[str]:
                     ORDER BY unit_id ASC, "order"
                 """, (prev_unit_ids,))
                 vocab_chunks = [row["content"] for row in cur.fetchall()]
+                
+            # 3. Lấy BOOKMAP của tối đa 2 unit trước đó
+            bookmap_chunks = []
+            prev_unit_ids = prev_unit_ids[:2] if len(prev_unit_ids) > 2 else prev_unit_ids
+            if prev_unit_ids:
+                cur.execute("""
+                    SELECT unit_id, content
+                    FROM unit_contents
+                    WHERE unit_id = ANY(%s) AND type = 'BOOKMAP'
+                    ORDER BY unit_id DESC, "order"
+                """, (prev_unit_ids,))
+                for row in cur.fetchall():
+                    bookmap_chunks.append(row["content"])
 
-            return vocab_chunks, text_chunks
+                bookmap_chunks.reverse()
+
+            return vocab_chunks, text_chunks, bookmap_chunks
     finally:
         conn.close()
 

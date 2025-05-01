@@ -1,0 +1,172 @@
+[
+    {
+        "id": "unit_1",
+        "unit": "Unit 1: A LONG AND HEALTHY LIFE",
+        "type": "BOOKMAP",
+        "content": {
+            "Pronunciation": "Strong and weak forms of auxiliary verbs",
+            "Vocabulary": "Words and phrases related to health and fitness",
+            "Grammar": "Past simple vs. Present perfect",
+            "Reading": "Reading for main ideas and specific information in an article about living a long and healthy life",
+            "Speaking": "Giving instructions for an exercise routine",
+            "Listening": "Listening for main ideas and specific information in a TV chat show about food and health",
+            "Writing": "Writing a short message",
+            "Everyday English": "Offering help and responding",
+            "Culture / CLIL": "CLIL: Bacteria and viruses",
+            "Project": "Designing a poster about a healthy habit"
+        }
+    },
+    {
+        "id": "unit_2",
+        "unit": "Unit 2: THE GENERATION GAP",
+        "type": "BOOKMAP",
+        "content": {
+            "Pronunciation": "Contracted forms",
+            "Vocabulary": "Words and phrases related to generational differences",
+            "Grammar": "Modal verbs: must, have to and should",
+            "Reading": "Reading for main ideas and specific information in an article about different generations",
+            "Speaking": "Talking about the different generations of a family; Starting a conversation or discussion",
+            "Listening": "Listening for specific information in a conversation about family conflicts",
+            "Writing": "Writing an opinion essay about limiting teenagers’ screen time",
+            "Everyday English": "Asking for and giving permission",
+            "Culture / CLIL": "Culture: The generation gap in Asian families",
+            "Project": "Carrying out a survey to find out generational differences in families"
+        }
+    },
+    {
+        "id": "unit_3",
+        "unit": "Unit 3: CITIES OF THE FUTURE",
+        "type": "BOOKMAP",
+        "content": {
+            "Pronunciation": "Linking final consonants to initial vowels",
+            "Vocabulary": "Words and phrases related to cities and smart living",
+            "Grammar": "Stative verbs in the continuous form; Linking verbs",
+            "Reading": "Reading for specific information in an article about the characteristics of future cities",
+            "Speaking": "Discussing cities of the future; Keeping a conversation going by asking Wh-questions",
+            "Listening": "Listening for main ideas and specific information in an interview about the disadvantages of living in a smart city",
+            "Writing": "Writing an article about the advantages and disadvantages of living in a smart city",
+            "Everyday English": "Expressing certainty and uncertainty",
+            "Culture / CLIL": "Culture: Smart cities around the world",
+            "Project": "Designing a poster of the ideal city of the future"
+        }
+    },
+    {
+        "id": "unit_4",
+        "unit": "Unit 4: ASEAN AND VIETNAM",
+        "type": "BOOKMAP",
+        "content": {
+            "Pronunciation": "Elision of vowels",
+            "Vocabulary": "Words and phrases related to ASEAN",
+            "Grammar": "Gerunds as subjects and objects",
+            "Reading": "Reading for main ideas and specific information in news items about ASEAN countries",
+            "Speaking": "Discussing the skills and experience needed for the ASEAN Youth Programme; Asking for and giving opinions",
+            "Listening": "Listening for main ideas and specific information in a conversation about an ASEAN school tour programme",
+            "Writing": "Writing a proposal for a welcome event",
+            "Everyday English": "Giving and responding to compliments",
+            "Culture / CLIL": "Culture: New Year Festivals in ASEAN",
+            "Project": "Doing research about an ASEAN member"
+        }
+    },
+    {
+        "id": "unit_5",
+        "unit": "Unit 5: GLOBAL WARMING",
+        "type": "BOOKMAP",
+        "content": {
+            "Pronunciation": "Sentence stress and rhythm",
+            "Vocabulary": "Words and phrases related to global warming",
+            "Grammar": "Present participle and past participle clauses",
+            "Reading": "Reading for main ideas and specific information in an article about the UN Climate Change Conference",
+            "Speaking": "Talking about human activities and global warming; Presenting ideas clearly in a discussion",
+            "Listening": "Listening for main ideas and specific information in a talk about black carbon and global temperature",
+            "Writing": "Writing a leaflet to persuade people to reduce black carbon emissions",
+            "Everyday English": "Giving and responding to warnings",
+            "Culture / CLIL": "CLIL: Reducing the environmental impact of farming",
+            "Project": "Carrying out a survey to find out how local people try to limit global warming"
+        }
+    },
+    {
+        "id": "unit_6",
+        "unit": "Unit 6: PRESERVING OUR HERITAGE",
+        "type": "BOOKMAP",
+        "content": {
+            "Pronunciation": "Intonation in statements, commands, and lists",
+            "Vocabulary": "Words and phrases related to preserving heritage",
+            "Grammar": "To-infinitive clauses",
+            "Reading": "Reading for main ideas and specific information in an article about an ideas competition",
+            "Speaking": "Discussing ways to preserve cultural heritage; Keeping a conversation going by showing interest and encouragement",
+            "Listening": "Listening for main ideas and specific information in a tour guide’s talk about Trang An Scenic Landscape Complex",
+            "Writing": "Writing a leaflet to inform people about ways to preserve Trang An Scenic Landscape Complex",
+            "Everyday English": "Asking for and giving directions",
+            "Culture / CLIL": "Culture: Initiatives to preserve heritage around the world",
+            "Project": "Proposing ways to preserve a type of heritage"
+        }
+    },
+    {
+        "id": "unit_7",
+        "unit": "Unit 7: EDUCATION OPTIONS FOR SCHOOL-LEAVERS",
+        "type": "BOOKMAP",
+        "content": {
+            "Pronunciation": "Intonation in Wh- and Yes/No questions",
+            "Vocabulary": "Words and phrases related to education after leaving school",
+            "Grammar": "Perfect gerunds and perfect participle clauses",
+            "Reading": "Reading for main ideas and specific information in an article about different study options after leaving school",
+            "Speaking": "Discussing the benefits of vocational training and academic study; Ending a conversation or discussion",
+            "Listening": "Listening for main ideas and specific information in a conversation about courses provided at a vocational school",
+            "Writing": "Writing a request letter to ask for information about vocational school courses",
+            "Everyday English": "Making an appointment",
+            "Culture / CLIL": "Culture: UK education after secondary school",
+            "Project": "Doing research on an educational institution"
+        }
+    },
+    {
+        "id": "unit_8",
+        "unit": "Unit 8: BECOMING INDEPENDENT",
+        "type": "BOOKMAP",
+        "content": {
+            "Pronunciation": "Intonation in invitations, suggestions, and polite requests",
+            "Vocabulary": "Words and phrases related to teen independence",
+            "Grammar": "Cleft sentences with It is/was… that/who…",
+            "Reading": "Reading for main ideas and specific information in an article about how teens can become independent",
+            "Speaking": "Giving detailed instructions on learning basic life skills; Using sequencing words and phrases when giving instructions",
+            "Listening": "Listening for main ideas and specific information in a conversation about becoming independent learners",
+            "Writing": "Writing an article about the pros and cons of self-study",
+            "Everyday English": "Expressing best wishes and responding",
+            "Culture / CLIL": "Culture: Teen independence in the US",
+            "Project": "Creating a detailed plan to develop a life skill"
+        }
+    },
+    {
+        "id": "unit_9",
+        "unit": "Unit 9: SOCIAL ISSUES",
+        "type": "BOOKMAP",
+        "content": {
+            "Pronunciation": "Intonation in choice questions",
+            "Vocabulary": "Words and phrases related to social issues",
+            "Grammar": "Linking words and phrases",
+            "Reading": "Reading for main ideas and specific information in an article about peer pressure",
+            "Speaking": "Talking about experiences of peer pressure and responding to peer pressure situations",
+            "Listening": "Listening for specific information in a conversation about types of bullying",
+            "Writing": "Writing a proposal for a school campaign against cyberbullying",
+            "Everyday English": "Expressing disappointment and sympathy",
+            "Culture / CLIL": "CLIL: Social problems facing teens in the US today",
+            "Project": "Planning an awareness campaign about a social issue"
+        }
+    },
+    {
+        "id": "unit_10",
+        "unit": "Unit 10: THE ECOSYSTEM",
+        "type": "BOOKMAP",
+        "content": {
+            "Pronunciation": "Intonation in question tags",
+            "Vocabulary": "Words and phrases related to ecosystems",
+            "Grammar": "Compound nouns",
+            "Reading": "Reading for main ideas and specific information in an article about a national park",
+            "Speaking": "Talking about ways to protect local biodiversity and responding to situations that may harm the environment",
+            "Listening": "Listening for specific information in a talk about the human impact on ecosystems, and making predictions",
+            "Writing": "Writing an opinion essay about spending money on restoring local ecosystems",
+            "Everyday English": "Expressing likes and dislikes",
+            "Culture / CLIL": "CLIL: Protecting the ecosystem - ideas from around the world",
+            "Project": "Making a poster about a local ecosystem and how to restore/protect it"
+        }
+    }
+]
