@@ -18,8 +18,7 @@ import { MAX_HEARTS } from "@/constants";
 export const roleEnum = pgEnum("role", ["USER", "VIP", "ADMIN"]);
 export const unitContentTypeEnum = pgEnum("unit_content_type", ["BOOKMAP", "VOCABULARY", "TEXT_CONTENT"]);
 export const questionTypeEnum = pgEnum("question_type", [
-  "FILL_IN_BLANK",
-  "TRANSLATION",
+  "TEXT",
   "IMAGE",
   "VOICE",
   "PRONUNCIATION",
