@@ -353,7 +353,9 @@ export const PronunciationChallenge = ({
         <div className="space-y-4">
             {/* Question and Original Audio Player Button */}
             <div className="flex items-center gap-4">
-                <div className="text-xl font-bold text-neutral-700">{question}</div>
+                <div className="text-xl font-bold text-neutral-700">
+                    <ReactMarkdown>{question}</ReactMarkdown>
+                </div>
                 {audioUrl && (
                     <>
                         {/* Hidden player for actual playback */}

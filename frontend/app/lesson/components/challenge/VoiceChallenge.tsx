@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { MultipleChoiceChallengeProps } from "./types";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
 
 export const VoiceChallenge = ({
   question,
@@ -31,7 +32,9 @@ export const VoiceChallenge = ({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <div className="text-xl font-bold text-neutral-700">{question}</div>
+        <div className="text-xl font-bold text-neutral-700">
+          <ReactMarkdown>{question}</ReactMarkdown>
+        </div>
         {audioUrl && (
           <button
             onClick={handlePlayAudio}
@@ -62,7 +65,9 @@ export const VoiceChallenge = ({
               status !== "none" && selectedOption !== option.id && "opacity-50"
             )}
           >
-            <p className="text-sm">{option.text}</p>
+            <p className="text-sm">
+              <ReactMarkdown>{option.text}</ReactMarkdown>
+            </p>
           </button>
         ))}
       </div>

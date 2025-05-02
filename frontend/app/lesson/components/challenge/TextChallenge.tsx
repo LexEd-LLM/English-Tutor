@@ -2,6 +2,7 @@
 
 import { MultipleChoiceChallengeProps  } from "./types";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
 
 export const TextChallenge = ({
   question,
@@ -10,9 +11,15 @@ export const TextChallenge = ({
   status,
   onSelect,
 }: MultipleChoiceChallengeProps ) => {
+  // Xử lý lỗi phổ biến do LLM sinh ra
+  const preprocessMarkdown = (text: string) =>
+    text.replace(/\*\*\*/g, "___");
+
   return (
     <div className="space-y-4">
-      <div className="text-xl font-bold text-neutral-700">{question}</div>
+      <div className="text-xl font-bold text-neutral-700">
+        <ReactMarkdown>{preprocessMarkdown(question)}</ReactMarkdown>
+      </div>
       <div className="grid grid-cols-1 gap-4">
         {options.map((option) => (
           <button
@@ -24,7 +31,9 @@ export const TextChallenge = ({
                 status !== "none" && selectedOption !== option.id && "opacity-50"
             )}
           >
-            {option.text}
+            <ReactMarkdown>
+              {preprocessMarkdown(option.text)}
+            </ReactMarkdown>
           </button>
         ))}
       </div>

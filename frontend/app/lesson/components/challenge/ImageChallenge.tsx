@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { MultipleChoiceChallengeProps  } from "./types";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
 
 export const ImageChallenge = ({
   question,
@@ -18,7 +19,9 @@ export const ImageChallenge = ({
 
   return (
     <div className="space-y-6">
-      <div className="text-xl font-bold text-neutral-700">{question}</div>
+      <div className="text-xl font-bold text-neutral-700">
+        <ReactMarkdown>{question}</ReactMarkdown>
+      </div>
 
       {imageUrl && !imageError && (
         <div className="relative h-64 w-full overflow-hidden rounded-lg">
@@ -66,7 +69,11 @@ export const ImageChallenge = ({
                   />
                 </div>
               )}
-              <p className="text-sm">{option.text}</p>
+              <p className="text-sm">
+                <ReactMarkdown>
+                {option.text}
+                </ReactMarkdown>
+              </p>
             </div>
           </button>
         ))}
