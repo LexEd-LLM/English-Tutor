@@ -8,7 +8,7 @@ export const generatePracticeQuiz = async (
     quizId: number
 ): Promise<boolean> => {
     try {
-        const response = await fetch(`${BACKEND_URL}/api/generate-quiz-again`, {
+        const response = await fetch(`${BACKEND_URL}/api/practice/generate-again`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
