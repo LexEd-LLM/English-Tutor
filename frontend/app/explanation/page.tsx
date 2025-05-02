@@ -99,7 +99,7 @@ export default function ExplanationPage() {
   return (
     <div className="max-w-3xl mx-auto p-6">
       <div className="flex items-center mb-6">
-        <Button variant="ghost" onClick={() => router.back()} className="flex items-center gap-2">
+        <Button variant="ghost" onClick={() => router.push("/learn")} className="flex items-center gap-2">
           <ArrowLeft className="h-5 w-5" /> Back to Learn
         </Button>
         <h1 className="text-3xl font-bold text-center flex-1">Quiz Explanations</h1>
@@ -267,7 +267,7 @@ export default function ExplanationPage() {
       })}
 
       <div className="flex justify-center mt-10">
-        <Button size="lg" onClick={() => router.back()}>
+        <Button size="lg" onClick={() => router.push("/learn")}>
           Return to Learn
         </Button>
       </div>
