@@ -16,10 +16,6 @@ api_router.include_router(pronunciation.router, prefix="/api")
 async def legacy_generate_explanation():
     return RedirectResponse(url="/api/quiz/generate-explanation", status_code=307)
 
-@api_router.post("/api/generate-quiz-again")
-async def legacy_generate_quiz_again():
-    return RedirectResponse(url="/api/quiz/generate-again", status_code=307)
-
 @api_router.post("/api/submit-quiz")
 async def legacy_submit_quiz():
     return RedirectResponse(url="/api/quiz/submit", status_code=307)
