@@ -21,8 +21,20 @@ class QuizService:
                 return cur.fetchall()
         finally:
             conn.close()
+            
+    def get_user_quiz(self, quiz_id: int) -> Optional[Dict]:
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT * FROM user_quizzes 
+                    WHERE id = %s
+                """, (quiz_id,))
+                return cur.fetchone()
+        finally:
+            conn.close()
 
-    def convert_db_question_to_quiz_item(self, question: Dict) -> QuizItem:
+    def __convert_db_question_to_quiz_item(self, question: Dict) -> QuizItem:
         """Convert a database question to a QuizItem"""
         # Get question type and ensure it's a valid QuestionType enum
         question_type = QuestionType(question["type"].lower())
@@ -166,7 +178,7 @@ class QuizService:
         # Get existing questions
         existing_questions = self.get_quiz_questions(quiz_id)
         existing_items = [
-            self.convert_db_question_to_quiz_item(q) 
+            self.__convert_db_question_to_quiz_item(q) 
             for q in existing_questions
         ]
 
@@ -275,5 +287,44 @@ class QuizService:
             quiz_id = cursor.fetchone()['id']
             conn.commit()
             return quiz_id
+    
+    def update_prompt(
+        self,
+        quiz_id: int,
+        contents: str,
+        prior_contents: str, 
+        text_chunks: str,
+        multiple_choice_count: int,
+        image_count: int,
+        voice_count: int,
+        custom_prompt: Optional[str] = None,
+        dok_level: Optional[List[int]] = None,
+        strengths: Optional[List[str]] = None,
+        weaknesses: Optional[List[str]] = None
+    ) -> None:
+        """Update the prompt field for a quiz with processed data"""
+        prompt_data = {
+            "contents": contents,
+            "prior_contents": prior_contents,
+            "multiple_choice_count": multiple_choice_count,
+            "image_count": image_count,
+            "voice_count": voice_count,
+            "custom_prompt": custom_prompt,
+            "dok_level": dok_level,
+            "strengths": strengths,
+            "weaknesses": weaknesses
+        }
+        
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE user_quizzes 
+                SET prompt = %s
+                WHERE id = %s
+                """,
+                (json.dumps(prompt_data), quiz_id)
+            )
+            conn.commit()
 
 quiz_service = QuizService()

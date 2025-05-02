@@ -18,7 +18,6 @@ from backend.schemas.quiz import (
 from backend.services.question_generator import generate_questions_batch
 from backend.services.quiz_service import quiz_service
 from backend.services.unit_service import get_unit_main_chunks, get_unit_subordinate_chunks
-from backend.services.practice_service import practice_service
 from backend.services.explanation_generator import generate_explanation_mcq
 from backend.database import get_db
 from backend.services.voice_quiz_generator import calculate_pronunciation_score
@@ -106,6 +105,7 @@ async def generate_quiz(request: QuizRequest):
 
     # Generate questions from chunks
     questions_data = generate_questions_batch(
+        quiz_id=quiz_id,
         contents=main_contents,
         prior_contents=prior_contents,
         text_chunks=random_text_chunks,

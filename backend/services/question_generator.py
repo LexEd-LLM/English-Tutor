@@ -8,6 +8,7 @@ import re
 from .voice_quiz_generator import generate_audio, get_phonemes
 from .image_generator import generate_image
 from .prompt_banks import POSSIBLE_CUSTOM_PROMPTS, DOK_DESCRIPTIONS, QUESTION_TYPES
+from quiz_service import quiz_service
 
 # Base prompt template for question generation without strengths/weaknesses
 BASE_TEXT_QUESTION_TEMPLATE = """ 
@@ -31,7 +32,7 @@ Make sure:
 1. Use a variety of school-level question formats. Avoid repeating similar formats.
 2. The content should feel like it belongs in a Vietnamese English textbook or exam paper.
 3. Avoid repetition.
-4. The “question” field should only contain the problem statement (stem). Do not include any answer choices here. Put all four answer choices into the “options” list.
+4. The "question" field should only contain the problem statement (stem). Do not include any answer choices here. Put all four answer choices into the "options" list.
 5. You may use standard Markdown syntax only (e.g., **bold**, *italic*, ~~strikethrough~~, line breaks \n). Use ___ for blanks.
 
 Format (in JSON array):
@@ -273,6 +274,7 @@ def generate_pronunciation_questions(
     ]
 
 def generate_questions_batch(
+    quiz_id: int,
     contents: List[str],
     prior_contents: List[str],
     text_chunks: List[str],
@@ -294,6 +296,21 @@ def generate_questions_batch(
     # Split voice questions between voice and pronunciation
     pronunciation_count = voice_count // 2
     voice_count = voice_count - pronunciation_count
+    
+    # Update new prompt
+    quiz_service.update_prompt(
+        quiz_id=quiz_id,
+        contents=combined_contents,
+        prior_contents=combined_prior_contents,
+        text_chunks=combined_text_chunks,
+        multiple_choice_count=multiple_choice_count,
+        image_count=image_count,
+        voice_count=voice_count,
+        custom_prompt=custom_prompt,
+        dok_level=dok_level,
+        strengths=strengths,
+        weaknesses=weaknesses
+    )
     
     # Generate questions
     text_questions = generate_text_questions(
