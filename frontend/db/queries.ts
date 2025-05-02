@@ -415,64 +415,6 @@ export const updateUserProgress = async (userId: string, curriculumId: number) =
     });
 };
 
-export const setUserQuizQuestions = async (questions: APIQuizQuestion[], unitId?: number, prompt: string = "") => {
-  const { userId } = auth();
-
-  if (!userId) return false;
-
-  try {
-    // First create a new quiz
-    const [quiz] = await db.insert(userQuizzes)
-      .values({
-        userId,
-        unitId: unitId || 1, // Default to first unit if not provided
-        prompt,
-        createdAt: new Date(),
-      })
-      .returning();
-
-    if (!quiz) {
-      console.error('Failed to create new quiz');
-      return false;
-    }
-
-    // Insert all questions with proper type mapping
-    const questionsToInsert = questions.map(q => {
-      const correctOption = q.challengeOptions.find((opt: ChallengeOption) => opt.correct);
-      
-      // Convert the question to match database schema
-      const dbQuestion = {
-        quizId: quiz.id,
-        questionText: q.question,
-        type: q.type,
-        options: q.challengeOptions as any, // JSON field in database
-        correctAnswer: correctOption?.text || "",
-        explanation: q.explanation || null,
-        imageUrl: null as string | null,
-        audioUrl: null as string | null,
-      };
-
-      // Add optional fields if they exist
-      if ('imageUrl' in q) {
-        dbQuestion.imageUrl = q.imageUrl;
-      }
-      if ('audioUrl' in q) {
-        dbQuestion.audioUrl = q.audioUrl;
-      }
-
-      return dbQuestion;
-    });
-
-    await db.insert(quizQuestions)
-      .values(questionsToInsert);
-
-    return true;
-  } catch (error) {
-    console.error('Error storing quiz questions:', error);
-    return false;
-  }
-};
-
 export const updateUserCurriculumProgress = async (userId: string, curriculumId: number) => {
   try {
     // Get total units in curriculum
