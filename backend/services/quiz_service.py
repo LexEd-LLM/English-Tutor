@@ -306,6 +306,7 @@ class QuizService:
         prompt_data = {
             "contents": contents,
             "prior_contents": prior_contents,
+            "text_chunks": text_chunks,
             "multiple_choice_count": multiple_choice_count,
             "image_count": image_count,
             "voice_count": voice_count,
