@@ -26,19 +26,17 @@ const QuizHistoryPage = async () => {
         {quizzes.map((quiz) => (
           <Link 
             key={quiz.id} 
-            href={`/lesson/explanations?quizId=${quiz.id}`}
+            href={`/explanation?quizId=${quiz.id}`}
           >
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardHeader className="relative w-full h-[200px] p-0">
+            <CardHeader className="relative w-full h-[200px] p-0 bg-green-100 overflow-hidden">
               <Image
-                src={
-                    quiz.unit.curriculum?.image_url?.startsWith("/")
-                    ? quiz.unit.curriculum.image_url
-                    : "/" + quiz.unit.curriculum?.image_url || "/default-curriculum.png"
-                }
+                src={"/quiz_placeholder.png"}
                 alt={quiz.unit.curriculum?.title || `Unit ${quiz.unit.order}`}
-                fill
-                className="object-cover rounded-t-lg"
+                width={400}
+                height={160}
+                className="object-contain w-full h-full"
+                loading="lazy"
               />
               </CardHeader>
               <CardContent className="p-4">
@@ -48,7 +46,7 @@ const QuizHistoryPage = async () => {
                       {quiz.unit.curriculum?.title}
                     </p>
                     <h3 className="font-semibold">
-                      Unit {quiz.unit.order}: {quiz.unit.title}
+                      {quiz.title ?? `Unit ${quiz.unit.order}: ${quiz.unit.title}`}
                     </h3>
                   </div>
                   <div className="flex justify-between text-sm text-muted-foreground">

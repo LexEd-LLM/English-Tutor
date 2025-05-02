@@ -114,6 +114,7 @@ export const userQuizzes = pgTable("user_quizzes", {
   unitId: integer("unit_id")
   .references(() => units.id, { onDelete: "cascade" })
   .notNull(),
+  title: text("title"),
   prompt: text("prompt"), // câu lệnh yêu cầu AI tạo quiz
   depthOfKnowledge: dokLevelEnum("depth_of_knowledge").array(),
   strengths: text("strengths"),      // điểm mạnh của user trong quiz

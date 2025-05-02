@@ -351,6 +351,7 @@ export const getUserQuizzes = cache(async () => {
       },
       questions: true,
     },
+    orderBy: (userQuizzes, { desc }) => [desc(userQuizzes.createdAt)],
   });
 
   return quizzes;

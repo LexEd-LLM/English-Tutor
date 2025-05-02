@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS "user_quizzes" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
 	"unit_id" integer NOT NULL,
+	"title" text,
 	"prompt" text,
 	"depth_of_knowledge" dok_level[],
 	"strengths" text,
