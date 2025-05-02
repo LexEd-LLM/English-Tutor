@@ -13,29 +13,30 @@ from .prompt_banks import POSSIBLE_CUSTOM_PROMPTS, DOK_DESCRIPTIONS, QUESTION_TY
 BASE_TEXT_QUESTION_TEMPLATE = """ 
 You are helping Vietnamese students improve their English through creative and varied questions.
 
-Use the following English learning materials as your inspiration. You are NOT restricted to the exact words or sentences in the content. Feel free to synthesize, combine, or transform ideas into realistic classroom or exam-style questions.
+Use the following English learning materials as your inspiration. You are NOT restricted to the exact words or sentences in the provided data. Feel free to synthesize, combine, or transform ideas into realistic classroom or exam-style questions.
 
-Base your questions primarily on:
-- The main vocabulary and skills from the current unit: <main knowledge>{content}</main knowledge>
-- You may occasionally draw on vocabulary or structures students are likely to have learned in earlier units, to reflect natural cumulative learning.
-<prior knowledge>{prior_contents}</prior knowledge>
-Ensure that most questions reflect the focus of the current unit, while a few can incorporate prior knowledge to increase realism and challenge.
-<content>{text_chunks}</content>
-<customized prompt>{custom_prompt}</customized prompt>
+{ 
+  "main_knowledge": "{content}",
+  "prior_knowledge": "{prior_contents}",
+  "text_chunks": "{text_chunks}",
+  "custom_prompt": "{custom_prompt}",
+  "question_types": "{question_types}",
+  "count": "{count}"
+}
 
-Create {count} unique fill-in-the-blank multiple-choice questions.
+Instruction:
+Create {count} unique multiple-choice questions.
 
 Make sure:
-1. Use a variety of school-level question formats. Try to avoid starting with the same type of question repeatedly.
-<question types>{question_types}</question types>
+1. Use a variety of school-level question formats. Avoid repeating similar formats.
 2. The content should feel like it belongs in a Vietnamese English textbook or exam paper.
 3. Avoid repetition.
-4. Treat tags like <main knowledge>...</main knowledge> as structured data hints.
-5. The answer must not appear in the question.
+4. The “question” field should only contain the problem statement (stem). Do not include any answer choices here. Put all four answer choices into the “options” list.
+5. You may use standard Markdown syntax only (e.g., **bold**, *italic*, ~~strikethrough~~, line breaks \n). Use ___ for blanks.
 
 Format (in JSON array):
 - id: count from 1
-- question: the word, phrase or sentence (use ___ for blanks or underline specific words when needed)
+- question: the word, phrase or sentence
 - options: list of 4 options, only one correct
 - correct_answer: the correct option string
 - type: "text"
@@ -81,7 +82,7 @@ def generate_text_questions(
     if count < 1:
         return []
     
-    """Generate fill-in-the-blank questions."""
+    """Generate text questions."""
     if strengths or weaknesses:
         template = PRACTICE_QUESTION_TEMPLATE 
         prompt_template = PromptTemplate(template=template)
