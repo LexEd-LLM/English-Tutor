@@ -123,9 +123,6 @@ export const generateQuiz = async (
     }
 
     console.log(`Received total ${allQuestions.length} questions from backend`);
-    if (allQuestions.length > 0) {
-      console.log(`First question: ${JSON.stringify(allQuestions[0]).substring(0, 2000)}...`);
-    }
 
     revalidatePath("/learn");
     return {

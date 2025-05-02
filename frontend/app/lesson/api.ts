@@ -23,7 +23,7 @@ export interface QuizData {
 export interface QuizQuestion {
     id: number;
     question: string;
-    type: "FILL_IN_BLANK" | "TRANSLATION" | "IMAGE" | "VOICE" | "PRONUNCIATION";
+    type: "TEXT" | "IMAGE" | "VOICE" | "PRONUNCIATION";
     challengeOptions: QuizOption[];
     explanation?: string;
     imageUrl?: string;
