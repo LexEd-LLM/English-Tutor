@@ -64,7 +64,7 @@ export const calculatePhonemeScore = async (userPhonemes: string, correctPhoneme
 export const generatePracticeQuiz = async (
     userId: string,
     quizId: number
-): Promise<boolean> => {
+): Promise<void> => {
     try {
         const response = await fetch(`${BACKEND_URL}/api/practice/generate-again`, {
             method: 'POST',
@@ -83,7 +83,11 @@ export const generatePracticeQuiz = async (
             throw new Error('Failed to generate practice quiz');
         }
 
-        return true;
+        const data = await response.json();
+        const lessonId = data.lesson_id;
+        
+        // Redirect to lesson page with both quizId and lessonId
+        window.location.href = `/lesson?quizId=${quizId}&lessonId=${lessonId}`;
     } catch (error) {
         console.error('Error generating practice quiz:', error);
         throw error;
