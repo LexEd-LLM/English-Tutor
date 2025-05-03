@@ -17,7 +17,6 @@ from backend.schemas.quiz import (
 from backend.services.question_generator import generate_questions_batch
 from backend.services.quiz_service import quiz_service
 from backend.services.unit_service import get_unit_main_chunks, get_unit_subordinate_chunks
-from backend.services.explanation_generator import generate_explanation_mcq
 from backend.database import get_db
 from backend.services.voice_quiz_generator import calculate_pronunciation_score
 
@@ -268,20 +267,6 @@ async def submit_quiz(submission: QuizSubmission):
     finally:
         if conn:
             conn.close()
-        
-@router.post("/generate-explanation")
-async def generate_explanation_api(request: ExplanationRequest):
-    try:
-        explanation = generate_explanation_mcq(
-            question=request.question_text, 
-            correct_answer=request.correct_answer, 
-            user_answer=request.user_answer
-        )
-        
-        return {"explanation": explanation}
-    except Exception as e:
-        print(f"Error generating explanation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{quiz_id}/explanations")
 async def get_quiz_with_user_answers(quiz_id: int) -> List[QuizQuestionWithUserAnswer]:
