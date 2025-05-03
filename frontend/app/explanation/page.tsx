@@ -45,7 +45,8 @@ export default function ExplanationPage() {
   const [generatingExplanations, setGeneratingExplanations] = useState<Record<number, boolean>>({});
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [savedExplanations, setSavedExplanations] = useState<Record<number, boolean>>({});
-  const audioRefs = useRef<Record<number, HTMLAudioElement | null>>({});
+  const sampleAudioRefs = useRef<Record<number, HTMLAudioElement | null>>({});
+  const userAudioRefs = useRef<Record<number, HTMLAudioElement | null>>({});
 
   const [phonemeScores, setPhonemeScores] = useState<Record<number, number>>({});
 
@@ -131,15 +132,32 @@ export default function ExplanationPage() {
     }
   };
 
-  const handlePlayAudio = (questionId: number, audioUrl: string) => {
-    if (audioRefs.current[questionId]) {
-      audioRefs.current[questionId]!.currentTime = 0;
-      audioRefs.current[questionId]!.play().catch(console.error);
+  const handlePlayAudio = (questionId: number, type: 'sample' | 'user') => {
+    const audioRef = type === 'sample' ? sampleAudioRefs.current[questionId] : userAudioRefs.current[questionId];
+    if (audioRef) {
+      audioRef.currentTime = 0;
+      audioRef.play().catch(console.error);
     }
   };
 
-  const setAudioRef = (questionId: number) => (el: HTMLAudioElement | null): void => {
-    audioRefs.current[questionId] = el;
+  const setSampleAudioRef = (questionId: number) => (el: HTMLAudioElement | null): void => {
+    sampleAudioRefs.current[questionId] = el;
+  };
+
+  const setUserAudioRef = (questionId: number) => (el: HTMLAudioElement | null): void => {
+    userAudioRefs.current[questionId] = el;
+  };
+
+  const getSpeakerColorFilter = (score?: number) => {
+    if (score === undefined) return "grayscale(100%)";
+  
+    if (score >= 0.8) {
+      return "invert(48%) sepia(95%) saturate(427%) hue-rotate(101deg) brightness(90%) contrast(108%)"; // green
+    } else if (score >= 0.5) {
+      return "invert(92%) sepia(37%) saturate(1313%) hue-rotate(8deg) brightness(102%) contrast(96%)"; // yellow
+    } else {
+      return "invert(41%) sepia(99%) saturate(5792%) hue-rotate(348deg) brightness(98%) contrast(116%)"; // red
+    }
   };
 
   return (
@@ -163,28 +181,46 @@ export default function ExplanationPage() {
               </div>
               <div className="font-semibold mb-2 flex items-center gap-4">
                 {q.questionText}
-                {q.type === "VOICE" && q.audioUrl && (
-                  <>
-                    <button
-                      onClick={() => handlePlayAudio(q.id, q.audioUrl)}
-                      className="p-2 rounded-full hover:bg-neutral-100 transition"
-                    >
-                      <Image
-                        src="/speaker.svg"
-                        alt="Play audio"
-                        width={24}
-                        height={24}
-                        className="cursor-pointer"
-                        style={{ filter: "invert(48%) sepia(80%) saturate(2476%) hue-rotate(200deg) brightness(118%) contrast(119%)" }}
-                      />
-                    </button>
-                    <audio 
-                      ref={setAudioRef(q.id)}
-                      src={q.audioUrl} 
-                      controls={false} 
-                    />
-                  </>
-                )}
+                <div className="flex items-center gap-2">
+                  {q.audioUrl && (
+                    <>
+                      <audio ref={setSampleAudioRef(q.id)} src={q.audioUrl} controls={false} />
+                      <button
+                        onClick={() => handlePlayAudio(q.id, 'sample')}
+                        className="p-2 rounded-full hover:bg-blue-100 transition-colors"
+                        title="Phát âm mẫu"
+                      >
+                        <Image
+                          src="/speaker.svg"
+                          alt="Play sample audio"
+                          width={24}
+                          height={24}
+                          className="cursor-pointer"
+                          style={{ filter: "invert(48%) sepia(80%) saturate(2476%) hue-rotate(200deg) brightness(118%) contrast(119%)" }}
+                        />
+                      </button>
+                    </>
+                  )}
+                  {q.userAnswer && (
+                    <>
+                      <audio ref={setUserAudioRef(q.id)} src={q.userAnswer} controls={false} />
+                      <button
+                        onClick={() => handlePlayAudio(q.id, 'user')}
+                        className="p-2 rounded-full hover:bg-green-100 transition-colors"
+                        title="Phát âm của bạn"
+                      >
+                        <Image
+                          src="/speaker.svg"
+                          alt="Play user audio"
+                          width={24}
+                          height={24}
+                          className="cursor-pointer"
+                          style={{ filter: getSpeakerColorFilter(phonemeScores[q.id]) }}
+                        />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
               {q.type === "IMAGE" && q.imageUrl && (
                 <div className="h-64 overflow-hidden rounded mb-2">
@@ -268,9 +304,6 @@ export default function ExplanationPage() {
                     </>
                   );                  
                 })()}
-                {q.userAudioUrl && (
-                  <audio controls src={q.userAudioUrl} className="w-full h-10" />
-                )}
               </div>
             )}
 
