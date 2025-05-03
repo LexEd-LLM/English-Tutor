@@ -46,7 +46,7 @@ export const submitQuizAnswers = async (
     answers: QuizAnswer[]
 ): Promise<QuizSubmissionResponse> => {
     try {
-        const response = await fetch(`${BACKEND_URL}/api/quiz/submit`, {
+        const response = await fetch(`${BACKEND_URL}/api/submit-quiz`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
