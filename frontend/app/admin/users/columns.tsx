@@ -5,26 +5,35 @@ import { RoleSelector } from "./role-selector";
 
 export type User = {
   id: string;
-  email: string;
-  imageUrl: string;
+  name: string;
+  imageSrc: string;
   role: "USER" | "VIP" | "ADMIN";
-  points: number;
   hearts: number;
-  createdAt: Date;
+  subscriptionStatus: "USER" | "VIP" | "ADMIN";
+  subscriptionEndDate: Date | null;
 };
 
 export const columns: ColumnDef<User>[] = [
   {
-    accessorKey: "email",
-    header: "Email",
-  },
-  {
-    accessorKey: "points",
-    header: "Points",
+    accessorKey: "name",
+    header: "Name",
   },
   {
     accessorKey: "hearts",
     header: "Hearts",
+  },
+  {
+    accessorKey: "subscriptionStatus",
+    header: "Subscription",
+  },
+  {
+    accessorKey: "subscriptionEndDate",
+    header: "End Date",
+    cell: ({ row }) => {
+      const date = row.original.subscriptionEndDate;
+      if (!date) return "N/A";
+      return new Date(date).toLocaleDateString();
+    }
   },
   {
     accessorKey: "role",
@@ -32,8 +41,6 @@ export const columns: ColumnDef<User>[] = [
     cell: ({ row }) => {
       const userId = row.original.id;
       const currentRole = row.original.role;
-      
-      console.log("Role selector data:", { userId, currentRole });
       
       return (
         <RoleSelector 

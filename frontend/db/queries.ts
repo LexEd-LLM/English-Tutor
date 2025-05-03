@@ -496,3 +496,19 @@ export const getQuizById = cache(async (quizId: number) => {
 
   return quiz;
 });
+
+export const getUsersWithRoles = cache(async () => {
+  const data = await db.query.users.findMany({
+    columns: {
+      id: true,
+      name: true,
+      imageSrc: true,
+      role: true,
+      hearts: true,
+      subscriptionStatus: true,
+      subscriptionEndDate: true,
+    },
+  });
+
+  return data;
+});
