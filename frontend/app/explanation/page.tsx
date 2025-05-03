@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, XCircle, RefreshCw } from "lucide-react";
@@ -45,6 +45,7 @@ export default function ExplanationPage() {
   const [generatingExplanations, setGeneratingExplanations] = useState<Record<number, boolean>>({});
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [savedExplanations, setSavedExplanations] = useState<Record<number, boolean>>({});
+  const audioRefs = useRef<Record<number, HTMLAudioElement | null>>({});
 
   const [phonemeScores, setPhonemeScores] = useState<Record<number, number>>({});
 
@@ -130,6 +131,17 @@ export default function ExplanationPage() {
     }
   };
 
+  const handlePlayAudio = (questionId: number, audioUrl: string) => {
+    if (audioRefs.current[questionId]) {
+      audioRefs.current[questionId]!.currentTime = 0;
+      audioRefs.current[questionId]!.play().catch(console.error);
+    }
+  };
+
+  const setAudioRef = (questionId: number) => (el: HTMLAudioElement | null): void => {
+    audioRefs.current[questionId] = el;
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-6 pb-24">
       <div className="flex items-center mb-6">
@@ -149,7 +161,31 @@ export default function ExplanationPage() {
               <div className="inline-block bg-green-100 text-green-800 rounded-full px-3 py-1 text-sm font-medium mb-2">
                 Question {index + 1}
               </div>
-              <div className="font-semibold mb-2">{q.questionText}</div>
+              <div className="font-semibold mb-2 flex items-center gap-4">
+                {q.questionText}
+                {q.type === "VOICE" && q.audioUrl && (
+                  <>
+                    <button
+                      onClick={() => handlePlayAudio(q.id, q.audioUrl)}
+                      className="p-2 rounded-full hover:bg-neutral-100 transition"
+                    >
+                      <Image
+                        src="/speaker.svg"
+                        alt="Play audio"
+                        width={24}
+                        height={24}
+                        className="cursor-pointer"
+                        style={{ filter: "invert(48%) sepia(80%) saturate(2476%) hue-rotate(200deg) brightness(118%) contrast(119%)" }}
+                      />
+                    </button>
+                    <audio 
+                      ref={setAudioRef(q.id)}
+                      src={q.audioUrl} 
+                      controls={false} 
+                    />
+                  </>
+                )}
+              </div>
               {q.type === "IMAGE" && q.imageUrl && (
                 <div className="h-64 overflow-hidden rounded mb-2">
                   <Image
@@ -159,11 +195,6 @@ export default function ExplanationPage() {
                     height={250}
                     className="object-contain w-full h-full"
                   />
-                </div>
-              )}
-              {q.type === "AUDIO" && q.audioUrl && (
-                <div className="flex items-center gap-2 mb-2">
-                  <audio controls src={q.audioUrl} className="h-10" />
                 </div>
               )}
             </div>
