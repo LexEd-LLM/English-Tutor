@@ -1,5 +1,7 @@
+from typing import List
 from llama_index.core.prompts import PromptTemplate
 from ..config.settings import llm
+from googletrans import Translator
 
 def generate_explanation_mcq(question: str, correct_answer: str, user_answer: str) -> str:
     """Generate explanation for a question."""
@@ -58,3 +60,18 @@ def generate_explanation_pronunciation(question: str, correct_answer: str, user_
     )
     response = llm.complete(prompt)
     return "\n".join(response.text.splitlines())
+
+async def generate_explanation_image(options: List[dict]) -> str:
+    """Translate 4 answers and return Markdown table."""
+    translator = Translator()
+    
+    translated_table = [
+        "Dưới đây là phần dịch nghĩa các từ.",
+        "| English  | Vietnamese     |",
+        "|----------|----------------|"
+    ]
+    for option in options:
+        translated = await translator.translate(option['text'], src='en', dest='vi')
+        translated_table.append(f"| {option['text']} | {translated.text} |")
+
+    return "\n".join(translated_table)

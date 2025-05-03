@@ -25,6 +25,7 @@ export async function getQuizWithAnswers(quizId: number): Promise<QuizQuestionWi
 export async function generateExplanation(question: {
   questionId: number;
   questionText: string;
+  options: { text: string }[];
   correctAnswer: string;
   type: string;
   userAnswer: string;
@@ -34,6 +35,7 @@ export async function generateExplanation(question: {
     {
       questionId: question.questionId,
       questionText: question.questionText,
+      options: question.options,
       correctAnswer: question.correctAnswer,
       userAnswer: question.userAnswer,
       type: question.type,

@@ -255,9 +255,32 @@ export default function ExplanationPage() {
                 <div className="mt-4 p-4 bg-blue-50 rounded-md">
                   <div className="prose prose-sm max-w-none">
                     {hasExplanation ? (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                        {explanations[q.id] || q.explanation}
-                      </ReactMarkdown>
+                      <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]} 
+                      rehypePlugins={[rehypeRaw]}
+                      components={{
+                        table: ({node, ...props}) => (
+                          <table className="min-w-full border border-gray-300 my-4" {...props} />
+                        ),
+                        thead: ({node, ...props}) => (
+                          <thead className="bg-gray-100" {...props} />
+                        ),
+                        tbody: ({node, ...props}) => (
+                          <tbody className="divide-y divide-gray-200" {...props} />
+                        ),
+                        tr: ({node, ...props}) => (
+                          <tr className="border-b border-gray-300" {...props} />
+                        ),
+                        th: ({node, ...props}) => (
+                          <th className="px-4 py-2 border border-gray-300 text-left font-medium" {...props} />
+                        ),
+                        td: ({node, ...props}) => (
+                          <td className="px-4 py-2 border border-gray-300" {...props} />
+                        ),
+                      }}
+                    >
+                      {explanations[q.id] || q.explanation}
+                    </ReactMarkdown>
                     ) : (
                       <p>Chưa có giải thích cho câu hỏi này.</p>
                     )}

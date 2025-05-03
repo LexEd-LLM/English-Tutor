@@ -1,5 +1,5 @@
 import psycopg2
-from backend.services.explanation_generator import generate_explanation_mcq, generate_explanation_pronunciation
+from backend.services.explanation_generator import generate_explanation_mcq, generate_explanation_pronunciation, generate_explanation_image
 from backend.schemas.quiz import ExplanationRequest
 from fastapi import APIRouter, HTTPException
 from backend.database import get_db
@@ -16,11 +16,7 @@ async def generate_explanation_api(request: ExplanationRequest):
                 user_answer=request.user_answer
             )
         elif request.type == "IMAGE":
-            explanation = generate_explanation_mcq(
-                question=request.question_text, 
-                correct_answer=request.correct_answer, 
-                user_answer=request.user_answer
-            )
+            explanation = await generate_explanation_image(request.options)
         else:
             explanation = generate_explanation_mcq(
                 question=request.question_text, 

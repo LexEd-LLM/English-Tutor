@@ -55,6 +55,7 @@ class QuizSubmission(BaseModel):
 class ExplanationRequest(BaseModel):
     question_id: int = Field(alias="questionId")
     question_text: str = Field(alias="questionText")
+    options: List[dict]
     correct_answer: str = Field(alias="correctAnswer")
     user_answer: str = Field(alias="userAnswer")
     type: str
