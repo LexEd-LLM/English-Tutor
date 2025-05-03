@@ -1,5 +1,5 @@
 {
-  "id": "ec1002eb-8e66-40c4-8480-b776447dc82d",
+  "id": "5c644894-1c60-4999-b274-3fdac5830ec6",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -413,7 +413,7 @@
         },
         "prompt": {
           "name": "prompt",
-          "type": "text",
+          "type": "json",
           "primaryKey": false,
           "notNull": false
         },

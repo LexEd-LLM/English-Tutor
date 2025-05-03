@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS "user_quizzes" (
 	"user_id" text NOT NULL,
 	"unit_id" integer NOT NULL,
 	"title" text,
-	"prompt" text,
+	"prompt" json,
 	"depth_of_knowledge" dok_level[],
 	"strengths" text,
 	"weaknesses" text,
