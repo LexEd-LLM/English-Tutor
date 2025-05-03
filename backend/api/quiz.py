@@ -347,7 +347,6 @@ async def get_assignment_feedback(quiz_id: int):
                 WHERE id = %s
             """, (quiz_id,))
             row = cur.fetchone()
-            print(row['strengths'], row['weaknesses'])
             if row:
                 return row
             else:
