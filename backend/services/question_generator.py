@@ -403,7 +403,7 @@ def generate_questions_adaptive(
     strengths: str,
     weaknesses: str,
     custom_prompt: Optional[str] = None,
-    dok_level: Optional[List[str]] = None
+    dok_level: Optional[str] = None
 ) -> Dict[str, List[Dict[str, Any]]]:
     """Generate adaptive questions based on user's strengths and weaknesses."""   
     # Split voice questions between voice and pronunciation
@@ -422,6 +422,7 @@ def generate_questions_adaptive(
         "SKILL_CONCEPT": 2,
         "STRATEGIC_THINKING": 3,
     }
+    dok_level = dok_level.strip('{}').split(',')
     dok_level = max([DOK_LEVEL[i] for i in dok_level])
     
     # Generate questions with adaptive focus
