@@ -44,6 +44,7 @@ export default function ExplanationPage() {
   const [explanations, setExplanations] = useState<Record<number, string>>({});
   const [generatingExplanations, setGeneratingExplanations] = useState<Record<number, boolean>>({});
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+  const [savedExplanations, setSavedExplanations] = useState<Record<number, boolean>>({});
 
   const [phonemeScores, setPhonemeScores] = useState<Record<number, number>>({});
 
@@ -77,11 +78,14 @@ export default function ExplanationPage() {
   const handleGenerateExplanation = async (questionId: number) => {
     const question = questions.find((q) => q.id === questionId);
     if (!question) return;
+    
+    setGeneratingExplanations((prev) => ({ ...prev, [questionId]: true }));
 
     try {
       const payload = {
         questionId: question.id,
         questionText: question.questionText,
+        options: question.options,
         correctAnswer: question.correctAnswer,
         type: question.type,
         userAnswer: question.type === "PRONUNCIATION" ? question.userPhonemes : question.userAnswer,
@@ -93,10 +97,11 @@ export default function ExplanationPage() {
         [questionId]: explanation,
       }));
 
-      setGeneratingExplanations((prev) => ({
-        ...prev,
-        [questionId]: saved,
+      setSavedExplanations((prev) => ({
+      ...prev,
+      [questionId]: saved,
       }));
+
     } catch (err) {
       console.error("Error generating explanation:", err);
     } finally {
@@ -282,7 +287,7 @@ export default function ExplanationPage() {
                       )}
                     </Button>
 
-                    {explanations[q.id] && (
+                    {savedExplanations[q.id] && (
                       <span className="text-green-600 text-sm flex items-center gap-1">
                         <CheckCircle size={14} /> Saved
                       </span>
