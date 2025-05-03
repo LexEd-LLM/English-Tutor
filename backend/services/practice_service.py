@@ -263,18 +263,18 @@ class PracticeService:
         prompt_data = await self.get_prompt_data(quiz_id)
         print("Successfully loaded prompt data")
 
-        # Get all answers including wrong ones
-        answers_data = await self.get_quiz_answers(quiz_id)
-        print("Successfully loaded quiz answers")
+        # # Get all answers including wrong ones
+        # answers_data = await self.get_quiz_answers(quiz_id)
+        # print("Successfully loaded quiz answers")
         
-        # Analyze current performance
-        user_profile = await self.analyze_performance(
-            quiz_id,
-            answers_data,
-            prompt_data,
-            user_profile
-        )
-        print("Successfully analyzed performance")
+        # # Analyze current performance
+        # user_profile = await self.analyze_performance(
+        #     quiz_id,
+        #     answers_data,
+        #     prompt_data,
+        #     user_profile
+        # )
+        # print("Successfully analyzed performance")
 
         # Generate adaptive questions
         questions_data = generate_questions_adaptive(

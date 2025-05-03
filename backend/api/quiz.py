@@ -17,6 +17,7 @@ from backend.schemas.quiz import (
 from backend.services.question_generator import generate_questions_batch
 from backend.services.quiz_service import quiz_service
 from backend.services.unit_service import get_unit_main_chunks, get_unit_subordinate_chunks
+from backend.services.practice_service import practice_service
 from backend.database import get_db
 from backend.services.voice_quiz_generator import calculate_pronunciation_score
 
@@ -246,6 +247,26 @@ async def submit_quiz(submission: QuizSubmission):
                 ))
 
         conn.commit()
+        
+        # === Analyze and comment on user's performance ===
+        quiz_id = submission.quizId
+
+        user_profile = await practice_service.load_user_profile(quiz_id)
+        print("Successfully loaded user profile")
+
+        prompt_data = await practice_service.get_prompt_data(quiz_id)
+        print("Successfully loaded prompt data")
+
+        answers_data = await practice_service.get_quiz_answers(quiz_id)
+        print("Successfully loaded quiz answers")
+
+        user_profile = await practice_service.analyze_performance(
+            quiz_id,
+            answers_data,
+            prompt_data,
+            user_profile
+        )
+        print("Successfully analyzed performance")
         
         results = {
             "success": True,
