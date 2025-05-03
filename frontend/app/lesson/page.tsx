@@ -6,6 +6,7 @@ import { lessonApi } from "./api";
 interface PageProps {
   searchParams: {
     quizId?: string;
+    lessonId?: string;
   };
 }
 
@@ -23,6 +24,7 @@ function normalizeType(type: string): ChallengeType {
 const LessonPage = async ({ searchParams }: PageProps) => {
   try {
     const quizId = searchParams.quizId;
+    const lessonId = searchParams.lessonId;
     
     if (!quizId) {
       return redirect("/learn?error=no-quiz-id");
@@ -42,7 +44,7 @@ const LessonPage = async ({ searchParams }: PageProps) => {
     const hearts =  userProgress.hearts;
 
     // Fetch quiz data using the new API
-    const quizData = await lessonApi.fetchQuizById(parseInt(quizId));
+    const quizData = await lessonApi.fetchQuizById(parseInt(quizId), lessonId ? parseInt(lessonId) : undefined);
     
     // Combine all questions into challenges array
     const challenges = [

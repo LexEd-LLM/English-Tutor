@@ -46,7 +46,7 @@ export const submitQuizAnswers = async (
     answers: QuizAnswer[]
 ): Promise<QuizSubmissionResponse> => {
     try {
-        const response = await fetch(`${BACKEND_URL}/api/submit-quiz`, {
+        const response = await fetch(`${BACKEND_URL}/api/quiz/submit`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -83,8 +83,11 @@ export const submitQuizAnswers = async (
 };
 
 export const lessonApi = {
-    async fetchQuizById(quizId: number): Promise<QuizData> {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/quiz/${quizId}`, {
+    async fetchQuizById(quizId: number, lessonId?: number): Promise<QuizData> {
+        // Construct URL with optional lessonId
+        const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/quiz/${quizId}${lessonId ? `?lesson_id=${lessonId}` : ''}`;
+        
+        const response = await fetch(url, {
             cache: "no-store",
         });
 
