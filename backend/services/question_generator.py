@@ -7,7 +7,7 @@ import json
 import re
 from .voice_quiz_generator import generate_audio, get_phonemes
 from .image_generator import generate_image
-from .prompt_banks import POSSIBLE_CUSTOM_PROMPTS, DOK_DESCRIPTIONS, QUESTION_TYPES, DIFFICULTY_LEVELS_VOICE_QUESTIONS
+from .prompt_banks import POSSIBLE_CUSTOM_PROMPTS, DOK_DESCRIPTIONS, QUESTION_TYPES, DIFFICULTY_LEVELS_VOICE_QUESTIONS, DIFFICULTY_LEVELS_PHONUNCIATION_QUESTIONS
 from .quiz_service import quiz_service
 
 # Base prompt template for question generation without strengths/weaknesses
@@ -19,7 +19,7 @@ Use the following English learning materials as your inspiration. You are NOT re
 { 
   "main_knowledge": "{content}",
   "prior_knowledge": "{prior_contents}",
-  "text_chunks": "{text_chunks}",
+  "sample_text": "{text_chunks}",
   "custom_prompt": "{custom_prompt}",
   "question_types": "{question_types}",
   "count": "{count}"
@@ -193,7 +193,7 @@ def generate_voice_questions(
     content: str,
     count: int,
     custom_prompt: Optional[str] = None,
-    dok_level: Optional[List[int]] = None
+    dok_level: Optional[int] = None
 ) -> List[Dict[str, Any]]:
     if count < 1:
         return []
@@ -221,7 +221,7 @@ def generate_voice_questions(
             Generate exactly {count} questions.
         """
     )
-    diffucult_level = DIFFICULTY_LEVELS_VOICE_QUESTIONS[max(dok_level)]
+    diffucult_level = DIFFICULTY_LEVELS_VOICE_QUESTIONS[dok_level]
     prompt = prompt_template.format(
         vocab_list=content, 
         count=count,
@@ -245,32 +245,50 @@ def generate_voice_questions(
 def generate_pronunciation_questions(
     content: str,
     count: int,
-    custom_prompt: Optional[str] = None
+    text_chunks: str,
+    custom_prompt: Optional[str] = None,
+    dok_level: Optional[int] = None
 ) -> List[Dict[str, Any]]:
     if count < 1:
         return []
     
     prompt_template = PromptTemplate(
         template="""
-            Generate {count} pronunciation practice questions from the following content.
-            Content: {content}
-            
-            For each question:
-                1. Select a word for pronunciation practice
-                2. Create a question asking the user to pronounce it correctly
-                3. Include the word/phrase as both the option and correct answer
-                4. Focus on commonly mispronounced words by Vietnamese learners
-            
-            Return the questions in JSON format with these fields:
+            You are an expert in creating pronunciation practice questions for English learners, especially Vietnamese speakers.
+            Use the materials below for inspiration. You are NOT limited to the exact sentences. You may adapt, merge, or simplify ideas to create natural, exam-style questions.
+
+            ## Instructions:
+            From the given list of English vocabulary items, generate {count} pronunciation practice questions. The questions can focus on either:
+            - A **single word** (especially those commonly mispronounced by Vietnamese learners)
+            - A **natural phrase** (e.g., short common expressions, idioms, or real-life collocations using the provided words)
+
+            {
+                "vocabulary_list": {vocab_list},
+                "sample_text": {text_chunks},
+                "difficulty_level": {diffucult_level} 
+            }
+
+            ## For each question:
+            1. Choose a target: either a **word** or a **realistic phrase** containing one or more of the input words.
+            2. Ensure phrases reflect real spoken English and are useful for learners.
+
+            ## Output format:
+            Return a list of JSON objects with these fields:
             - question: "Please pronounce this word correctly: word"
             - correct_answer: word
             - type: "pronunciation"
-            
-            Generate exactly {count} questions.
-        """
+
+            Generate exactly {count} items. Output only the JSON list, no extra text.
+            """
+            )
+    text_chunks = f"- Sample textbook snippets: {text_chunks}" if len(text_chunks) > 0 else ""
+    diffucult_level = DIFFICULTY_LEVELS_PHONUNCIATION_QUESTIONS[dok_level]
+    prompt = prompt_template.format(
+        vocab_list=content, 
+        count=count,
+        text_chunks=text_chunks,
+        diffucult_level=diffucult_level
     )
-    
-    prompt = prompt_template.format(content=content, count=count)
     response = llm.complete(prompt)
     questions = parse_json_questions(response.text)
     
@@ -306,7 +324,7 @@ def generate_questions_batch(
     combined_vocabs = "\n".join(vocabs)
        
     # Split voice questions between voice and pronunciation
-    pronunciation_count = voice_count // 2
+    pronunciation_count = 1 if voice_count > 0 else 0
     voice_count = voice_count - pronunciation_count
     
     # Convert dok_level to string
@@ -343,10 +361,11 @@ def generate_questions_batch(
         multiple_choice_count,
         combined_custom_prompt,
     )
-       
+    
+    # Get maximum of dok_level to meaning difficult level
     image_questions = generate_image_questions(vocabs, image_count, custom_prompt)
-    voice_questions = generate_voice_questions(vocabs, voice_count, custom_prompt, dok_level)
-    pronunciation_questions = generate_pronunciation_questions(vocabs, pronunciation_count, custom_prompt)
+    voice_questions = generate_voice_questions(vocabs, voice_count, custom_prompt, max(dok_level))
+    pronunciation_questions = generate_pronunciation_questions(vocabs, pronunciation_count, combined_text_chunks, custom_prompt, max(dok_level))
     
     return {
         "multiple_choice_questions": text_questions,
@@ -366,17 +385,26 @@ def generate_questions_adaptive(
     strengths: str,
     weaknesses: str,
     custom_prompt: Optional[str] = None,
+    dok_level: Optional[List[str]] = None
 ) -> Dict[str, List[Dict[str, Any]]]:
     """Generate adaptive questions based on user's strengths and weaknesses."""   
     # Split voice questions between voice and pronunciation
-    pronunciation_count = voice_count // 2
+    pronunciation_count = 1 if voice_count > 0 else 0
     voice_count = voice_count - pronunciation_count
-       
+
     # Create adaptive prompt based on strengths and weaknesses
     adaptive_prompt = "Please focus on these areas that need improvement:\n"
     adaptive_prompt += "\n".join(f"- {weakness}" for weakness in weaknesses)
     adaptive_prompt += "\n\nWhile maintaining these strong areas:\n"
     adaptive_prompt += "\n".join(f"- {strength}" for strength in strengths)
+    
+    # Convert DOK Enum to DOK Level
+    DOK_LEVEL = {
+        "RECALL": 1,
+        "SKILL_CONCEPT": 2,
+        "STRATEGIC_THINKING": 3,
+    }
+    dok_level = max([DOK_LEVEL[i] for i in dok_level])
     
     # Generate questions with adaptive focus
     text_questions = generate_text_questions(
@@ -389,8 +417,8 @@ def generate_questions_adaptive(
     )
     
     image_questions = generate_image_questions(contents, image_count, custom_prompt)
-    voice_questions = generate_voice_questions(contents, voice_count, custom_prompt)
-    pronunciation_questions = generate_pronunciation_questions(contents, pronunciation_count, custom_prompt)
+    voice_questions = generate_voice_questions(contents, voice_count, custom_prompt, dok_level)
+    pronunciation_questions = generate_pronunciation_questions(contents, pronunciation_count, text_chunks, custom_prompt, dok_level)
     
     # Return questions to be appended to existing quiz
     return {
