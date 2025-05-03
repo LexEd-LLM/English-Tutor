@@ -8,7 +8,10 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import Image from "next/image";
-import { getQuizWithAnswers, generateExplanation, calculatePhonemeScore } from "./api";
+import { getQuizWithAnswers, generateExplanation, calculatePhonemeScore, generatePracticeQuiz } from "./api";
+import { Footer } from "./footer";
+import { toast } from "sonner";
+import { useAuth } from "@clerk/nextjs";
 
 const renderColoredPhonemes = (correct: string, user: string = "") => {
   const output = [];
@@ -36,6 +39,7 @@ export default function ExplanationPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const quizId = searchParams.get("quizId");
+  const { userId } = useAuth();
   const [questions, setQuestions] = useState<any[]>([]);
   const [explanations, setExplanations] = useState<Record<number, string>>({});
   const [generatingExplanations, setGeneratingExplanations] = useState<Record<number, boolean>>({});
@@ -96,8 +100,27 @@ export default function ExplanationPage() {
     }
   };
 
+  const handleReturnToLearn = () => {
+    router.push("/learn");
+  };
+
+  const handlePracticeAgain = async () => {
+    if (!userId || !quizId) {
+      toast.error("Missing required information to start practice");
+      return;
+    }
+    
+    try {
+      await generatePracticeQuiz(userId, Number(quizId));
+      window.location.href = '/practice';
+    } catch (error) {
+      console.error("Error starting practice:", error);
+      toast.error("Failed to start practice session");
+    }
+  };
+
   return (
-    <div className="max-w-3xl mx-auto p-6">
+    <div className="max-w-3xl mx-auto p-6 pb-24">
       <div className="flex items-center mb-6">
         <Button variant="ghost" onClick={() => router.back()} className="flex items-center gap-2">
           <ArrowLeft className="h-5 w-5" /> Back
@@ -266,11 +289,12 @@ export default function ExplanationPage() {
         );
       })}
 
-      <div className="flex justify-center mt-10">
-        <Button size="lg" onClick={() => router.push("/learn")}>
-          Return to Learn
-        </Button>
-      </div>
+      <Footer 
+        onReturnToLearn={handleReturnToLearn}
+        onPracticeAgain={handlePracticeAgain}
+        userId={userId || undefined}
+        quizId={quizId ? Number(quizId) : undefined}
+      />
     </div>
   );
 }

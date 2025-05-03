@@ -14,8 +14,8 @@ export const generatePracticeQuiz = async (
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userId,
-                quizId,
+                user_id: userId,
+                quiz_id: quizId,
             }),
         });
 
