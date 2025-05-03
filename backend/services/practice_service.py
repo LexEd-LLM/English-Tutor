@@ -1,11 +1,10 @@
 from typing import List, Dict, Any, Optional
-from backend.services.question_generator import generate_questions_batch
-from backend.schemas.quiz import QuestionType
+from backend.services.question_generator import generate_questions_adaptive
 from ..config.settings import llm
 from llama_index.core.prompts import PromptTemplate
 from backend.database.database import get_db
 import json
-from .voice_quiz_generator import process_user_audio
+from .quiz_service import quiz_service
 
 class PracticeService:
     def __init__(self):
@@ -161,7 +160,7 @@ class PracticeService:
             - Xem xét kỹ **tất cả các câu trả lời** (đúng và sai).
             - Xác định các **điểm mạnh nổi bật** và **điểm yếu cần cải thiện** trong bài làm.
             - Viết nhận xét một cách ngắn gọn, rõ ràng, giống như đang trực tiếp nhận xét với học sinh.
-            - Tránh dùng các từ như “Người học” hay “The student”. Ưu tiên dùng “em” hoặc viết tự nhiên như một lời nhận xét thân thiện.
+            - Tránh dùng các từ như "Người học" hay "The student". Ưu tiên dùng "em" hoặc viết tự nhiên như một lời nhận xét thân thiện.
             - Viết bằng **tiếng Việt**.
 
             ### Định dạng đầu ra (chỉ trả về JSON hợp lệ, không thêm bất kỳ văn bản nào khác):
@@ -242,8 +241,8 @@ class PracticeService:
                 conn.close()
 
             return {
-                "strengths": unique_strengths,
-                "weaknesses": unique_weaknesses
+                "strengths": combined_strengths,
+                "weaknesses": combined_weaknesses
             }
         except Exception as e:
             print(f"Error parsing analysis: {e}")
@@ -266,6 +265,7 @@ class PracticeService:
         # Get all answers including wrong ones
         answers_data = await self.get_quiz_answers(quiz_id)
         print("Successfully loaded quiz answers")
+        
         # Analyze current performance
         user_profile = await self.analyze_performance(
             quiz_id,
@@ -275,10 +275,22 @@ class PracticeService:
         )
         print("Successfully analyzed performance")
 
-
-        # Generate questions with focus on weak areas
-        # questions_data = generate_questions_batch()
-        # print("Successfully generated questions")
-        # return questions_data
+        # Generate adaptive questions
+        questions_data = generate_questions_adaptive(
+            quiz_id=quiz_id,
+            contents=prompt_data.get("contents", None),
+            prior_contents=prompt_data.get("prior_contents", None),
+            text_chunks=prompt_data.get("text_chunks", None),
+            multiple_choice_count=prompt_data.get("multiple_choice_count", 3),
+            image_count=prompt_data.get("image_count", 1),
+            voice_count=prompt_data.get("voice_count", 2),
+            strengths=user_profile.get("strengths", None),
+            weaknesses=user_profile.get("weaknesses", None),
+            custom_prompt=prompt_data.get("custom_prompt"),
+        )
+        print("Successfully generated adaptive questions")
+        
+        # Append new questions to existing quiz
+        return quiz_service.append_questions_to_quiz(quiz_id, questions_data)
 
 practice_service = PracticeService() 

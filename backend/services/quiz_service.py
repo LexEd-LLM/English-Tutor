@@ -21,20 +21,8 @@ class QuizService:
                 return cur.fetchall()
         finally:
             conn.close()
-            
-    def get_user_quiz(self, quiz_id: int) -> Optional[Dict]:
-        conn = get_db()
-        try:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    SELECT * FROM user_quizzes 
-                    WHERE id = %s
-                """, (quiz_id,))
-                return cur.fetchone()
-        finally:
-            conn.close()
 
-    def __convert_db_question_to_quiz_item(self, question: Dict) -> QuizItem:
+    def convert_db_question_to_quiz_item(self, question: Dict) -> QuizItem:
         """Convert a database question to a QuizItem"""
         # Get question type and ensure it's a valid QuestionType enum
         question_type = QuestionType(question["type"].lower())
@@ -178,10 +166,9 @@ class QuizService:
         # Get existing questions
         existing_questions = self.get_quiz_questions(quiz_id)
         existing_items = [
-            self.__convert_db_question_to_quiz_item(q) 
+            self.convert_db_question_to_quiz_item(q) 
             for q in existing_questions
         ]
-
         # Convert new questions to QuizItems
         multiple_choice_items = [
             QuizItem(
@@ -194,13 +181,12 @@ class QuizService:
                         correct=opt == q["correct_answer"]
                     ) for j, opt in enumerate(q["options"])
                 ],
-                type=q["type"].upper(),
+                type=q["type"],
                 explanation=q.get("explanation", ""),
                 correctAnswer=q["correct_answer"]
             )
             for i, q in enumerate(new_questions["multiple_choice_questions"])
         ]
-
         image_items = [
             QuizItem(
                 id=len(existing_items) + len(multiple_choice_items) + i + 1,
@@ -212,14 +198,13 @@ class QuizService:
                         correct=opt == q["correct_answer"]
                     ) for j, opt in enumerate(q["options"])
                 ],
-                type=q["type"].upper(),
+                type=q["type"],
                 explanation=q.get("explanation", ""),
                 imageUrl=q.get("image_url"),
                 correctAnswer=q["correct_answer"]
             )
             for i, q in enumerate(new_questions["image_questions"])
         ]
-
         voice_items = [
             QuizItem(
                 id=len(existing_items) + len(multiple_choice_items) + len(image_items) + i + 1,
@@ -231,33 +216,30 @@ class QuizService:
                         correct=opt == q["correct_answer"]
                     ) for j, opt in enumerate(q["options"])
                 ],
-                type=q["type"].upper(),
+                type=q["type"],
                 explanation=q.get("explanation", ""),
                 audioUrl=q.get("audio_url"),
                 correctAnswer=q["correct_answer"]
             )
             for i, q in enumerate(new_questions["voice_questions"])
         ]
-
         pronunciation_items = [
             QuizItem(
                 id=len(existing_items) + len(multiple_choice_items) + len(image_items) + len(voice_items) + i + 1,
                 question=q["question"],
                 challengeOptions=[],  # Empty for pronunciation
-                type=q["type"].upper(),
+                type=q["type"],
                 explanation=q.get("explanation", ""),
                 audioUrl=q.get("audio_url"),
                 correctAnswer=q["correct_answer"]
             )
             for i, q in enumerate(new_questions.get("pronunciation_questions", []))
         ]
-
         # Save new questions to database
         self.save_new_questions(quiz_id, multiple_choice_items + image_items + voice_items + pronunciation_items)
-
         # Return combined questions
         return {
-            "multiple_choice_questions": existing_items + multiple_choice_items,
+            "multiple_choice_questions": multiple_choice_items,
             "image_questions": image_items,
             "voice_questions": voice_items,
             "pronounc_questions": pronunciation_items
@@ -298,9 +280,6 @@ class QuizService:
         image_count: int,
         voice_count: int,
         custom_prompt: Optional[str] = None,
-        dok_level: Optional[List[int]] = None,
-        strengths: Optional[List[str]] = None,
-        weaknesses: Optional[List[str]] = None
     ) -> None:
         """Update the prompt field for a quiz with processed data"""
         prompt_data = {
@@ -311,9 +290,6 @@ class QuizService:
             "image_count": image_count,
             "voice_count": voice_count,
             "custom_prompt": custom_prompt,
-            "dok_level": dok_level,
-            "strengths": strengths,
-            "weaknesses": weaknesses
         }
         
         with get_db() as conn:

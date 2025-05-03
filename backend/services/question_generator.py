@@ -8,7 +8,7 @@ import re
 from .voice_quiz_generator import generate_audio, get_phonemes
 from .image_generator import generate_image
 from .prompt_banks import POSSIBLE_CUSTOM_PROMPTS, DOK_DESCRIPTIONS, QUESTION_TYPES
-from quiz_service import quiz_service
+from .quiz_service import quiz_service
 
 # Base prompt template for question generation without strengths/weaknesses
 BASE_TEXT_QUESTION_TEMPLATE = """ 
@@ -36,7 +36,7 @@ Make sure:
 5. You may use standard Markdown syntax only (e.g., **bold**, *italic*, ~~strikethrough~~, line breaks \n). Use ___ for blanks.
 
 Format (in JSON array):
-- id: count from 1
+- id: from 1 to {count}
 - question: the word, phrase or sentence
 - options: list of 4 options, only one correct
 - correct_answer: the correct option string
@@ -46,28 +46,39 @@ Return exactly {count} questions.
 """
 
 # Template for practice questions with strengths/weaknesses
-PRACTICE_QUESTION_TEMPLATE = """
-    You are a language learning expert helping **Vietnamese learners** improve their English. Generate {count} {question_type} questions focused on improving the student's weak areas while occasionally reinforcing their strengths.
+ADAPTIVE_QUESTION_TEMPLATE = """ 
+You are helping Vietnamese students improve their English through personalized and diverse multiple-choice questions.
 
-    Student Profile:
-    Strengths: {strengths}
-    Weaknesses: {weaknesses}
+Use the materials below for inspiration. You are NOT limited to the exact sentences. You may adapt, merge, or simplify ideas to create natural, exam-style questions.
 
-    Content: {content}
+{ 
+  "main_knowledge": "{content}",
+  "prior_knowledge": "{prior_contents}",
+  "text_chunks": "{text_chunks}",
+  "custom_prompt": "{custom_prompt}",
+  "question_types": "{question_types}",
+  "count": "{count}",
+  "adaptive_prompt": "{adaptive_prompt}"
+}
 
-    For each question:
-    1. Create a question targeting specific language skills
-    2. Generate 4 options with only one correct answer
-    3. Mark the correct answer
-    4. Focus on areas where the student needs improvement
+Instruction:
+Create {count} unique multiple-choice questions based on the above.
 
-    Return the questions in JSON format with these fields:
-    - question: the question text
-    - options: array of 4 possible answers
-    - correct_answer: the correct option
-    - type: "{question_type}"
+Guidelines:
+1. Adapt content to address weaknesses and reinforce strengths in the adaptive_prompt.
+2. Vary question types and difficulty levels. Avoid repeating formats.
+3. Questions should feel suitable for Vietnamese textbooks or exams.
+4. In "question", include only the stem. Put 4 options in "options".
+5. Use Markdown (e.g., **bold**, *italic*, ___ for blanks).
 
-    Generate exactly {count} questions.
+Output format (JSON array):
+- id: from 1 to {count}
+- question: stem only
+- options: list of 4 strings (one correct)
+- correct_answer: the correct string
+- type: "text"
+
+Return exactly {count} questions.
 """
 
 def generate_text_questions(
@@ -75,49 +86,40 @@ def generate_text_questions(
     prior_contents: str,
     text_chunks: str,
     count: int,
-    custom_prompt: Optional[str] = None,
-    dok_level: Optional[List[int]] = None,
-    strengths: Optional[List[str]] = None,
-    weaknesses: Optional[List[str]] = None
+    custom_prompt: str,
+    adaptive_prompt: str = None
 ) -> List[Dict[str, Any]]:
     if count < 1:
         return []
     
     """Generate text questions."""
-    if strengths or weaknesses:
-        template = PRACTICE_QUESTION_TEMPLATE 
+    text_chunks = f"- Sample textbook snippets: {text_chunks}" if len(text_chunks) > 0 else ""
+    
+    question_types = random.sample(QUESTION_TYPES, min(len(QUESTION_TYPES), random.randint(min(count//2, 5), count//2)))
+    question_types = "\n - ".join(question_types)
+
+    if adaptive_prompt:
+        template = ADAPTIVE_QUESTION_TEMPLATE 
         prompt_template = PromptTemplate(template=template)
         
         prompt = prompt_template.format(
             content=content,
+            prior_contents=prior_contents,
+            text_chunks=text_chunks,
+            custom_prompt=custom_prompt,
+            question_types=question_types,
             count=count,
-            question_type=QuestionType.TEXT.value,
-            strengths=", ".join(strengths) if strengths else "None",
-            weaknesses=", ".join(weaknesses) if weaknesses else "None"
         )
-    else:
-        dok_prompt = "The questions should match these levels of cognitive complexity:\n\n"
-        dok_prompt += "\n\n".join(DOK_DESCRIPTIONS[dok] for dok in dok_level)
-
-        # if not custom_prompt:
-        #     custom_prompt = random.choice(POSSIBLE_CUSTOM_PROMPTS)
-            
-        custom_prompt = f"You should incorporate the following instruction when generating questions: {custom_prompt}"
-        combined_custom_prompt = f"{custom_prompt}\n\n{dok_prompt}"
-    
-        text_chunks = f"- Sample textbook snippets: {text_chunks}" if len(text_chunks) > 0 else ""
-        
-        question_types = random.sample(QUESTION_TYPES, min(len(QUESTION_TYPES), random.randint(min(count//2, 5), count//2)))
-        question_types = "\n - ".join(question_types)
-
+    else:   
         template = BASE_TEXT_QUESTION_TEMPLATE
         prompt_template = PromptTemplate(template=template)
         prompt = prompt_template.format(
             content=content,
             prior_contents=prior_contents,
             text_chunks=text_chunks,
-            custom_prompt=combined_custom_prompt,
+            custom_prompt=custom_prompt,
             question_types=question_types,
+            adaptive_prompt=adaptive_prompt,
             count=count,
         )
 
@@ -283,8 +285,6 @@ def generate_questions_batch(
     voice_count: int,
     custom_prompt: Optional[str] = None,
     dok_level: Optional[List[int]] = None,
-    strengths: Optional[List[str]] = None,
-    weaknesses: Optional[List[str]] = None
 ) -> Dict[str, List[Dict[str, Any]]]:
     """Generate a batch of questions."""
     
@@ -297,6 +297,19 @@ def generate_questions_batch(
     pronunciation_count = voice_count // 2
     voice_count = voice_count - pronunciation_count
     
+    # Convert dok_level to string
+    dok_prompt = "The questions should match these levels of cognitive complexity:\n\n"
+    dok_prompt += "\n\n".join(DOK_DESCRIPTIONS[dok] for dok in dok_level)
+
+    # if not custom_prompt:
+    #     custom_prompt = random.choice(POSSIBLE_CUSTOM_PROMPTS)
+    
+    # Add depth of knowledge to custom prompt
+    instruction = custom_prompt if custom_prompt else dok_prompt
+    combined_custom_prompt = f"You should incorporate the following instruction when generating questions: {instruction}"
+    if custom_prompt:
+        combined_custom_prompt += f"\n\n{dok_prompt}"
+    
     # Update new prompt
     quiz_service.update_prompt(
         quiz_id=quiz_id,
@@ -306,10 +319,7 @@ def generate_questions_batch(
         multiple_choice_count=multiple_choice_count,
         image_count=image_count,
         voice_count=voice_count,
-        custom_prompt=custom_prompt,
-        dok_level=dok_level,
-        strengths=strengths,
-        weaknesses=weaknesses
+        custom_prompt=combined_custom_prompt,
     )
     
     # Generate questions
@@ -318,16 +328,58 @@ def generate_questions_batch(
         combined_prior_contents,
         combined_text_chunks,
         multiple_choice_count,
-        custom_prompt,
-        dok_level,
-        strengths=strengths,
-        weaknesses=weaknesses
+        combined_custom_prompt,
     )
        
     image_questions = generate_image_questions(combined_contents, image_count, custom_prompt)
     voice_questions = generate_voice_questions(combined_contents, voice_count, custom_prompt)
     pronunciation_questions = generate_pronunciation_questions(combined_contents, pronunciation_count, custom_prompt)
     
+    return {
+        "multiple_choice_questions": text_questions,
+        "image_questions": image_questions,
+        "voice_questions": voice_questions,
+        "pronunciation_questions": pronunciation_questions
+    }
+
+def generate_questions_adaptive(
+    quiz_id: int,
+    contents: str,
+    prior_contents: str, 
+    text_chunks: str,
+    multiple_choice_count: int,
+    image_count: int,
+    voice_count: int,
+    strengths: str,
+    weaknesses: str,
+    custom_prompt: Optional[str] = None,
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Generate adaptive questions based on user's strengths and weaknesses."""   
+    # Split voice questions between voice and pronunciation
+    pronunciation_count = voice_count // 2
+    voice_count = voice_count - pronunciation_count
+       
+    # Create adaptive prompt based on strengths and weaknesses
+    adaptive_prompt = "Please focus on these areas that need improvement:\n"
+    adaptive_prompt += "\n".join(f"- {weakness}" for weakness in weaknesses)
+    adaptive_prompt += "\n\nWhile maintaining these strong areas:\n"
+    adaptive_prompt += "\n".join(f"- {strength}" for strength in strengths)
+    
+    # Generate questions with adaptive focus
+    text_questions = generate_text_questions(
+        contents,
+        prior_contents,
+        text_chunks,
+        multiple_choice_count,
+        custom_prompt,
+        adaptive_prompt
+    )
+    
+    image_questions = generate_image_questions(contents, image_count, custom_prompt)
+    voice_questions = generate_voice_questions(contents, voice_count, custom_prompt)
+    pronunciation_questions = generate_pronunciation_questions(contents, pronunciation_count, custom_prompt)
+    
+    # Return questions to be appended to existing quiz
     return {
         "multiple_choice_questions": text_questions,
         "image_questions": image_questions,
