@@ -1,3 +1,4 @@
+import re
 from gtts import gTTS 
 from pathlib import Path
 from ..config.settings import asr_model
@@ -21,7 +22,9 @@ def generate_audio(text: str, language: str = 'en') -> str:
         audio_dir.mkdir(parents=True, exist_ok=True)
         
         # Generate filename from text
-        filename = f"{text.lower()}.mp3"
+        filename = text.lower().strip().replace(" ", "_")
+        filename = re.sub(r"[^\w_]", "", filename)
+        filename = filename[:50] + ".mp3"
         filepath = audio_dir / filename
         
         # If file already exists, return its path
