@@ -7,7 +7,7 @@ import json
 import re
 from .voice_quiz_generator import generate_audio, get_phonemes
 from .image_generator import generate_image
-from .prompt_banks import POSSIBLE_CUSTOM_PROMPTS, DOK_DESCRIPTIONS, QUESTION_TYPES
+from .prompt_banks import POSSIBLE_CUSTOM_PROMPTS, DOK_DESCRIPTIONS, QUESTION_TYPES, DIFFICULTY_LEVELS_VOICE_QUESTIONS
 from .quiz_service import quiz_service
 
 # Base prompt template for question generation without strengths/weaknesses
@@ -146,7 +146,7 @@ def generate_image_questions(
     prompt_template = PromptTemplate(
         template="""
             You are an educational content creation expert. Create {count} English vocabulary learning questions using images based on the following vocabulary list:
-            {content}
+            {vocab_list}
             
             Requirements:
             1. Each question must focus on **one specific vocabulary word** that is a noun and can be visualized with an image.
@@ -170,7 +170,7 @@ def generate_image_questions(
         """
     )
     
-    prompt = prompt_template.format(content=vocab, count=count)
+    prompt = prompt_template.format(vocab_list=vocab, count=count)
     response = llm.complete(prompt)
     questions = parse_json_questions(response.text)
     
@@ -192,22 +192,26 @@ def generate_image_questions(
 def generate_voice_questions(
     content: str,
     count: int,
-    custom_prompt: Optional[str] = None
+    custom_prompt: Optional[str] = None,
+    dok_level: Optional[List[int]] = None
 ) -> List[Dict[str, Any]]:
     if count < 1:
         return []
     
     prompt_template = PromptTemplate(
         template="""
-            Generate {count} pronunciation-based questions using words with similar sounds.
-            Content: {content}
+            You are an expert in creating pronunciation-based English vocabulary questions.
+            ## From a list of English words provided, randomly choose {count} words. For each selected word:
+                1. Choose a real English word that sounds similar but has a different meaning.
+                2. Create a multiple-choice question that helps learners distinguish the correct pronunciation.
+                3. The question should be: "Which word did you hear?"
+                4. Provide two options: the correct word (from the list) and the distractor (similar-sounding word).
+                5. Mark the correct answer (the word from the list).
+                6. Do **not** include phonetic transcriptions in the options or answer.
             
-            For each question:
-                1. Select a word from the content that may be confusing in pronunciation
-                2. Find another real English word that sounds similar but has a different meaning
-                3. Create a question that helps learners distinguish them by sound
-                4. Do **not** include phonetic transcriptions in the `options` or `correct_answer` fields
-            
+            ## Difficulty level: {difficulty_level}
+
+            ## Use the following list of vocabulary words: {vocab_list}
             Return the questions in JSON format with these fields:
             - question: "Which word did you hear?"
             - options: array with the correct word and similar-sounding word
@@ -217,8 +221,12 @@ def generate_voice_questions(
             Generate exactly {count} questions.
         """
     )
-    
-    prompt = prompt_template.format(content=content, count=count)
+    diffucult_level = DIFFICULTY_LEVELS_VOICE_QUESTIONS[max(dok_level)]
+    prompt = prompt_template.format(
+        vocab_list=content, 
+        count=count,
+        diffucult_level=diffucult_level
+    )
     response = llm.complete(prompt)
     questions = parse_json_questions(response.text)
     
@@ -337,7 +345,7 @@ def generate_questions_batch(
     )
        
     image_questions = generate_image_questions(vocabs, image_count, custom_prompt)
-    voice_questions = generate_voice_questions(vocabs, voice_count, custom_prompt)
+    voice_questions = generate_voice_questions(vocabs, voice_count, custom_prompt, dok_level)
     pronunciation_questions = generate_pronunciation_questions(vocabs, pronunciation_count, custom_prompt)
     
     return {

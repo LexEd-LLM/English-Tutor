@@ -56,3 +56,9 @@ QUESTION_TYPES = [
     # Cloze Test
     "Paragraph cloze test (choose the best word or phrase to complete blanks in a short text)"
 ]
+
+DIFFICULTY_LEVELS_VOICE_QUESTIONS = {
+  1: """Level 1: The two words should have clearly different vowel or consonant sounds.""",
+  2: """Level 2: The words should sound quite similar, sharing at least one major sound.""",
+  3: """Level 3: The two words should be minimal pairs or nearly indistinguishable in sound (e.g., "ship" vs "sheep")."""
+}
