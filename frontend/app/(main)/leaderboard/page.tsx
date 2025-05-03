@@ -25,13 +25,13 @@ const LeaderboardPage = async () => {
     leaderboardData,
   ]);
 
-  if (!userProgress || !userProgress.activeCourse) redirect("/courses");
+  // if (!userProgress || !userProgress.activeCourse) redirect("/courses");
 
   const isPro = !!userSubscription?.isActive;
 
   return (
     <div className="flex flex-row-reverse gap-[48px] px-6">
-      <StickyWrapper>
+      {/* <StickyWrapper>
         <UserProgress
           activeCourse={userProgress.activeCourse}
           hearts={userProgress.hearts}
@@ -40,7 +40,7 @@ const LeaderboardPage = async () => {
         />
         {!isPro && <Promo />}
         <Quests points={userProgress.points} />
-      </StickyWrapper>
+      </StickyWrapper> */}
 
       <FeedWrapper>
         <div className="flex w-full flex-col items-center">
@@ -76,7 +76,7 @@ const LeaderboardPage = async () => {
               <p className="flex-1 font-bold text-neutral-800">
                 {userProgress.userName}
               </p>
-              <p className="text-muted-foreground">{userProgress.points} XP</p>
+              {/* <p className="text-muted-foreground">{userProgress.points} XP</p> */}
             </div>
           ))}
         </div>

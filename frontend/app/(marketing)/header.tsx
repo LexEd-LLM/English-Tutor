@@ -25,7 +25,7 @@ export const Header = () => {
   // Only show content after component mounts on client
   useState(() => {
     setIsMounted(true);
-  }, []);
+  });
 
   // Prevent hydration mismatch by not rendering until mounted
   if (!isMounted) {

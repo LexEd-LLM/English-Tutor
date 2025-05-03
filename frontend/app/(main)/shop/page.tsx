@@ -18,13 +18,13 @@ const ShopPage = async () => {
     userSubscriptionData,
   ]);
 
-  if (!userProgress || !userProgress.activeCourse) redirect("/courses");
+  // if (!userProgress || !userProgress.activeCourse) redirect("/courses");
 
   const isPro = !!userSubscription?.isActive;
 
   return (
     <div className="flex flex-row-reverse gap-[48px] px-6">
-      <StickyWrapper>
+      {/* <StickyWrapper>
         <UserProgress
           activeCourse={userProgress.activeCourse}
           hearts={userProgress.hearts}
@@ -33,7 +33,7 @@ const ShopPage = async () => {
         />
 
         <Quests points={userProgress.points} />
-      </StickyWrapper>
+      </StickyWrapper> */}
 
       <FeedWrapper>
         <div className="flex w-full flex-col items-center">
@@ -46,11 +46,11 @@ const ShopPage = async () => {
             Spend your points on cool stuff.
           </p>
 
-          <Items
+          {/* <Items
             hearts={userProgress.hearts}
             points={userProgress.points}
             hasActiveSubscription={isPro}
-          />
+          /> */}
         </div>
       </FeedWrapper>
     </div>

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { redirect } from "next/navigation";
 import { getUserProgress, getUserSubscription } from "@/db/queries";
 import { Quiz } from "./quiz";
