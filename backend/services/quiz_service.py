@@ -8,16 +8,16 @@ class QuizService:
     def __init__(self):
         pass
 
-    def get_quiz_questions(self, quiz_id: int) -> List[Dict]:
+    def get_quiz_questions(self, quiz_id: int, lesson_id: int = 0) -> List[Dict]:
         """Get all questions for a quiz"""
         conn = get_db()
         try:
             with conn.cursor() as cur:
                 cur.execute("""
                     SELECT * FROM quiz_questions 
-                    WHERE quiz_id = %s
+                    WHERE quiz_id = %s AND lesson_id = %s
                     ORDER BY id
-                """, (quiz_id,))
+                """, (quiz_id, lesson_id))
                 return cur.fetchall()
         finally:
             conn.close()
