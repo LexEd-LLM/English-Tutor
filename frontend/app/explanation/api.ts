@@ -28,7 +28,7 @@ export async function generateExplanation(question: {
   correctAnswer: string;
   type: string;
   userAnswer: string;
-}) {
+}): Promise<{ explanation: string; saved: boolean }> {
   const res = await axios.post(
     `/api/quiz/generate-explanation`,
     {
@@ -44,7 +44,7 @@ export async function generateExplanation(question: {
       },
     }
   );
-  return res.data.explanation;
+  return res.data;
 }
 
 export const calculatePhonemeScore = async (userPhonemes: string, correctPhonemes: string) => {

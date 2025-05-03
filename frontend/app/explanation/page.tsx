@@ -78,17 +78,24 @@ export default function ExplanationPage() {
     const question = questions.find((q) => q.id === questionId);
     if (!question) return;
 
-    if (["VOICE", "IMAGE"].includes(question.type)) {
-      alert("Dạng bài này không được hỗ trợ");
-      return;
-    }
-
-    setGeneratingExplanations((prev) => ({ ...prev, [questionId]: true }));
     try {
-      const explanation = await generateExplanation(question);
+      const payload = {
+        questionId: question.id,
+        questionText: question.questionText,
+        correctAnswer: question.correctAnswer,
+        type: question.type,
+        userAnswer: question.type === "PRONUNCIATION" ? question.userPhonemes : question.userAnswer,
+      };
+  
+      const { explanation, saved } = await generateExplanation(payload);
       setExplanations((prev) => ({
         ...prev,
         [questionId]: explanation,
+      }));
+
+      setGeneratingExplanations((prev) => ({
+        ...prev,
+        [questionId]: saved,
       }));
     } catch (err) {
       console.error("Error generating explanation:", err);
