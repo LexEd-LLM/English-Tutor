@@ -287,6 +287,7 @@ class QuizService:
         quiz_id: int,
         contents: str,
         prior_contents: str, 
+        vocabs: str,
         text_chunks: str,
         multiple_choice_count: int,
         image_count: int,
@@ -297,6 +298,7 @@ class QuizService:
         prompt_data = {
             "contents": contents,
             "prior_contents": prior_contents,
+            "vocabs": vocabs,
             "text_chunks": text_chunks,
             "multiple_choice_count": multiple_choice_count,
             "image_count": image_count,

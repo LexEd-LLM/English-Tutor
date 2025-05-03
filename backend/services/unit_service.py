@@ -9,13 +9,24 @@ def get_unit_main_chunks(unit_id: int) -> List[str]:
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT content 
+                SELECT type, content 
                 FROM unit_contents 
                 WHERE unit_id = %s AND type IN ('VOCABULARY', 'BOOKMAP')
                 ORDER BY "order"
             """, (unit_id,))
             results = cur.fetchall()
-            return [row["content"] for row in results] if results else []
+
+            vocab = None
+            bookmap = None
+
+            for row in results:
+                row_type = row["type"]
+                if row_type == "VOCABULARY" and vocab is None:
+                    vocab = row["content"]
+                elif row_type == "BOOKMAP" and bookmap is None:
+                    bookmap = row["content"]
+            unit_chunks = [bookmap, vocab]
+            return unit_chunks, vocab
     finally:
         conn.close()
 
