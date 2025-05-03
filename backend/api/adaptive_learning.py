@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from backend.services.practice_service import practice_service
-from backend.schemas.quiz import QuizUserRequest, QuizResponse
+from backend.schemas.quiz import QuizUserRequest, QuizResponsewithLessonId
 
 router = APIRouter(prefix="/api/practice", tags=["practice"])
     
@@ -11,8 +11,9 @@ async def generate_adaptive_quiz(payload: QuizUserRequest):
         questions = await practice_service.generate_practice_questions(payload.user_id, payload.quiz_id)
         
         # Create response object
-        result = QuizResponse(
+        result = QuizResponsewithLessonId(
             quiz_id=payload.quiz_id,
+            lesson_id=questions.lesson_id,
             multiple_choice_questions=questions.get("multiple_choice_questions", []),
             image_questions=questions.get("image_questions", []),
             voice_questions=questions.get("voice_questions", []),

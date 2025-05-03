@@ -79,3 +79,11 @@ class QuizQuestionWithUserAnswer(BaseModel):
 class QuizUserRequest(BaseModel):
     user_id: str
     quiz_id: int
+    
+class QuizResponsewithLessonId(BaseModel):
+    quiz_id: int
+    lesson_id: int
+    multiple_choice_questions: List[QuizItem]
+    image_questions: List[QuizItem]
+    voice_questions: List[QuizItem]
+    pronunc_questions: List[QuizItem]

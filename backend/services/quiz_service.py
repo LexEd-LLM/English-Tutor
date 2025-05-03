@@ -69,7 +69,7 @@ class QuizService:
             challengeOptions=challenge_options
         )
 
-    def save_new_questions(self, quiz_id: int, new_items: List[QuizItem]):
+    def save_new_questions(self, quiz_id: int, new_items: List[QuizItem], lesson_id: int = 0):
         """Save new questions to database"""
         conn = get_db()
         try:
@@ -119,12 +119,12 @@ class QuizService:
                         
                         cur.execute("""
                             INSERT INTO quiz_questions (
-                                quiz_id, question_text, type, options, 
+                                quiz_id, lesson_id, question_text, type, options, 
                                 correct_answer, explanation, image_url, audio_url
-                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                             RETURNING id
                         """, (
-                            quiz_id,
+                            quiz_id, lesson_id,
                             item.question, item.type.value.upper(),
                             json.dumps(options), correct_answer,
                             item.explanation, item.imageUrl, item.audioUrl
@@ -166,10 +166,12 @@ class QuizService:
         """Append new questions to existing quiz and return combined questions"""
         # Get existing questions
         existing_questions = self.get_quiz_questions(quiz_id)
-        existing_items = [
-            self.convert_db_question_to_quiz_item(q) 
-            for q in existing_questions
-        ]
+        existing_items = []
+        lesson_id = 0
+        for q in existing_questions:
+            existing_items.append(self.convert_db_question_to_quiz_item(q))
+            lesson_id = max(lesson_id, q["lesson_id"])
+    
         # Convert new questions to QuizItems
         multiple_choice_items = [
             QuizItem(
@@ -237,9 +239,10 @@ class QuizService:
             for i, q in enumerate(new_questions.get("pronunciation_questions", []))
         ]
         # Save new questions to database
-        self.save_new_questions(quiz_id, multiple_choice_items + image_items + voice_items + pronunciation_items)
+        self.save_new_questions(quiz_id, multiple_choice_items + image_items + voice_items + pronunciation_items, lesson_id + 1)
         # Return combined questions
         return {
+            "lesson_id": lesson_id + 1,
             "multiple_choice_questions": multiple_choice_items,
             "image_questions": image_items,
             "voice_questions": voice_items,
