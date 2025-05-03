@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 from typing import List
 
 from backend.schemas.quiz import (
-    PracticeHistory,
     QuizItem,
     QuizOption,
     QuizRequest,

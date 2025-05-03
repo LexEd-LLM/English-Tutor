@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, Optional
 from backend.services.question_generator import generate_questions_batch
-from backend.schemas.quiz import PracticeHistory, WrongQuestion, QuestionType
+from backend.schemas.quiz import QuestionType
 from ..config.settings import llm
 from llama_index.core.prompts import PromptTemplate
 from backend.database.database import get_db
@@ -11,19 +11,16 @@ class PracticeService:
     def __init__(self):
         pass
 
-    async def load_user_profile(self, user_id: str) -> Dict[str, List[str]]:
-        """Load user's learning profile from database."""
+    async def load_user_profile(self, quiz_id: int) -> Dict[str, List[str]]:
+        """Load user's learning profile from database based on specific quiz."""
         conn = get_db()
         try:
             with conn.cursor() as cur:
-                # Get the latest quiz for this user
                 cur.execute("""
                     SELECT strengths, weaknesses 
                     FROM user_quizzes 
-                    WHERE user_id = %s 
-                    ORDER BY created_at DESC 
-                    LIMIT 1
-                """, (user_id,))
+                    WHERE id = %s
+                """, (quiz_id,))
                 
                 result = cur.fetchone()
                 if result and result["strengths"] and result["weaknesses"]:
@@ -35,6 +32,69 @@ class PracticeService:
                     "strengths": [],
                     "weaknesses": []
                 }
+        finally:
+            conn.close()
+
+    async def get_quiz_answers(self, quiz_id: int) -> Dict[str, Any]:
+        """Get all answers for a specific quiz with tracking of wrong answers."""
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT 
+                        qq.question_text as question,
+                        qq.options,
+                        qq.correct_answer,
+                        ua.user_answer,
+                        qq.type,
+                        ua.user_phonemes
+                    FROM user_answers ua
+                    JOIN quiz_questions qq ON ua.question_id = qq.id
+                    WHERE qq.quiz_id = %s
+                    ORDER BY ua.submitted_at DESC
+                """, (quiz_id,))
+                
+                results = cur.fetchall()
+                all_answers = []
+                for row in results:
+                    answer = {
+                        "question": row["question"],
+                        "options": row["options"],
+                        "correctAnswer": row["correct_answer"],
+                        "userAnswer": row["user_answer"],
+                        "type": row["type"],
+                        "userPhonemes": row["user_phonemes"],
+                    }
+                    all_answers.append(answer)
+                        
+                return all_answers
+        finally:
+            conn.close()
+
+    async def get_prompt_data(self, quiz_id: int) -> Dict[str, Any]:
+        """Get prompt data from user_quizzes table."""
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT prompt
+                    FROM user_quizzes 
+                    WHERE id = %s
+                """, (quiz_id,))
+                
+                result = cur.fetchone()
+                if result and result["prompt"]:
+                    prompt_data = result["prompt"]
+                    return {
+                        "contents": prompt_data.get("contents", []),
+                        "prior_contents": prompt_data.get("prior_contents", []),
+                        "text_chunks": prompt_data.get("text_chunks", []),
+                        "multiple_choice_count": prompt_data.get("multiple_choice_count", 0),
+                        "image_count": prompt_data.get("image_count", 0),
+                        "voice_count": prompt_data.get("voice_count", 0),
+                        "custom_prompt": prompt_data.get("custom_prompt", "")
+                    }
+                return {}
         finally:
             conn.close()
 
@@ -73,57 +133,86 @@ class PracticeService:
     
     async def analyze_performance(
         self,
-        user_id: str,
-        wrong_questions: List[WrongQuestion],
-        original_prompt: str,
+        quiz_id: int,
+        all_answers: List[Dict[str, Any]],
+        prompt_data: Dict[str, Any],
         previous_profile: Dict[str, List[str]]
     ) -> Dict[str, List[str]]:
         """Analyze user's performance using LLM to identify strengths and weaknesses."""
         
         prompt_template = PromptTemplate(
             template="""
-            You are an expert language learning analyst. Analyze the student's English performance based on the provided information.
+            Bạn là một giáo viên tiếng Anh có nhiều kinh nghiệm trong việc hướng dẫn học sinh cải thiện kỹ năng ngôn ngữ. Hãy đánh giá phần làm bài của học sinh dựa trên các câu trả lời đã cung cấp.
 
-            Previous Performance Profile:
-            - Strengths: {prev_strengths}
-            - Weaknesses: {prev_weaknesses}
+            ## Hồ sơ học tập trước đây:
+            - Điểm mạnh: {prev_strengths}
+            - Điểm yếu: {prev_weaknesses}
 
-            Original Learning Content:
-            {original_prompt}
+            ## Nội dung học:
+            {learning_content}
+            
+            ## Hướng dẫn bài tập:
+            {custom_prompt}
 
-            Incorrectly Answered Questions:
-            {wrong_questions}
+            ## Bài làm của học sinh:
+            {all_answers}
+            
+            Nhiệm vụ của bạn:
+            - Xem xét kỹ **tất cả các câu trả lời** (đúng và sai).
+            - Xác định các **điểm mạnh nổi bật** và **điểm yếu cần cải thiện** trong bài làm.
+            - Viết nhận xét một cách ngắn gọn, rõ ràng, giống như đang trực tiếp nhận xét với học sinh.
+            - Tránh dùng các từ như “Người học” hay “The student”. Ưu tiên dùng “em” hoặc viết tự nhiên như một lời nhận xét thân thiện.
+            - Viết bằng **tiếng Việt**.
 
-            Your task:
-            - Identify exactly **2 strengths** and **2 weaknesses** in the student's English abilities based on the incorrect answers.
-            - Compare the current performance to the previous profile, and mention if there's any improvement or recurring issue.
-
-            ### Output Format (strictly return only valid JSON):
+            ### Định dạng đầu ra (chỉ trả về JSON hợp lệ, không thêm bất kỳ văn bản nào khác):
             {
                 "strengths": {
-                    "point_1": "Specific strength with clear example",
-                    "point_2": "Another strength with clear example"
+                    "point_1": "Nhận xét điểm mạnh cụ thể",
+                    "point_2": "Một điểm mạnh khác",
+                    ...
                 },
                 "weaknesses": {
-                    "point_1": "Specific weakness with clear example",
-                    "point_2": "Another weakness with clear example"
+                    "point_1": "Nhận xét điểm yếu cụ thể",
+                    "point_2": "Một điểm yếu khác",
+                    ...
                 }
             }
-            Only output JSON. Do not include any explanation or extra text outside of the JSON.
+            Chỉ trả về JSON. Không thêm bất kỳ giải thích hay văn bản nào bên ngoài JSON.
             """
         )
 
-        # Format wrong questions for prompt
-        wrong_questions_text = "\n".join([
-            f"- Question: {q.question}\n  User Answer: {q.userAnswer}\n  Correct: {q.correctAnswer}\n  Type: {q.type}"
-            for q in wrong_questions
-        ])
+        # === Combine learning content ===
+        learning_content = "\n".join(prompt_data.get("prior_contents", []) + prompt_data.get("contents", []))
+        
+        # === Format previous profile ===
+        prev_strengths = ", ".join(previous_profile.get("strengths", [])) or "None identified yet"
+        prev_weaknesses = ", ".join(previous_profile.get("weaknesses", [])) or "None identified yet"
 
+        # === Format answers for prompt ===
+        formatted_answers = "\n\n".join(
+            (
+                f"- Question (PRONUNCIATION): {a['question']}\n"
+                f"  Student's Pronunciation (phonemes): {a.get('userPhonemes', 'N/A')} \n"
+                f"  IPA Phonemes: {a['correctAnswer']}"
+                if a['type'] == 'PRONUNCIATION'
+                else
+                f"- Question ({a['type']}): {a['question']}\n"
+                f"  Options:\n" +
+                "\n".join(
+                    f"    {'correct -' if opt.get('correct') else 'incorrect -'} {opt.get('text')}"
+                    for opt in (a.get('options') or [])
+                ) + f"\n  Student's Answer: {a['userAnswer']}"
+            )
+            for a in all_answers[-50:]
+        )
+        
+        # TODO: Tách riêng nhận xét cho từng type
         prompt = prompt_template.format(
-            prev_strengths=", ".join(previous_profile["strengths"]) or "None identified yet",
-            prev_weaknesses=", ".join(previous_profile["weaknesses"]) or "None identified yet",
-            original_prompt=original_prompt,
-            wrong_questions=wrong_questions_text
+            prev_strengths=prev_strengths,
+            prev_weaknesses=prev_weaknesses,
+            learning_content=learning_content,
+            custom_prompt=prompt_data.get("custom_prompt", ""),
+            all_answers=formatted_answers
         )
 
         response = llm.complete(prompt)
@@ -139,20 +228,15 @@ class PracticeService:
             combined_strengths = "\n".join(unique_strengths)
             combined_weaknesses = "\n".join(unique_weaknesses)
 
-            # Update the latest quiz with new strengths and weaknesses
+            # Update quiz with new strengths and weaknesses
             conn = get_db()
             try:
                 with conn.cursor() as cur:
                     cur.execute("""
                         UPDATE user_quizzes 
                         SET strengths = %s, weaknesses = %s
-                        WHERE id = (
-                            SELECT id FROM user_quizzes 
-                            WHERE user_id = %s 
-                            ORDER BY created_at DESC 
-                            LIMIT 1
-                        )
-                    """, (combined_strengths, combined_weaknesses, user_id))
+                        WHERE id = %s
+                    """, (combined_strengths, combined_weaknesses, quiz_id))
                     conn.commit()
             finally:
                 conn.close()
@@ -168,72 +252,33 @@ class PracticeService:
     async def generate_practice_questions(
         self,
         user_id: str,
-        wrong_questions: List[WrongQuestion],
-        original_prompt: str,
-        text_chunks: List[str]
+        quiz_id: int,
     ) -> Dict[str, Any]:
         """Generate questions focused on user's weak areas."""
-        # Load previous profile
-        previous_profile = await self.load_user_profile(user_id)
+        # Load user profile
+        user_profile = await self.load_user_profile(quiz_id)
         print("Successfully loaded user profile")
+
+        # Get prompt data
+        prompt_data = await self.get_prompt_data(quiz_id)
+        print("Successfully loaded prompt data")
+
+        # Get all answers including wrong ones
+        answers_data = await self.get_quiz_answers(quiz_id)
+        print("Successfully loaded quiz answers")
         # Analyze current performance
-        current_profile = await self.analyze_performance(
-            user_id,
-            wrong_questions,
-            original_prompt,
-            previous_profile
+        user_profile = await self.analyze_performance(
+            quiz_id,
+            answers_data,
+            prompt_data,
+            user_profile
         )
         print("Successfully analyzed performance")
-        # Extract question types from wrong questions
-        question_types = set(q.type for q in wrong_questions)
 
-        # Adjust question counts based on wrong answer types
-        multiple_choice_count = 4 if "FILL_IN_BLANK" in question_types or "TRANSLATION" in question_types else 2
-        image_count = 1 if "IMAGE" in question_types else 0
-        voice_count = 1 if "VOICE" in question_types else 0
 
         # Generate questions with focus on weak areas
-        questions_data = generate_questions_batch(
-            text_chunks=text_chunks,
-            multiple_choice_count=multiple_choice_count,
-            image_count=image_count,
-            voice_count=voice_count,
-            strengths=current_profile["strengths"],
-            weaknesses=current_profile["weaknesses"]
-        )
-        print("Successfully generated questions")
-        return questions_data
-
-    async def save_practice_history(self, history: PracticeHistory) -> None:
-        """Save practice history to database."""
-        try:
-            conn = get_db()
-            with conn.cursor() as cur:
-                for answer in history.answers:
-                    user_phonemes = None
-                    is_correct = answer.isCorrect
-                    
-                    # Process pronunciation submissions
-                    if answer.userAudioUrl and answer.questionType == QuestionType.PRONUNCIATION:
-                        user_phonemes = process_user_audio(answer.userAudioUrl)
-                                          
-                    # Insert into database
-                    cur.execute("""
-                        INSERT INTO user_answers 
-                        (user_id, question_id, user_answer, is_correct, user_audio_url, user_phonemes)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                    """, (
-                        history.userId,
-                        answer.questionId,
-                        answer.userAnswer,
-                        is_correct,
-                        answer.userAudioUrl,
-                        user_phonemes
-                    ))
-            
-            conn.commit()
-        except Exception as e:
-            print(f"Error saving practice history: {e}")
-            raise e
+        # questions_data = generate_questions_batch()
+        # print("Successfully generated questions")
+        # return questions_data
 
 practice_service = PracticeService() 
