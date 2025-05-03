@@ -136,7 +136,7 @@ def generate_text_questions(
     ]
 
 def generate_image_questions(
-    content: str,
+    vocab: str,
     count: int,
     custom_prompt: Optional[str] = None
 ) -> List[Dict[str, Any]]:
@@ -145,19 +145,22 @@ def generate_image_questions(
     
     prompt_template = PromptTemplate(
         template="""
-            Generate {count} image-based questions from the following content.
-            Content: {content}
-            {custom_prompt}
+            You are an educational content creation expert. Create {count} English vocabulary learning questions using images based on the following vocabulary list:
+            {content}
             
-            For each question:
-            1. Select a concrete noun or object that can be visualized
-            2. Create a question asking "What is this?" in Vietnamese
-            3. The correct answer should be the English word for the object
-            4. Generate 3 other plausible but incorrect English words
-            5. Include an image description that would be used to generate the image
+            Requirements:
+            1. Each question must focus on **one specific vocabulary word** that is a noun and can be visualized with an image.
+            2. For each word:
+                - Create a question: What is this?
+                - The correct answer must be the vocabulary word.
+                - Provide 3 incorrect answers that are **distinct**, **visually different**, and **not semantically similar** to the correct one (avoid roles in the same environment, such as 'doctor' vs 'nurse').
+            3. Include a detailed, unambiguous image description that:
+                - Clearly shows the correct object or person in a relevant, identifiable setting.
+                - Specifies the character's role, location, outfit, or actions to **eliminate confusion with similar roles**.
+                - Includes **background context** (e.g., workplace, tools, environment) to support correct interpretation.
             
             Return the questions in JSON format with these fields:
-            - question: "Đây là cái gì?"
+            - question: "What is this?"
             - options: array of 4 English words
             - correct_answer: the correct English word
             - type: "image"
@@ -167,8 +170,7 @@ def generate_image_questions(
         """
     )
     
-    custom_prompt = f"You should incorporate the following instruction when generating questions: {custom_prompt}" if custom_prompt else ""
-    prompt = prompt_template.format(content=content, custom_prompt=custom_prompt, count=count)
+    prompt = prompt_template.format(content=vocab, count=count)
     response = llm.complete(prompt)
     questions = parse_json_questions(response.text)
     
@@ -180,7 +182,7 @@ def generate_image_questions(
             "correct_answer": q["correct_answer"],
             "type": QuestionType.IMAGE.value,
             "image_url": generate_image(
-                f"An illustration of {q['correct_answer']}, in the style of Duolingo learning illustration. {q.get('image_description', '')}"
+                f"An illustration in Duolingo flat style showing the concept of '{q['correct_answer']}' without using any text or labels. {q.get('image_description', '')} Word must not be shown in the image."
             ),
             "image_description": q.get("image_description", "")
         }
@@ -279,6 +281,7 @@ def generate_questions_batch(
     quiz_id: int,
     contents: List[str],
     prior_contents: List[str],
+    vocabs: List[str],
     text_chunks: List[str],
     multiple_choice_count: int,
     image_count: int,
@@ -292,6 +295,7 @@ def generate_questions_batch(
     combined_contents = "\n".join(contents)
     combined_text_chunks = "\n".join(text_chunks)
     combined_prior_contents = "\n".join(prior_contents)
+    combined_vocabs = "\n".join(vocabs)
        
     # Split voice questions between voice and pronunciation
     pronunciation_count = voice_count // 2
@@ -315,6 +319,7 @@ def generate_questions_batch(
         quiz_id=quiz_id,
         contents=combined_contents,
         prior_contents=combined_prior_contents,
+        vocabs=combined_vocabs,
         text_chunks=combined_text_chunks,
         multiple_choice_count=multiple_choice_count,
         image_count=image_count,
@@ -331,9 +336,9 @@ def generate_questions_batch(
         combined_custom_prompt,
     )
        
-    image_questions = generate_image_questions(combined_contents, image_count, custom_prompt)
-    voice_questions = generate_voice_questions(combined_contents, voice_count, custom_prompt)
-    pronunciation_questions = generate_pronunciation_questions(combined_contents, pronunciation_count, custom_prompt)
+    image_questions = generate_image_questions(vocabs, image_count, custom_prompt)
+    voice_questions = generate_voice_questions(vocabs, voice_count, custom_prompt)
+    pronunciation_questions = generate_pronunciation_questions(vocabs, pronunciation_count, custom_prompt)
     
     return {
         "multiple_choice_questions": text_questions,
