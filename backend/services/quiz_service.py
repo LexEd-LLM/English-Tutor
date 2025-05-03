@@ -8,16 +8,23 @@ class QuizService:
     def __init__(self):
         pass
 
-    def get_quiz_questions(self, quiz_id: int, lesson_id: int = 0) -> List[Dict]:
+    def get_quiz_questions(self, quiz_id: int, lesson_id: int = None) -> List[Dict]:
         """Get all questions for a quiz"""
         conn = get_db()
         try:
             with conn.cursor() as cur:
-                cur.execute("""
-                    SELECT * FROM quiz_questions 
-                    WHERE quiz_id = %s AND lesson_id = %s
-                    ORDER BY id
-                """, (quiz_id, lesson_id))
+                if lesson_id:
+                    cur.execute("""
+                        SELECT * FROM quiz_questions 
+                        WHERE quiz_id = %s AND lesson_id = %s
+                        ORDER BY id
+                    """, (quiz_id, lesson_id))
+                else:
+                    cur.execute("""
+                        SELECT * FROM quiz_questions 
+                        WHERE quiz_id = %s
+                        ORDER BY id
+                    """, (quiz_id,))
                 return cur.fetchall()
         finally:
             conn.close()
@@ -240,6 +247,7 @@ class QuizService:
         ]
         # Save new questions to database
         self.save_new_questions(quiz_id, multiple_choice_items + image_items + voice_items + pronunciation_items, lesson_id + 1)
+
         # Return combined questions
         return {
             "lesson_id": lesson_id + 1,

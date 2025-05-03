@@ -137,14 +137,14 @@ async def generate_quiz(request: QuizRequest):
     return result
 
 @router.get("/{quiz_id}", response_model=QuizResponse)
-async def get_quiz_by_id(quiz_id: int):
+async def get_quiz_by_id(quiz_id: int, lesson_id: int = 0):
     """
     Get quiz data by ID.
     Returns all questions and metadata for the specified quiz.
     """
     try:
         # Get quiz questions from database
-        questions = quiz_service.get_quiz_questions(quiz_id)
+        questions = quiz_service.get_quiz_questions(quiz_id, lesson_id)
         if not questions:
             raise HTTPException(status_code=404, detail="Quiz not found")
 
