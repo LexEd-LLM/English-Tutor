@@ -112,7 +112,6 @@ export default function ExplanationPage() {
     
     try {
       await generatePracticeQuiz(userId, Number(quizId));
-      window.location.href = '/practice';
     } catch (error) {
       console.error("Error starting practice:", error);
       toast.error("Failed to start practice session");

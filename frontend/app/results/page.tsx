@@ -114,9 +114,7 @@ export default function ResultPage() {
 
       // Call API to generate practice quiz
       await generatePracticeQuiz(result.userId, result.quizId);
-      
-      // Force a hard reload when redirecting to practice page
-      window.location.href = '/practice';
+
     } catch (error: any) {
       console.error("[DEBUG] Practice Again - Full Error:", {
         error,
