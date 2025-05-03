@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { Loader2 } from "lucide-react";
 
 type Unit = InferSelectModel<typeof units> & { completed: boolean };
 
@@ -44,14 +45,9 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
       toast.error("Please select a unit");
       return;
     }
-
+  
     setIsLoading(true);
-    setProgress(0);
     try {
-      const interval = setInterval(() => {
-        setProgress((p) => Math.min(p + 10, 90));
-      }, 300);
-
       const result = await generateQuiz(
         [parseInt(selectedUnit)],
         dokLevel,
@@ -60,10 +56,7 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
         counts.image,
         counts.voice,
       );
-
-      clearInterval(interval);
-      setProgress(100);
-
+  
       if (result.success && result.quizId) {
         toast.success("Quiz generated successfully!");
         router.push(`/lesson?quizId=${result.quizId}`);
@@ -74,7 +67,6 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
       toast.error("An error occurred while generating the quiz");
     } finally {
       setIsLoading(false);
-      setTimeout(() => setProgress(0), 1000);
     }
   };
 
@@ -199,22 +191,23 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
 
         {/* Generate Button with Progress */}
         <div className="relative">
-          <Button
-            className="w-full overflow-hidden relative z-10"
-            size="lg"
-            onClick={handleGenerateQuiz}
-            disabled={isLoading}
-          >
-            {isLoading ? "Đang tạo quiz..." : "Tạo quiz"}
-          </Button>
-          {isLoading && (
-            <div
-              className="absolute top-0 left-0 h-full bg-green-400 transition-all duration-300 ease-in-out z-0"
-              style={{ width: `${progress}%` }}
-            />
-          )}
+        <Button
+          className="w-full relative flex items-center justify-center gap-2"
+          size="lg"
+          onClick={handleGenerateQuiz}
+          disabled={isLoading}
+        >
+          {isLoading && <Loader2 className="w-4 h-4 animate-spin text-white" />}
+          {isLoading ? "Đang tạo..." : "Tạo quiz"}
+        </Button>
         </div>
       </div>
+      {/* Full-screen loading overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30">
+          <Loader2 className="w-10 h-10 animate-spin text-white" />
+        </div>
+      )}
     </Card>
   );
 };
