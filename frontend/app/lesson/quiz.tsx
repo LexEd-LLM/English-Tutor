@@ -63,7 +63,6 @@ export const Quiz = ({
     userPhonemes: string | null;
   }>>({});
   const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Clear previous answers when starting a new quiz
   useEffect(() => {
@@ -168,8 +167,6 @@ export const Quiz = ({
       return;
     }
 
-    setIsSubmitting(true);
-
     try {
       const answers = Object.entries(userAnswers).map(([questionId, answer]) => {
         // Find the question and get the selected option's text
@@ -197,15 +194,13 @@ export const Quiz = ({
       const response = await submitQuizAnswers(userId, quizId, answers);
       
       if (response.success) {
-        router.push(`/results?quizId=${quizId}`);
+        await router.push(`/results?quizId=${quizId}`);
       } else {
         toast.error("Failed to submit quiz");
       }
     } catch (error) {
       console.error('Error submitting quiz:', error);
       toast.error("An error occurred while submitting the quiz");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
