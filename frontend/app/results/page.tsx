@@ -8,11 +8,12 @@ import { useWindowSize } from "react-use";
 import Confetti from "react-confetti";
 import { useAudio } from "react-use";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 
 import { Button } from "@/components/ui/button";
 import { ResultCard } from "./result-card";
 import { Footer } from "./footer";
-import { generatePracticeQuiz, getUserProfile, Role } from "./api";
+import { generatePracticeQuiz, getUserProfile, Role, getStrengthWeakness } from "./api";
 
 interface QuizResult {
   success: boolean;
@@ -29,6 +30,8 @@ export default function ResultPage() {
 
   const [result, setResult] = useState<QuizResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [strengths, setStrengths] = useState<string | null>(null);
+  const [weaknesses, setWeaknesses] = useState<string | null>(null);
 
   const [userRole, setUserRole] = useState<Role | null>(null);
   const [userHearts, setUserHearts] = useState<number>(5);
@@ -47,6 +50,18 @@ export default function ResultPage() {
       try {
         const parsedResults = JSON.parse(quizResults);
         setResult(parsedResults);
+
+        // Fetch strengths and weaknesses
+        if (parsedResults.quizId) {
+          getStrengthWeakness(parsedResults.quizId)
+            .then(data => {
+              setStrengths(data.strengths);
+              setWeaknesses(data.weaknesses);
+            })
+            .catch(err => {
+              console.error("Failed to load strengths/weaknesses:", err);
+            });
+        }
 
         if (parsedResults.userId) {
           getUserProfile(parsedResults.userId)
@@ -161,6 +176,11 @@ export default function ResultPage() {
         height={height}
       />
       <div className="flex min-h-screen flex-col items-center justify-center gap-8 py-10 pb-24">
+        <div className="w-full flex justify-center px-4">
+          <h1 className="text-center text-2xl font-extrabold text-blue-600 lg:text-4xl leading-snug">
+              🎉 Chúc mừng bạn đã hoàn thành bài kiểm tra! 🎉
+          </h1>
+        </div>
         <div className="mx-auto flex max-w-lg flex-col items-center justify-center gap-y-4 text-center lg:gap-y-8">
           <Image
             src="/finish.svg"
@@ -169,18 +189,9 @@ export default function ResultPage() {
             height={100}
             width={100}
           />
-
-          <Image
-            src="/finish.svg"
-            alt="Finish"
-            className="block lg:hidden"
-            height={100}
-            width={100}
-          />
-
-          <h1 className="text-lg font-bold text-neutral-700 lg:text-3xl">
-            Great job! <br /> You&apos;ve completed the quiz.
-          </h1>
+          <p className="text-neutral-600 text-base lg:text-lg text-center max-w-md">
+            Hãy xem lại phần giải thích để củng cố kiến thức, hoặc luyện tập lại nếu cần!
+          </p>
 
           <div className="flex w-full items-center gap-x-4">
             <ResultCard 
@@ -196,14 +207,29 @@ export default function ResultPage() {
               label="Quota Left"
             />
           </div>
-
           <div className="flex flex-col gap-y-4 w-full mt-4">
             <Button
               onClick={goToExplanations}
               className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3"
             >
-              View Explanations
+              Xem giải thích
             </Button>
+          </div>
+        </div>
+        <div className="w-full flex justify-center px-4">
+          <div className="w-full max-w-4xl space-y-4">
+            {strengths && (
+              <div className="bg-green-100 text-green-800 px-4 py-2 rounded-md font-medium whitespace-pre-wrap">
+                <div className="mb-1">🟢 <strong>Điểm tốt:</strong></div>
+                <ReactMarkdown>{strengths}</ReactMarkdown>
+              </div>
+            )}
+            {weaknesses && (
+              <div className="bg-red-100 text-red-800 px-4 py-2 rounded-md font-medium whitespace-pre-wrap">
+                <div className="mb-1">🔴 <strong>Điểm chưa tốt:</strong></div>
+                <ReactMarkdown>{weaknesses}</ReactMarkdown>
+              </div>
+            )}
           </div>
         </div>
       </div>

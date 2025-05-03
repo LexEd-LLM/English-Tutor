@@ -64,3 +64,11 @@ export const getUserProfile = async (userId: string): Promise<UserProfile> => {
         throw error;
     }
 };
+
+export async function getStrengthWeakness(quizId: number) {
+  const res = await fetch(`/api/quiz/${quizId}/get-strength-weakness`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch strengths and weaknesses");
+  }
+  return res.json();
+}
