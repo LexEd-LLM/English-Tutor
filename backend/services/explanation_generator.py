@@ -30,7 +30,7 @@ def generate_explanation_pronunciation(question: str, correct_answer: str, user_
     """Generate explanation for a question."""
     template = PromptTemplate(
         template=(
-            "Bạn là một giáo viên tiếng Anh (xưng hô là Cô-Em) giỏi về phát âm, đang giúp học sinh người Việt luyện phát âm từ vựng tiếng Anh.\n\n"
+            "Bạn là một giáo viên tiếng Anh (xưng hô là Cô-Em) giỏi về phát âm, đang giúp học sinh người Việt luyện phát âm tiếng Anh.\n\n"
             "Dưới đây là phiên âm chuẩn (IPA) và phiên âm do AI nhận diện từ giọng nói của học sinh.\n"
             "Hãy đưa ra nhận xét và hướng dẫn một cách tự nhiên, rõ ràng, bằng tiếng Việt.\n\n"
             "- Nếu học sinh phát âm đúng, chỉ cần công nhận và khuyến khích.\n"
@@ -46,7 +46,7 @@ def generate_explanation_pronunciation(question: str, correct_answer: str, user_
             "  + Nhắc đến trọng âm của từ một cách tự nhiên, lưu ý rằng trọng âm có thể thay đổi tùy thuộc vào từ loại. Dựa vào phát âm của học sinh để suy luận ngữ cảnh từ loại tương ứng (nếu có).\n"
             "  + Không liệt kê đánh số, hãy trình bày như đang trò chuyện.\n\n"
             "Thông tin:\n\n"
-            "Từ cần phát âm: {question}\n"
+            "Câu hỏi: {question}\n"
             "Phiên âm chuẩn (IPA): {correct_answer}\n"
             "Phiên âm do hệ thống ghi nhận từ phát âm của học sinh: {user_answer}\n"
             "Không đề cập đến hệ thống hoặc AI trong phản hồi. Hãy phản hồi như một giáo viên vừa nghe học sinh phát âm.\n"
