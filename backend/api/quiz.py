@@ -314,3 +314,25 @@ async def get_quiz_with_user_answers(quiz_id: int) -> List[QuizQuestionWithUserA
         raise HTTPException(status_code=500, detail="Failed to fetch quiz explanations")
     finally:
         conn.close()
+        
+@router.get("/{quiz_id}/get-strength-weakness")
+async def get_assignment_feedback(quiz_id: int):
+    conn = get_db()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("""
+                SELECT strengths, weaknesses
+                FROM user_quizzes
+                WHERE id = %s
+            """, (quiz_id,))
+            row = cur.fetchone()
+            print(row['strengths'], row['weaknesses'])
+            if row:
+                return row
+            else:
+                raise HTTPException(status_code=404, detail="Quiz not found")
+    except Exception as e:
+        print(f"[ERROR] Failed to fetch strengths/weaknesses: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch strengths/weaknesses")
+    finally:
+        conn.close()

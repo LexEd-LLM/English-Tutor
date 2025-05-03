@@ -8,7 +8,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import Image from "next/image";
-import { getQuizWithAnswers, generateExplanation, calculatePhonemeScore, generatePracticeQuiz } from "./api";
+import { getQuizWithAnswers, generateExplanation, calculatePhonemeScore, generatePracticeQuiz, getStrengthWeakness } from "./api";
 import { Footer } from "./footer";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
@@ -47,7 +47,9 @@ export default function ExplanationPage() {
   const [savedExplanations, setSavedExplanations] = useState<Record<number, boolean>>({});
   const sampleAudioRefs = useRef<Record<number, HTMLAudioElement | null>>({});
   const userAudioRefs = useRef<Record<number, HTMLAudioElement | null>>({});
-
+  const [strengths, setStrengths] = useState<string | null>(null);
+  const [weaknesses, setWeaknesses] = useState<string | null>(null);
+  
   const [phonemeScores, setPhonemeScores] = useState<Record<number, number>>({});
 
   useEffect(() => {
@@ -70,6 +72,14 @@ export default function ExplanationPage() {
   
         setPhonemeScores(scores);
       });
+
+      getStrengthWeakness(Number(quizId)).then(data => {
+        setStrengths(data.strengths);
+        setWeaknesses(data.weaknesses);
+      }).catch(err => {
+        console.error("Failed to load strengths/weaknesses:", err);
+      });
+      
     }
   }, [quizId]);  
 
@@ -168,6 +178,22 @@ export default function ExplanationPage() {
         </Button>
         <h1 className="text-3xl font-bold text-center flex-1">Quiz Explanations</h1>
       </div>
+      {(strengths || weaknesses) && (
+        <div className="mt-4 space-y-2 mb-10">
+          {strengths && (
+            <div className="bg-green-100 text-green-800 px-4 py-2 rounded-md font-medium whitespace-pre-wrap">
+              <div className="mb-1">🟢 <strong>Điểm tốt:</strong></div>
+              <ReactMarkdown>{strengths}</ReactMarkdown>
+            </div>
+          )}
+          {weaknesses && (
+            <div className="bg-red-100 text-red-800 px-4 py-2 rounded-md font-medium whitespace-pre-wrap">
+              <div className="mb-1">🔴 <strong>Điểm chưa tốt:</strong></div>
+              <ReactMarkdown>{weaknesses}</ReactMarkdown>
+            </div>
+          )}
+        </div>
+      )}
 
       {questions.map((q, index) => {
         const isExpanded = expanded[q.id];

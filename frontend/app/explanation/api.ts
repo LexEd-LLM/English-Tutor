@@ -19,8 +19,17 @@ interface QuizQuestionWithUserAnswer {
 
 export async function getQuizWithAnswers(quizId: number): Promise<QuizQuestionWithUserAnswer[]> {
   const res = await axios.get(`/api/quiz/${quizId}/explanations`);
-  return res.data; // should be an array of questions with user answers and extra info
+  return res.data;
 }
+
+export async function getStrengthWeakness(quizId: number) {
+  const res = await fetch(`/api/quiz/${quizId}/get-strength-weakness`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch strengths and weaknesses");
+  }
+  return res.json();
+}
+
 
 export async function generateExplanation(question: {
   questionId: number;
