@@ -128,7 +128,7 @@ export const quizQuestions = pgTable("quiz_questions", {
   quizId: integer("quiz_id")
     .references(() => userQuizzes.id, { onDelete: "cascade" })
     .notNull(),
-  lessonId: integer("lesson_id").notNull(),
+  lessonId: integer("lesson_id").default(0),
   questionText: text("question_text").notNull(),
   type: questionTypeEnum("type").notNull(),
   options: json("options"), // List of answers (QuizOption[]). Null for PRONUNCIATION

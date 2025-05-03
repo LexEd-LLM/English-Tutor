@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS "curriculums" (
 CREATE TABLE IF NOT EXISTS "quiz_questions" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"quiz_id" integer NOT NULL,
+	"lesson_id" integer NOT NULL,
 	"question_text" text NOT NULL,
 	"type" "question_type" NOT NULL,
 	"options" json,

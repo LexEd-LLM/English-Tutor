@@ -1,5 +1,5 @@
 {
-  "id": "5c644894-1c60-4999-b274-3fdac5830ec6",
+  "id": "422a91b6-63f2-4345-a2e0-4629a0ccbe81",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -50,6 +50,12 @@
         },
         "quiz_id": {
           "name": "quiz_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lesson_id": {
+          "name": "lesson_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true

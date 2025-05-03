@@ -119,12 +119,12 @@ class QuizService:
                         
                         cur.execute("""
                             INSERT INTO quiz_questions (
-                                quiz_id, lesson_id, question_text, type, options, 
+                                quiz_id, question_text, type, options, 
                                 correct_answer, explanation, image_url, audio_url
                             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                             RETURNING id
                         """, (
-                            quiz_id, 0, # lesson_id = 0 mặc định
+                            quiz_id,
                             item.question, item.type.value.upper(),
                             json.dumps(options), correct_answer,
                             item.explanation, item.imageUrl, item.audioUrl
