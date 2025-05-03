@@ -13,7 +13,7 @@ async def generate_adaptive_quiz(payload: QuizUserRequest):
         # Create response object
         result = QuizResponsewithLessonId(
             quiz_id=payload.quiz_id,
-            lesson_id=questions.lesson_id,
+            lesson_id=questions.get("lesson_id", 0),
             multiple_choice_questions=questions.get("multiple_choice_questions", []),
             image_questions=questions.get("image_questions", []),
             voice_questions=questions.get("voice_questions", []),
