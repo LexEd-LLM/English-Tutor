@@ -192,6 +192,7 @@ def generate_image_questions(
 def generate_voice_questions(
     content: str,
     count: int,
+    text_chunks: Optional[str] = None,
     custom_prompt: Optional[str] = None,
     dok_level: Optional[int] = None
 ) -> List[Dict[str, Any]]:
@@ -200,31 +201,48 @@ def generate_voice_questions(
     
     prompt_template = PromptTemplate(
         template="""
-            You are an expert in creating pronunciation-based English vocabulary questions.
-            ## From a list of English words provided, randomly choose {count} words. For each selected word:
-                1. Choose a real English word that sounds similar but has a different meaning.
-                2. Create a multiple-choice question that helps learners distinguish the correct pronunciation.
-                3. The question should be: "Which word did you hear?"
-                4. Provide two options: the correct word (from the list) and the distractor (similar-sounding word).
-                5. Mark the correct answer (the word from the list).
-                6. Do **not** include phonetic transcriptions in the options or answer.
+            You are an expert in designing English listening comprehension questions to help Vietnamese learners distinguish between similar-sounding words.
+            Use the vocabulary list and sample English text provided as inspiration. You are NOT restricted to the exact words or sentences. Feel free to create realistic, classroom-style or exam-style questions that test pronunciation discrimination.
             
-            ## Difficulty level: {difficulty_level}
+            {
+                "vocabulary_list": {vocab_list},
+                "sample_text": {text_chunks},
+                "difficulty_level": {diffucult_level} 
+            }
+            
+            ## For each question (choose {count} total):
+            Create EITHER of the following two types:
+                1. **Multiple Choice Listening**
+                - Prompt: "Which word did you hear?"
+                - Pick one word from the list and one similar-sounding distractor (e.g., sheep vs ship, live vs leave).
+                - These words should sound similar but have different meanings.
 
-            ## Use the following list of vocabulary words: {vocab_list}
-            Return the questions in JSON format with these fields:
+                2. **Fill in the Blank with Phrase Context**
+                - Use one of the vocabulary words (or a similar-sounding word pair) in a natural sentence or phrase.
+                - Mask the target word with a blank (e.g., "He sat on the ___ by the fire.")
+                - Provide two options: correct word and a distractor.
+
+            ## You must:
+            - Use real, natural English phrases or sentences (can be based on sample_text)
+            - Prioritize word pairs that Vietnamese learners tend to confuse in listening (e.g., bad–bed, pan–pen, rice–lice)
+            - Randomly mix between the two question types
+
+            ## Output format:
+            Return a list of JSON objects with these fields:
             - question: "Which word did you hear?"
             - options: array with the correct word and similar-sounding word
-            - correct_answer: the word from the content
+            - correct_answer: word
             - type: "voice"
-            
-            Generate exactly {count} questions.
-        """
-    )
+
+            Generate exactly {count} questions. Output only the JSON list.
+            """
+        )
+    text_chunks = f"- Sample textbook snippets: {text_chunks}" if len(text_chunks) > 0 else ""
     diffucult_level = DIFFICULTY_LEVELS_VOICE_QUESTIONS[dok_level]
     prompt = prompt_template.format(
         vocab_list=content, 
         count=count,
+        text_chunks=text_chunks,
         diffucult_level=diffucult_level
     )
     response = llm.complete(prompt)
@@ -364,7 +382,7 @@ def generate_questions_batch(
     
     # Get maximum of dok_level to meaning difficult level
     image_questions = generate_image_questions(vocabs, image_count, custom_prompt)
-    voice_questions = generate_voice_questions(vocabs, voice_count, custom_prompt, max(dok_level))
+    voice_questions = generate_voice_questions(vocabs, voice_count, combined_text_chunks, custom_prompt, max(dok_level))
     pronunciation_questions = generate_pronunciation_questions(vocabs, pronunciation_count, combined_text_chunks, custom_prompt, max(dok_level))
     
     return {
@@ -417,7 +435,7 @@ def generate_questions_adaptive(
     )
     
     image_questions = generate_image_questions(contents, image_count, custom_prompt)
-    voice_questions = generate_voice_questions(contents, voice_count, custom_prompt, dok_level)
+    voice_questions = generate_voice_questions(contents, voice_count, text_chunks, custom_prompt, dok_level)
     pronunciation_questions = generate_pronunciation_questions(contents, pronunciation_count, text_chunks, custom_prompt, dok_level)
     
     # Return questions to be appended to existing quiz
