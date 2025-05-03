@@ -62,3 +62,9 @@ DIFFICULTY_LEVELS_VOICE_QUESTIONS = {
   2: """Level 2: The words should sound quite similar, sharing at least one major sound.""",
   3: """Level 3: The two words should be minimal pairs or nearly indistinguishable in sound (e.g., "ship" vs "sheep")."""
 }
+
+DIFFICULTY_LEVELS_PHONUNCIATION_QUESTIONS = {
+    1: "Beginner – Focus on basic words with regular spelling-to-sound patterns (e.g., cat, dog, book)",
+    2: "Intermediate – Include common but slightly irregular words or phrases (e.g., schedule, comfortable, a cup of tea)",
+    3: "Advanced – Focus on difficult or misleading pronunciation (e.g., colonel, thorough, 'through the tunnel')"
+}

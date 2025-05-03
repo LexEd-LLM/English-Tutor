@@ -76,7 +76,7 @@ class PracticeService:
         try:
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT prompt
+                    SELECT prompt, depth_of_knowledge
                     FROM user_quizzes 
                     WHERE id = %s
                 """, (quiz_id,))
@@ -91,7 +91,8 @@ class PracticeService:
                         "multiple_choice_count": prompt_data.get("multiple_choice_count", 0),
                         "image_count": prompt_data.get("image_count", 0),
                         "voice_count": prompt_data.get("voice_count", 0),
-                        "custom_prompt": prompt_data.get("custom_prompt", "")
+                        "custom_prompt": prompt_data.get("custom_prompt", ""),
+                        "dok_level": result["depth_of_knowledge"]
                     }
                 return {}
         finally:
@@ -287,6 +288,7 @@ class PracticeService:
             strengths=user_profile.get("strengths", None),
             weaknesses=user_profile.get("weaknesses", None),
             custom_prompt=prompt_data.get("custom_prompt"),
+            dok_level=prompt_data.get("dok_level")
         )
         print("Successfully generated adaptive questions")
         
