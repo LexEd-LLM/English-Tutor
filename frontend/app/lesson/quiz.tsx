@@ -218,6 +218,8 @@ export const Quiz = ({
         totalQuestions={challenges.length}
         currentQuestionIndex={activeIndex}
         onQuestionClick={goToQuestion}
+        userAnswers={userAnswers}
+        questions={challenges}
       />
       <div className="flex-1">
         <div className="mx-auto h-full max-w-[1140px] px-6 pb-[100px] pt-8 lg:px-10">

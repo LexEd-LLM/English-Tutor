@@ -12,6 +12,8 @@ type HeaderProps = {
   totalQuestions?: number;
   currentQuestionIndex?: number;
   onQuestionClick?: (index: number) => void;
+  userAnswers?: Record<number, any>;
+  questions?: { id: number }[];
 };
 
 export const Header = ({
@@ -22,6 +24,8 @@ export const Header = ({
   totalQuestions = 0,
   currentQuestionIndex = 0,
   onQuestionClick,
+  userAnswers = {},
+  questions = [],
 }: HeaderProps) => {
   const { open } = useExitModal();
 
@@ -31,19 +35,26 @@ export const Header = ({
       {showQuestionsNav && totalQuestions > 0 && (
         <div className="fixed left-4 top-[150px] flex flex-col gap-2 p-4">
           <div className="grid grid-cols-5 gap-2">
-            {Array.from({ length: totalQuestions }).map((_, index) => (
-              <button
-                key={index}
-                onClick={() => onQuestionClick?.(index)}
-                className={`h-8 w-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors border ${
-                  index === currentQuestionIndex
-                    ? "border-blue-500 text-gray-700"
-                    : "border-gray-200 text-gray-600 hover:border-gray-300"
-                } bg-white`}
-              >
-                {index + 1}
-              </button>
-            ))}
+            {Array.from({ length: totalQuestions }).map((_, index) => {
+              const questionId = questions[index]?.id;
+              const isAnswered = questionId && userAnswers[questionId] !== undefined;
+              
+              return (
+                <button
+                  key={index}
+                  onClick={() => onQuestionClick?.(index)}
+                  className={`h-8 w-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors border ${
+                    index === currentQuestionIndex
+                      ? "border-blue-500 text-gray-700"
+                      : isAnswered
+                      ? "border-blue-500 text-gray-700 bg-blue-50"
+                      : "border-gray-200 text-gray-600 hover:border-gray-300"
+                  } bg-white`}
+                >
+                  {index + 1}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
