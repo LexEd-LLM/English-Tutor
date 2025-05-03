@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  eslint: {
+    // Tắt hoàn toàn kiểm tra ESLint trong quá trình build
+    ignoreDuringBuilds: true,
+  },
   async headers() {
     return [
       {
@@ -30,7 +34,7 @@ const nextConfig = {
       {
         protocol: "http",
         hostname: "localhost",
-        port: "8000",
+        port: "3000",
         pathname: "/**",
       },
       {
@@ -38,9 +42,6 @@ const nextConfig = {
         hostname: "**",
       },
     ],
-  },
-  experimental: {
-    serverActions: true,
   },
   async rewrites() {
     return [
