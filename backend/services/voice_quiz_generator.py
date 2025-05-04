@@ -18,7 +18,7 @@ def generate_audio(text: str, language: str = 'en') -> str:
     """
     try:
         # Create audio directory if it doesn't exist
-        audio_dir = Path("../frontend/public/audio")
+        audio_dir = Path("../frontend/assets/audio")
         audio_dir.mkdir(parents=True, exist_ok=True)
         
         # Generate filename from text
@@ -36,7 +36,7 @@ def generate_audio(text: str, language: str = 'en') -> str:
         tts.save(str(filepath))
         
         # Return relative path
-        return f"/audio/{filename}"
+        return f"/api/assets/audio/{filename}"
         
     except Exception as e:
         print(f"Error generating audio: {e}")

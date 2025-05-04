@@ -12,7 +12,7 @@ from backend.schemas.pronunciation import PronunciationAnalysisResult, Pronuncia
 
 router = APIRouter(tags=["pronunciation"])
 
-FRONTEND_PUBLIC_DIR = Path("../frontend/public").resolve()
+FRONTEND_PUBLIC_DIR = Path("../frontend/assets").resolve()
 UPLOAD_DIR = FRONTEND_PUBLIC_DIR / "users"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -34,7 +34,7 @@ async def upload_audio(
         temp_id = uuid.uuid4().hex
         temp_path = UPLOAD_DIR / f"temp_{temp_id}{file_extension}"
         output_path = UPLOAD_DIR / filename
-        relative_output_url = f"/users/{filename}" # URL for frontend
+        relative_output_url = f"/api/assets/users/{filename}" # URL for frontend
 
         # Write temporary file
         with open(temp_path, "wb") as f:
