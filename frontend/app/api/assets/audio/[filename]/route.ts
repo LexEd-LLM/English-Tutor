@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 export async function GET(req: NextRequest, { params }: { params: { filename: string } }) {
-  const filePath = path.join(process.cwd(), 'assets', 'images', params.filename);
+  const filePath = path.join(process.cwd(), 'assets', 'audio', params.filename);
 
   if (fs.existsSync(filePath)) {
     const ext = path.extname(filePath).slice(1);
