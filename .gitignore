@@ -329,4 +329,5 @@ frontend/.env.example
 frontend/public/audio
 frontend/public/images
 frontend/public/users
+frontend/assets
 notebooks
