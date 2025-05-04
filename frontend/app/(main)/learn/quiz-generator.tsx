@@ -35,14 +35,24 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
   const [progress, setProgress] = useState(0);
   const [dokLevel, setDokLevel] = useState<(1 | 2 | 3)[]>([1]);
   const [counts, setCounts] = useState({
-    multipleChoice: 2,
-    image: 1,
-    voice: 2,
+    multipleChoice: 20,
+    image: 6,
+    voice: 4,
   });
 
   const handleGenerateQuiz = async () => {
     if (!selectedUnit) {
-      toast.error("Please select a unit");
+      toast.error("Vui lòng chọn unit");
+      return;
+    }
+
+    if (dokLevel.length === 0) {
+      toast.error("Vui lòng chọn ít nhất một cấp độ khó (DOK)");
+      return;
+    }
+
+    if (counts.multipleChoice <= 0 && counts.image <= 0 && counts.voice <= 0) {
+      toast.error("Vui lòng chọn ít nhất một loại câu hỏi");
       return;
     }
   
