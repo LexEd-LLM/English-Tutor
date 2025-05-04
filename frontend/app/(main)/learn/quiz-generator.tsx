@@ -51,7 +51,14 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
       return;
     }
 
-    if (counts.multipleChoice <= 0 && counts.image <= 0 && counts.voice <= 0) {
+    // Kiểm tra giá trị âm
+    if (counts.multipleChoice < 0 || counts.image < 0 || counts.voice < 0) {
+      toast.error("Số lượng câu hỏi không được âm");
+      return;
+    }
+
+    // Kiểm tra có ít nhất 1 loại câu hỏi
+    if (counts.multipleChoice === 0 && counts.image === 0 && counts.voice === 0) {
       toast.error("Vui lòng chọn ít nhất một loại câu hỏi");
       return;
     }
