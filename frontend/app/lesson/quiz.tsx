@@ -163,7 +163,7 @@ export const Quiz = ({
 
   const handleSubmitQuiz = async () => {
     if (!allQuestionsAnswered) {
-      toast.error("Please answer all questions before submitting");
+      toast.error("Bạn cần trả lời tất cả câu hỏi trước khi nộp bài");
       return;
     }
 
