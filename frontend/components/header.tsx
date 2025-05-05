@@ -30,6 +30,7 @@ export const Header = ({
   showBackButton = true,
   isVIP = false,
 }: HeaderProps) => {
+  const router = useRouter();
   const { signOut } = useClerk();
 
   return (
@@ -39,11 +40,13 @@ export const Header = ({
         <div className="flex-1 flex items-center px-6">
           <div className="w-full max-w-3xl mx-auto flex items-center justify-between">
             {showBackButton && (
-              <Link href="/courses">
-                <Button size="sm" variant="ghost">
+                <Button 
+                size="sm" 
+                variant="ghost" 
+                onClick={() => router.back()}
+                >
                   <ArrowLeft className="h-5 w-5 stroke-2 text-neutral-400" />
                 </Button>
-              </Link>
             )}
             
             <h1 className="text-lg font-bold text-neutral-700">
