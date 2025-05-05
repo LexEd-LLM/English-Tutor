@@ -12,6 +12,7 @@ import { getQuizWithAnswers, generateExplanation, calculatePhonemeScore, generat
 import { Footer } from "./footer";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
+import { ChatbotPopup } from "@/components/ChatbotPopup";
 
 const renderColoredPhonemes = (correct: string, user: string = "") => {
   const output = [];
@@ -172,6 +173,7 @@ export default function ExplanationPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-6 pb-24">
+      <ChatbotPopup />
       <div className="flex items-center mb-6">
         <Button variant="ghost" onClick={() => router.back()} className="flex items-center gap-2">
           <ArrowLeft className="h-5 w-5" /> Back
