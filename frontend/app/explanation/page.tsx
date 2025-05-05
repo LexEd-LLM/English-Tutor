@@ -95,7 +95,7 @@ export default function ExplanationPage() {
 
     try {
       const payload = {
-        questionId: question.id,
+        questionId: question.questionId,
         questionText: question.questionText,
         options: question.options,
         correctAnswer: question.correctAnswer,
