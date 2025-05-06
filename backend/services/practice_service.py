@@ -151,7 +151,7 @@ class PracticeService:
             ## Nội dung học:
             {learning_content}
             
-            ## Hướng dẫn bài tập:
+            ## Hướng dẫn bài tập (hệ thống chỉ có 3 cấp độ DOK Level):
             {custom_prompt}
 
             ## Bài làm của học sinh:
@@ -159,7 +159,9 @@ class PracticeService:
             
             Nhiệm vụ của bạn:
             - Xem xét kỹ **tất cả các câu trả lời** (đúng và sai).
-            - Xác định các **điểm mạnh nổi bật** và **điểm yếu cần cải thiện** trong bài làm.
+            - Xác định các điểm mạnh nổi bật. Nếu có điểm nào chưa tốt, hãy nêu rõ điểm yếu cần cải thiện.
+            - Nếu học sinh đã làm đúng toàn bộ các câu hỏi và bài tập thuộc DOK Level 3, hãy ghi nhận toàn bộ điểm mạnh. Trong trường hợp này, KHÔNG đưa ra bất kỳ điểm yếu nào. Trả về "Không" trong phần "weaknesses".
+            - Tuyệt đối không tự suy diễn rằng bài tập còn đơn giản nếu thông tin đã nêu rõ đó là DOK Level 3.
             - Viết nhận xét một cách ngắn gọn, rõ ràng, giống như đang trực tiếp nhận xét với học sinh.
             - Tránh dùng các từ như "Người học" hay "The student". Ưu tiên dùng "em" hoặc viết tự nhiên như một lời nhận xét thân thiện.
             - Viết bằng **tiếng Việt**.
