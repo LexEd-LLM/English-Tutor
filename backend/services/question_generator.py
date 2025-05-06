@@ -153,7 +153,10 @@ def generate_image_questions(
             2. For each word:
                 - Create a question: What is this?
                 - The correct answer must be the vocabulary word.
-                - Provide 3 incorrect answers that are **distinct**, **visually different**, and **not semantically similar** to the correct one (avoid roles in the same environment, such as 'doctor' vs 'nurse').
+                - Incorrect options **must not be semantically or visually similar** to the correct word. Avoid:
+                    - Synonyms or related terms (e.g., 'road' vs 'path', 'chef' vs 'cook')
+                    - Words that can appear in similar contexts or environments.
+                - Think about what a beginner learner might confuse visually or conceptually — and avoid that.
             3. Include a detailed, unambiguous image description that:
                 - Clearly shows the correct object or person in a relevant, identifiable setting.
                 - Specifies the character's role, location, outfit, or actions to **eliminate confusion with similar roles**.
@@ -182,7 +185,7 @@ def generate_image_questions(
             "correct_answer": q["correct_answer"],
             "type": QuestionType.IMAGE.value,
             "image_url": generate_image(
-                f"An illustration in Duolingo flat style showing the concept of '{q['correct_answer']}' without using any text or labels. {q.get('image_description', '')} Word must not be shown in the image."
+                f"An illustration in Duolingo flat style based on the following scene: {q.get('image_description', '')}. The image must not include any text or labels."
             ),
             "image_description": q.get("image_description", "")
         }
