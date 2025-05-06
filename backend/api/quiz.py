@@ -99,8 +99,8 @@ async def generate_quiz(request: QuizRequest):
         bookmap_chunks.extend(bookmap_chunk)
     random_text_chunks = random.sample(text_chunks, 2) if len(text_chunks) > 2 else text_chunks
     
-    vocabs = [vocab.strip() for vocab_per_unit in vocab_chunks for vocab in vocab_per_unit.split("\n") if vocab.strip()]
-    random_vocab_chunks = random.sample(vocabs, 30) if len(vocabs) > 30 else vocabs
+    precontent_vocabs = [vocab.strip() for vocab_per_unit in vocab_chunks for vocab in vocab_per_unit.split("\n") if vocab.strip()]
+    random_vocab_chunks = random.sample(precontent_vocabs, 30) if len(precontent_vocabs) > 30 else precontent_vocabs
     vocabs.extend(random_vocab_chunks)
     prior_contents = random_vocab_chunks + bookmap_chunks
 
