@@ -28,7 +28,7 @@ const QuizHistoryPage = async () => {
             key={quiz.id} 
             href={`/explanation?quizId=${quiz.id}`}
           >
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer h-[320px]">
             <CardHeader className="relative w-full h-[200px] p-0 bg-green-100 overflow-hidden">
               <Image
                 src={"/quiz_placeholder.png"}

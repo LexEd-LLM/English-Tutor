@@ -159,10 +159,10 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
                   <Label>
                   <span className="md:inline hidden">
                     {type === "multipleChoice"
-                      ? "Multiple choice questions"
+                      ? "Multiple choice"
                       : type === "image"
-                      ? "Image questions"
-                      : "Audio questions"}
+                      ? "Image"
+                      : "Audio"}
                   </span>
                   <span className="inline md:hidden">
                     {type === "multipleChoice"
