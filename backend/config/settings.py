@@ -13,4 +13,4 @@ llm = Gemini(model="models/gemini-2.0-flash", temperature=1)
 #     temperature=1
 # )
 img_model = "gemini-2.0-flash-exp-image-generation"
-asr_model = pipeline(model="vitouphy/wav2vec2-xls-r-300m-timit-phoneme")
+asr_model = pipeline(model="vitouphy/wav2vec2-xls-r-300m-timit-phoneme", device='cpu')
