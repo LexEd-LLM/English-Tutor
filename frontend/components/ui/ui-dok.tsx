@@ -33,12 +33,11 @@ export const DokExplanation = () => {
 
             <div className="text-sm space-y-4">
               <p>
-                Một khuôn khổ để hiểu sự phức tạp của nhiệm vụ. Dưới đây là mô tả
-                ngắn gọn về từng cấp độ:
+              A framework for understanding task complexity. Here is a brief description of each level:
               </p>
               <ul className="list-disc list-inside space-y-2">
                 <li>
-                  <span className="font-bold">DOK Level 1 – Remembering:</span> 
+                  <span className="font-bold">DOK Level 1 – Remembering:</span>{" "}
                   Simply recall basic facts, terms, or concepts.
                 </li>
                 <li>

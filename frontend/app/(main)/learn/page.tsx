@@ -58,7 +58,7 @@ const LearnPage = async () => {
         </StickyWrapper>
         <FeedWrapper>
           <div className="w-full max-w-3xl mx-auto p-6 bg-white rounded-xl shadow-sm">
-            <h2 className="text-2xl font-bold mb-6 text-center">Sinh câu hỏi</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center">Question Generator</h2>
             <QuizGenerator units={units} />
           </div>
         </FeedWrapper>
