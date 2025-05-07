@@ -14,4 +14,4 @@ googletrans
 transformers
 torch
 gtts
-pydub
+audioop-lts

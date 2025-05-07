@@ -18,10 +18,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy yêu cầu & cài Python packages
-COPY backend/requirements.base.txt /app/backend/
-COPY backend/requirements.dev.txt /app/backend/
-RUN pip install -r /app/backend/requirements.base.txt
-RUN pip install -r /app/backend/requirements.dev.txt
+COPY backend/requirements.txt /app/backend/
+RUN pip install -r /app/backend/requirements.txt
 
 # Copy phần code backend (tách ra sau để tránh mất cache ở bước pip)
 COPY backend/ /app/backend/
