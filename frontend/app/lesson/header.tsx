@@ -45,7 +45,7 @@ export const Header = ({
                   onClick={() => onQuestionClick?.(index)}
                   className={`h-8 w-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors border ${
                     index === currentQuestionIndex
-                      ? "border-blue-500 text-gray-700"
+                      ? "border-2 border-black text-gray-700"
                       : isAnswered
                       ? "border-blue-500 text-gray-700 bg-blue-50"
                       : "border-gray-200 text-gray-600 hover:border-gray-300"
