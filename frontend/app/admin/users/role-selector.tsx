@@ -44,10 +44,10 @@ export const RoleSelector = ({
       }
 
       setRole(newRole);
-      toast.success("Cập nhật role thành công");
+      toast.success("Role updated successfully");
     } catch (error) {
       console.error("[ROLE_SELECTOR]", error);
-      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật role");
+      toast.error(error instanceof Error ? error.message : "An error occurred while updating role");
       // Khôi phục role cũ nếu có lỗi
       setRole(currentRole);
     } finally {
@@ -62,7 +62,7 @@ export const RoleSelector = ({
       disabled={isLoading}
     >
       <SelectTrigger className="w-[110px]">
-        <SelectValue placeholder="Chọn role" />
+        <SelectValue placeholder="Select role" />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="USER">User</SelectItem>

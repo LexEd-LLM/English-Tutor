@@ -71,9 +71,9 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
   };
 
   const dokTooltips: Record<1 | 2 | 3, string> = {
-    1: "Nhớ lại",
-    2: "Kỹ năng/Khái niệm",
-    3: "Lập luận",
+    1: "Remember",
+    2: "Skills/Concepts",
+    3: "Reasoning",
   };
   
   const renderDOKButton = (level: 1 | 2 | 3) => {
@@ -99,7 +99,7 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
                 ${selected ? "bg-purple-100 text-purple-600 border-purple-400" : "text-gray-500 border-gray-300"}
               `}
             >
-              {selected && <span className="text-green-600">✔</span>} Cấp độ {level}
+              {selected && <span className="text-green-600">✔</span>} Level {level}
             </button>
           </Tooltip.Trigger>
 
@@ -124,7 +124,7 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
       <div className="space-y-6">
         {/* Unit Selection */}
         <div className="space-y-4">
-          <Label className="text-base font-semibold">Vui lòng chọn Unit</Label>
+          <Label className="text-base font-semibold">Please select a unit</Label>
           <Select value={selectedUnit} onValueChange={setSelectedUnit}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a unit to generate quiz" />
@@ -151,16 +151,16 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
 
         {/* Counts */}
         <div className="space-y-4">
-          <Label className="text-base font-semibold">Số lượng câu hỏi</Label>
+          <Label className="text-base font-semibold">Number of questions</Label>
           <div className="grid grid-cols-3 gap-4">
             {["multipleChoice", "image", "voice"].map((type, i) => (
               <div key={i}>
                 <Label>
                   {type === "multipleChoice"
-                    ? "Câu hỏi trắc nghiệm"
+                    ? "Multiple choice question"
                     : type === "image"
-                    ? "Câu hỏi hình ảnh"
-                    : "Câu hỏi âm thanh"}
+                    ? "Image question"
+                    : "Audio question"}
                 </Label>
                 <Input
                   type="number"
@@ -198,7 +198,7 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
           disabled={isLoading}
         >
           {isLoading && <Loader2 className="w-4 h-4 animate-spin text-white" />}
-          {isLoading ? "Đang tạo..." : "Tạo quiz"}
+          {isLoading ? "Generating..." : "Generate quiz"}
         </Button>
         </div>
       </div>
