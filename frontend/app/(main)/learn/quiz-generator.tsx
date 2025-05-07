@@ -99,7 +99,7 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
                 ${selected ? "bg-purple-100 text-purple-600 border-purple-400" : "text-gray-500 border-gray-300"}
               `}
             >
-              {selected && <span className="text-green-600">✔</span>} Level {level}
+              {selected && <span className="text-green-600 hidden md:inline">✔</span>} Level {level}
             </button>
           </Tooltip.Trigger>
 
@@ -120,94 +120,105 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
   };
 
   return (
-    <Card className="w-full p-6 bg-green-50">
-      <div className="space-y-6">
-        {/* Unit Selection */}
-        <div className="space-y-4">
-          <Label className="text-base font-semibold">Please select a unit</Label>
-          <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a unit to generate quiz" />
-            </SelectTrigger>
-            <SelectContent>
-              {units.map((unit) => (
-                <SelectItem key={unit.id} value={unit.id.toString()}>
-                  {unit.title}
-                </SelectItem>
+    <div className="flex justify-center md:justify-start">
+      <Card className="w-full p-6 bg-green-50">
+        <div className="space-y-6">
+          {/* Unit Selection */}
+          <div className="space-y-4">
+            <Label className="text-base font-semibold">Please select a unit</Label>
+            <Select value={selectedUnit} onValueChange={setSelectedUnit}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a unit to generate quiz" />
+              </SelectTrigger>
+              <SelectContent>
+                {units.map((unit) => (
+                  <SelectItem key={unit.id} value={unit.id.toString()}>
+                    {unit.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Prompt */}
+          <div className="space-y-4">
+            <Label className="text-base font-semibold">Custom Instructions</Label>
+            <Input
+              placeholder="Enter your custom instructions for the quiz..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+            />
+          </div>
+
+          {/* Counts */}
+          <div className="space-y-4">
+            <Label className="text-base font-semibold">Number of questions</Label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {["multipleChoice", "image", "voice"].map((type, i) => (
+                <div key={i}>
+                  <Label>
+                  <span className="md:inline hidden">
+                    {type === "multipleChoice"
+                      ? "Multiple choice questions"
+                      : type === "image"
+                      ? "Image questions"
+                      : "Audio questions"}
+                  </span>
+                  <span className="inline md:hidden">
+                    {type === "multipleChoice"
+                      ? "MCQs"
+                      : type === "image"
+                      ? "Image"
+                      : "Audio"}
+                  </span>
+                  </Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={type === "multipleChoice" ? 50 : type === "voice" ? 20 : 10}
+                    value={counts[type as keyof typeof counts]}
+                    onChange={(e) =>
+                      setCounts((prev) => ({
+                        ...prev,
+                        [type]: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                  />
+                </div>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
+            </div>
+          </div>
 
-        {/* Prompt */}
-        <div className="space-y-4">
-          <Label className="text-base font-semibold">Custom Instructions</Label>
-          <Input
-            placeholder="Enter your custom instructions for the quiz..."
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-          />
-        </div>
+          {/* DOK */}
+          <div data-testid="dok-container" className="flex justify-between border-t border-gray-300 pt-4">
+            <DokExplanation />
+            <div className="flex gap-2">
+              {renderDOKButton(1)}
+              {renderDOKButton(2)}
+              {renderDOKButton(3)}
+            </div>
+          </div>
 
-        {/* Counts */}
-        <div className="space-y-4">
-          <Label className="text-base font-semibold">Number of questions</Label>
-          <div className="grid grid-cols-3 gap-4">
-            {["multipleChoice", "image", "voice"].map((type, i) => (
-              <div key={i}>
-                <Label>
-                  {type === "multipleChoice"
-                    ? "Multiple choice question"
-                    : type === "image"
-                    ? "Image question"
-                    : "Audio question"}
-                </Label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={type === "multipleChoice" ? 50 : type === "voice" ? 20 : 10}
-                  value={counts[type as keyof typeof counts]}
-                  onChange={(e) =>
-                    setCounts((prev) => ({
-                      ...prev,
-                      [type]: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                />
-              </div>
-            ))}
+          {/* Generate Button with Progress */}
+          <div className="relative">
+          <Button
+            className="w-full relative flex items-center justify-center gap-2"
+            size="lg"
+            onClick={handleGenerateQuiz}
+            disabled={isLoading}
+          >
+            {isLoading && <Loader2 className="w-4 h-4 animate-spin text-white" />}
+            {isLoading ? "Generating..." : "Generate quiz"}
+          </Button>
           </div>
         </div>
-
-        {/* DOK */}
-        <div data-testid="dok-container" className="flex justify-between border-t border-gray-300 pt-4">
-          <DokExplanation />
-          <div className="flex gap-2">
-            {renderDOKButton(1)}
-            {renderDOKButton(2)}
-            {renderDOKButton(3)}
+        {/* Full-screen loading overlay */}
+        {isLoading && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30">
+            <Loader2 className="w-10 h-10 animate-spin text-white" />
           </div>
-        </div>
-
-        {/* Generate Button with Progress */}
-        <div className="relative">
-        <Button
-          className="w-full relative flex items-center justify-center gap-2"
-          size="lg"
-          onClick={handleGenerateQuiz}
-          disabled={isLoading}
-        >
-          {isLoading && <Loader2 className="w-4 h-4 animate-spin text-white" />}
-          {isLoading ? "Generating..." : "Generate quiz"}
-        </Button>
-        </div>
-      </div>
-      {/* Full-screen loading overlay */}
-      {isLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30">
-          <Loader2 className="w-10 h-10 animate-spin text-white" />
-        </div>
-      )}
-    </Card>
+        )}
+      </Card>
+    </div>
   );
 };

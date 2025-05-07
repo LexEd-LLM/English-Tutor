@@ -33,7 +33,7 @@ export const Header = ({
     <div className="relative">
       {/* Left sidebar for question navigation */}
       {showQuestionsNav && totalQuestions > 0 && (
-        <div className="fixed left-4 top-[150px] flex flex-col gap-2 p-4">
+        <div className="hidden md:flex fixed left-4 top-[150px] flex-col gap-2 p-4">
           <div className="grid grid-cols-5 gap-2">
             {Array.from({ length: totalQuestions }).map((_, index) => {
               const questionId = questions[index]?.id;
