@@ -34,7 +34,14 @@ export const List = ({
         .then(() => {
           router.push('/learn');
         })
-        .catch(() => toast.error("Something went wrong"));
+        .catch((error) => {
+          if (error.message === "Unauthorized") {
+            router.push('/');
+            toast.error("Please login to access courses");
+          } else {
+            toast.error("Something went wrong");
+          }
+        });
     });
   };
 
