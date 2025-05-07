@@ -285,7 +285,7 @@ export default function ExplanationPage() {
                   return (
                     <li key={idx} className={classes + " flex items-center"}>
                       {icon}
-                      <span className="font-medium">{opt.text}</span>
+                      <span className="font-medium"><ReactMarkdown>{opt.text}</ReactMarkdown></span>
                     </li>
                   );
                 })}
