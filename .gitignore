@@ -324,7 +324,7 @@ src/ftn_llm/outputs
 src/ftn_llm/unsloth_compiled_cache
 weights
 
-backend/static
+backend/media
 frontend/.env.example
 frontend/public/audio
 frontend/public/images

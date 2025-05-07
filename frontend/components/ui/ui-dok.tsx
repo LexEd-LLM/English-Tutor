@@ -20,7 +20,7 @@ export const DokExplanation = () => {
       className="flex justify-between border-t border-gray-300 pt-4"
     >
       <div className="flex gap-2 items-center">
-        <p className="text-sm font-semibold">Độ sâu kiến thức (DOK)</p>
+        <p className="text-sm font-semibold">Depth of Knowledge (DOK)</p>
         <button onClick={() => setOpen(true)}>
           <Info className="w-4 h-4 text-gray-400" />
         </button>
@@ -28,7 +28,7 @@ export const DokExplanation = () => {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Chiều sâu kiến thức (DOK) là gì?</DialogTitle>
+              <DialogTitle>What is Depth of Knowledge (DOK)</DialogTitle>
             </DialogHeader>
 
             <div className="text-sm space-y-4">
@@ -38,16 +38,16 @@ export const DokExplanation = () => {
               </p>
               <ul className="list-disc list-inside space-y-2">
                 <li>
-                  <span className="font-bold">DOK cấp 1 – Nhớ lại:</span> Đơn giản
-                  nhờ lại các sự kiện, thuật ngữ hoặc khái niệm cơ bản.
+                  <span className="font-bold">DOK Level 1 – Remembering:</span> 
+                  Simply recall basic facts, terms, or concepts.
                 </li>
                 <li>
-                  <span className="font-bold">DOK cấp 2 – Kỹ năng/Khái niệm:</span>{" "}
-                  Áp dụng kiến thức hoặc quy trình để giải quyết vấn đề.
+                  <span className="font-bold">DOK Level 2 - Skills/Concepts:</span>{" "}
+                  Apply knowledge or procedures to solve problems.
                 </li>
                 <li>
-                  <span className="font-bold">DOK cấp 3 – Tư duy chiến lược:</span>{" "}
-                  Bao gồm sự hiểu biết sâu sắc, lý luận và ra quyết định phức tạp.
+                  <span className="font-bold">DOK Level 3 - Strategic Thinking:</span>{" "}
+                  Involves deep understanding, reasoning, and complex decision making.
                 </li>
               </ul>
             </div>

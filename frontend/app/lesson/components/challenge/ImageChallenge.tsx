@@ -17,6 +17,12 @@ export const ImageChallenge = ({
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
 
+  const getFullImageUrl = (url: string) => {
+    if (!url) return "";
+    if (url.startsWith("http")) return url;
+    return `${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`;
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-xl font-bold text-neutral-700">
@@ -31,7 +37,7 @@ export const ImageChallenge = ({
             </div>
           )}
           <Image
-            src={imageUrl}
+            src={getFullImageUrl(imageUrl)}
             alt="Question image"
             fill
             className={cn(
@@ -62,7 +68,7 @@ export const ImageChallenge = ({
               {option.imageSrc && (
                 <div className="relative h-12 w-12 overflow-hidden rounded-lg">
                   <Image
-                    src={option.imageSrc}
+                    src={getFullImageUrl(option.imageSrc)}
                     alt={option.text}
                     fill
                     className="object-cover"

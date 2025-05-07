@@ -75,7 +75,7 @@ class QuizQuestionWithUserAnswer(BaseModel):
     audioUrl: Optional[str]
     userAnswer: Optional[str]
     isCorrect: Optional[bool]
-    userPhonemes: Optional[str]
+    userPhonemes: Optional[str] = ""
     
 class QuizUserRequest(BaseModel):
     user_id: str

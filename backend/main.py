@@ -21,6 +21,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount media directory for static file serving
+app.mount("/media", StaticFiles(directory="media"), name="media")
+
 # Include tất cả API routes
 app.include_router(api_router)
 

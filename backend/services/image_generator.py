@@ -24,7 +24,7 @@ def generate_image(prompt: str) -> str:
     """
     try:
         # Create images directory if it doesn't exist
-        img_dir = Path("../frontend/public/images")
+        img_dir = Path("media/images")
         img_dir.mkdir(parents=True, exist_ok=True)
         
         # Initialize Gemini client
@@ -68,7 +68,7 @@ def generate_image(prompt: str) -> str:
                 save_binary_file(str(filepath), inline_data.data)
                 
                 # Return relative path
-                return f"/images/{filename}{file_extension}"
+                return f"/media/images/{filename}{file_extension}"
                 
         return ""
         

@@ -24,14 +24,14 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Đăng nhập thành công");
+        toast.success("Login successful");
         window.location.href = "/admin/users";
       } else {
-        toast.error(data.error || "Thông tin đăng nhập không chính xác");
+        toast.error(data.error || "Invalid login credentials");
       }
     } catch (error) {
       console.error("Login error:", error);
-      toast.error("Có lỗi xảy ra, vui lòng thử lại");
+      toast.error("An error occurred, please try again");
     } finally {
       setIsLoading(false);
     }
@@ -81,7 +81,7 @@ export default function AdminLogin() {
             disabled={isLoading}
             className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
           >
-            {isLoading ? "Đang xử lý..." : "Đăng nhập"}
+            {isLoading ? "Processing..." : "Login"}
           </button>
         </form>
       </div>

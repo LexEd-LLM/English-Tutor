@@ -11,3 +11,7 @@ python-multipart
 pydub
 phonemizer
 googletrans
+transformers
+torch
+gtts
+audioop-lts

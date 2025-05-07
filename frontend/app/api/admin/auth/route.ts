@@ -13,13 +13,13 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ 
       success: false, 
-      error: "Thông tin đăng nhập không chính xác" 
+      error: "Invalid login credentials" 
     }, { status: 401 });
   } catch (error) {
     console.error("[ADMIN_AUTH]", error);
     return NextResponse.json({ 
       success: false, 
-      error: "Có lỗi xảy ra, vui lòng thử lại" 
+      error: "An error occurred, please try again" 
     }, { status: 500 });
   }
 } 

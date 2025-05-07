@@ -12,9 +12,8 @@ from backend.schemas.pronunciation import PronunciationAnalysisResult, Pronuncia
 
 router = APIRouter(tags=["pronunciation"])
 
-FRONTEND_PUBLIC_DIR = Path("../frontend/public").resolve()
-UPLOAD_DIR = FRONTEND_PUBLIC_DIR / "users"
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+MEDIA_PUBLIC_DIR = Path("media/users")
+MEDIA_PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
 @router.post("/upload-audio", response_model=PronunciationAnalysisResult)
 async def upload_audio(
@@ -32,9 +31,9 @@ async def upload_audio(
 
         filename = f"{uuid.uuid4().hex}.wav" # Always save as wav eventually
         temp_id = uuid.uuid4().hex
-        temp_path = UPLOAD_DIR / f"temp_{temp_id}{file_extension}"
-        output_path = UPLOAD_DIR / filename
-        relative_output_url = f"/users/{filename}" # URL for frontend
+        temp_path = MEDIA_PUBLIC_DIR / f"temp_{temp_id}{file_extension}"
+        output_path = MEDIA_PUBLIC_DIR / filename
+        relative_output_url = f"/media/users/{filename}" # URL for frontend
 
         # Write temporary file
         with open(temp_path, "wb") as f:

@@ -216,7 +216,7 @@ export default function ExplanationPage() {
                       <button
                         onClick={() => handlePlayAudio(q.id, 'sample')}
                         className="p-2 rounded-full hover:bg-blue-100 transition-colors"
-                        title="Phát âm mẫu"
+                        title="Sample pronunciation"
                       >
                         <Image
                           src="/speaker.svg"
@@ -235,7 +235,7 @@ export default function ExplanationPage() {
                       <button
                         onClick={() => handlePlayAudio(q.id, 'user')}
                         className="p-2 rounded-full hover:bg-green-100 transition-colors"
-                        title="Phát âm của bạn"
+                        title="Your pronunciation"
                       >
                         <Image
                           src="/speaker.svg"

@@ -163,7 +163,7 @@ export const PronunciationChallenge = ({
                     // Check if chunks exist
                     if (!audioChunksRef.current || audioChunksRef.current.length === 0) {
                         console.error("No audio chunks recorded!");
-                        setRecordingError("Ghi âm không thành công (không có dữ liệu).");
+                        setRecordingError("Recording failed (no data).");
                         setRecordingState("error");
                         // Stop stream tracks here too
                         try {
@@ -177,7 +177,7 @@ export const PronunciationChallenge = ({
             
                     if (blob.size === 0) {
                         console.error("Blob created but size is 0!");
-                        setRecordingError("Ghi âm không thành công (kích thước 0 byte).");
+                        setRecordingError("Recording failed (0 byte size).");
                         setRecordingState("error");
                          try {
                             mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
@@ -198,7 +198,7 @@ export const PronunciationChallenge = ({
             
                 } catch (error) {
                     console.error("Error inside onstop handler:", error); // <-- Catch potential errors
-                    setRecordingError("Lỗi xử lý bản ghi âm.");
+                    setRecordingError("Error processing recording.");
                     setRecordingState("error");
                      try {
                         mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
@@ -210,7 +210,7 @@ export const PronunciationChallenge = ({
             mediaRecorderRef.current.onerror = (event) => {
                 console.error("MediaRecorder error event:", event);
                 // Add specific error check if possible, e.g., event.error.name
-                setRecordingError(`Lỗi MediaRecorder: ${event.error.name || 'Unknown error'}`);
+                setRecordingError(`Cannot access microphone. Please check permissions and try again.`);
                 setRecordingState("error");
                 stopTimer();
                 try {
@@ -223,7 +223,7 @@ export const PronunciationChallenge = ({
             startTimer();
         } catch (error) {
             console.error("Error accessing microphone:", error);
-            setRecordingError("Không thể truy cập microphone. Vui lòng kiểm tra quyền và thử lại.");
+            setRecordingError("Cannot access microphone. Please check permissions and try again.");
             setRecordingState("error");
         }
     };
@@ -283,7 +283,7 @@ export const PronunciationChallenge = ({
 
         } catch (error: any) {
             console.error("Error uploading/analyzing audio:", error);
-            setRecordingError(error.message || "Gửi và phân tích âm thanh thất bại.");
+            setRecordingError(error.message || "Failed to send and analyze audio.");
             setRecordingState("error");
             setAudioBlob(null); // Clear blob on error
         }
@@ -364,8 +364,8 @@ export const PronunciationChallenge = ({
                         <button
                             onClick={playOriginalAudio}
                             className="p-2 rounded-full hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
-                            aria-label="Play sample audio"
-                            title="Phát âm mẫu" // Tooltip
+                            aria-label="Sample pronunciation"
+                            title="Sample pronunciation" // Tooltip
                         >
                             <Image
                                 src="/speaker.svg"
@@ -387,7 +387,7 @@ export const PronunciationChallenge = ({
                         onClick={startRecording}
                         disabled={isDisabled}
                         className={`flex flex-col items-center justify-center text-blue-500 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity duration-200 p-4 rounded-lg ${isDisabled ? '' : 'hover:bg-blue-50'}`}
-                        aria-label="Bắt đầu ghi âm"
+                        aria-label="Start recording"
                     >
                         <Image src="/icons/microphone.svg" alt="" width={40} height={40} style={{ filter: "invert(48%) sepia(80%) saturate(2476%) hue-rotate(200deg) brightness(118%) contrast(119%)" }}/>
                         <span className="mt-2 text-sm font-medium">Nhấn để bắt đầu ghi âm</span>
@@ -399,7 +399,7 @@ export const PronunciationChallenge = ({
                     <button
                         onClick={handleStopClick}
                         className="flex flex-col items-center justify-center text-red-500 hover:text-red-700 p-4 rounded-lg hover:bg-red-50 transition-colors duration-200"
-                        aria-label="Dừng ghi âm"
+                        aria-label="Stop recording"
                     >
                         <Image src="/icons/stop.svg" alt="" width={40} height={40} style={{ filter: 'invert(13%) sepia(96%) saturate(7465%) hue-rotate(1deg) brightness(90%) contrast(120%)' }}/>
                         <span className="mt-2 text-sm font-medium">Dừng ghi âm</span>
@@ -448,7 +448,7 @@ export const PronunciationChallenge = ({
 
                                <div className="font-semibold text-gray-600 self-start">Phiên âm của bạn:</div>
                                <div className="font-mono break-words">
-                                   {renderedPhonemes ? renderedPhonemes.userDisplay : (analysisResult.userPhonemes === null ? <span className="text-orange-600">Không thể xử lý</span> : "...")}
+                                   {renderedPhonemes ? renderedPhonemes.userDisplay : (analysisResult.userPhonemes === null ? <span className="text-orange-600">Cannot process</span> : "...")}
                                </div>
                            </div>
                            {/* Display Score */}
@@ -471,7 +471,7 @@ export const PronunciationChallenge = ({
                             onClick={handleRerecord}
                             disabled={status !== 'none'}
                             className="text-sm bg-white text-blue-500 font-medium px-5 py-2 rounded-xl hover:bg-gray-200 transition-colors duration-200 flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-                            aria-label="Ghi âm lại"
+                            aria-label="Record again"
                         >
                             <Image 
                                 src="/icons/rotate-left.svg" 
@@ -488,12 +488,12 @@ export const PronunciationChallenge = ({
                 {recordingState === "error" && (
                     <div className="w-full flex flex-col items-center text-center">
                         <p className="text-red-500 text-sm mb-4">
-                            {recordingError || "Ghi âm lỗi. Vui lòng thử lại."}
+                            {recordingError || "Recording error. Please try again."}
                         </p>
                         <button
                             onClick={handleRerecord}
                             className="text-sm bg-blue-100 text-blue-500 font-medium px-5 py-2 rounded-xl hover:bg-blue-200 transition-colors duration-200 flex items-center gap-2"
-                            aria-label="Thử ghi âm lại"
+                            aria-label="Try recording again"
                         >
                             <Image src="/icons/rotate-left.svg" alt="" width={16} height={16} />
                             Thử ghi âm lại

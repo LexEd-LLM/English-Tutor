@@ -326,7 +326,7 @@ async def get_quiz_with_user_answers(quiz_id: int) -> List[QuizQuestionWithUserA
                     audioUrl=row.get("audio_url"),
                     userAnswer=row.get("user_answer"),
                     isCorrect=row.get("is_correct"),
-                    userPhonemes=row.get("user_phonemes")
+                    userPhonemes=row.get("user_phonemes") or ""
                 )
                 for i, row in enumerate(rows, start=1)
             ]

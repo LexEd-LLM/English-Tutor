@@ -27,6 +27,16 @@ const nextConfig = {
           },
         ],
       },
+      {
+        // Add headers for media files
+        source: "/media/(.*)",
+        headers: [
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+        ],
+      },
     ];
   },
   images: {
@@ -38,8 +48,20 @@ const nextConfig = {
         pathname: "/**",
       },
       {
+        protocol: "http",
+        hostname: "localhost",
+        port: "8000",
+        pathname: "/**",
+      },
+      {
         protocol: "https",
         hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "backend",
+        port: "8000",
+        pathname: "/media/**",
       },
     ],
   },
@@ -48,6 +70,11 @@ const nextConfig = {
       {
         source: '/api/:path*',
         destination: `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/:path*`,
+      },
+      {
+        // Add rewrite rule for media files
+        source: '/media/:path*',
+        destination: `${process.env.BACKEND_URL || 'http://localhost:8000'}/media/:path*`,
       },
     ];
   },

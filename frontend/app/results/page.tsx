@@ -178,7 +178,7 @@ export default function ResultPage() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-8 py-10 pb-24">
         <div className="w-full flex justify-center px-4">
           <h1 className="text-center text-2xl font-extrabold text-blue-600 lg:text-4xl leading-snug">
-              🎉 Chúc mừng bạn đã hoàn thành bài kiểm tra! 🎉
+            🎉 Congratulations on completing the test! 🎉
           </h1>
         </div>
         <div className="mx-auto flex max-w-lg flex-col items-center justify-center gap-y-4 text-center lg:gap-y-8">
@@ -190,7 +190,7 @@ export default function ResultPage() {
             width={100}
           />
           <p className="text-neutral-600 text-base lg:text-lg text-center max-w-md">
-            Hãy xem lại phần giải thích để củng cố kiến thức, hoặc luyện tập lại nếu cần!
+            Review the explanations to reinforce your understanding, or practice again if needed!
           </p>
 
           <div className="flex w-full items-center gap-x-4">
@@ -212,7 +212,7 @@ export default function ResultPage() {
               onClick={goToExplanations}
               className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3"
             >
-              Xem giải thích
+              View Explanation
             </Button>
           </div>
         </div>
