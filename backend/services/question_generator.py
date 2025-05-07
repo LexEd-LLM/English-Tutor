@@ -346,7 +346,7 @@ def generate_questions_batch(
        
     # Split voice questions between voice and pronunciation
     pronunciation_count = 1 if voice_count > 0 else 0
-    voice_count = voice_count - pronunciation_count
+    listen_count = voice_count - pronunciation_count
     
     # Convert dok_level to string
     dok_prompt = "The questions should match these levels of cognitive complexity:\n\n"
@@ -385,7 +385,7 @@ def generate_questions_batch(
     
     # Get maximum of dok_level to meaning difficult level
     image_questions = generate_image_questions(vocabs, image_count, custom_prompt)
-    voice_questions = generate_voice_questions(vocabs, voice_count, combined_text_chunks, custom_prompt, max(dok_level))
+    voice_questions = generate_voice_questions(vocabs, listen_count, combined_text_chunks, custom_prompt, max(dok_level))
     pronunciation_questions = generate_pronunciation_questions(vocabs, pronunciation_count, combined_text_chunks, custom_prompt, max(dok_level))
     
     return {
