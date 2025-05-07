@@ -34,7 +34,7 @@ export const generatePracticeQuestions = async (
   questions: PracticeQuestion[];
   nextReview: Date;
 }> => {
-  const response = await fetch(`${BACKEND_URL}/api/practice/generate`, {
+  const response = await fetch(`/api/practice/generate`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -58,7 +58,7 @@ export const generatePracticeQuestions = async (
 };
 
 export const savePracticeHistory = async (history: PracticeHistory): Promise<void> => {
-  const response = await fetch(`${BACKEND_URL}/api/practice/history`, {
+  const response = await fetch(`/api/practice/history`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
