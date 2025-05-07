@@ -21,6 +21,7 @@ services:
       interval: 5s
       timeout: 2s
       retries: 120
+    restart: on-failure
   
   frontend:
     build:
@@ -38,6 +39,7 @@ services:
         condition: service_healthy
     networks:
       - app-network
+    restart: on-failure
 
 volumes:
   backend-media:
