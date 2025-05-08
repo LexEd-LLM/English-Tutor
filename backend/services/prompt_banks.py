@@ -64,7 +64,7 @@ DIFFICULTY_LEVELS_VOICE_QUESTIONS = {
 }
 
 DIFFICULTY_LEVELS_PHONUNCIATION_QUESTIONS = {
-    1: "Beginner – Focus on basic words with regular spelling-to-sound patterns (e.g., cat, dog, book)",
-    2: "Intermediate – Include common but slightly irregular words or phrases (e.g., schedule, comfortable, a cup of tea)",
-    3: "Advanced – Focus on difficult or misleading pronunciation (e.g., colonel, thorough, 'through the tunnel')"
+    1: "Beginner - Focus on basic words with regular spelling-to-sound patterns (e.g., cat, dog, book)",
+    2: "Intermediate - Include common but slightly irregular words or phrases (e.g., schedule, comfortable, a cup of tea)",
+    3: "Advanced - Focus on difficult or misleading pronunciation (e.g., colonel, thorough, 'through the tunnel')"
 }
