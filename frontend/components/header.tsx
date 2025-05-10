@@ -75,13 +75,13 @@ export const Header = ({
               <button className="focus:outline-none">
                 <Avatar>
                   <AvatarImage src={userImage} />
-                  <AvatarFallback>U</AvatarFallback>
+                  <AvatarFallback>Y</AvatarFallback>
                 </Avatar>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem asChild>
-                <Link href="/quiz-history">Lịch sử câu hỏi</Link>
+                <Link href="/quiz-history">Quiz History</Link>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-rose-500"
@@ -91,7 +91,7 @@ export const Header = ({
                   });
                 }}
               >
-                Đăng xuất
+                Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
