@@ -4,6 +4,8 @@ from pathlib import Path
 from ..config.settings import asr_model
 from phonemizer import phonemize
 import json
+from nltk.metrics import edit_distance
+from difflib import SequenceMatcher
 
 def generate_audio(text: str, language: str = 'en') -> str:
     """
@@ -81,3 +83,44 @@ def calculate_pronunciation_score(user_phonemes: str, correct_phonemes_json: str
         max_score = max(max_score, score)
 
     return round(max_score, 1)
+
+def pronunciation_feedback(user_phonemes: str,
+                           correct_phonemes_json: str) -> dict:
+    correct_dict = json.loads(correct_phonemes_json)
+    correct_phonemes = correct_dict['en-us']
+    # 1. Tiền xử lý
+    u = user_phonemes.strip("/ ").replace(" ", "")
+    c = correct_phonemes.strip("/ ").replace(" ", "")
+
+    # 2. Điểm số
+    dist = edit_distance(u, c)
+    score = round((1 - dist / max(len(c), 1)), 1)
+
+    # 3. So khớp
+    sm = SequenceMatcher(None, u, c)
+    highlight = []       # [(chunk, status)] status: 'ok' | 'wrong' | 'missing'
+    corrections = []     # ["user → correct", ...]
+
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        user_chunk    = u[i1:i2]
+        correct_chunk = c[j1:j2]
+
+        if tag == "equal":
+            highlight.append((user_chunk, "ok"))
+        elif tag == "replace":
+            # ghi highlight
+            highlight.append((user_chunk, "wrong"))
+            # ghi gợi ý sửa từng cặp con
+            k_max = min(len(user_chunk), len(correct_chunk))
+            for k in range(k_max):
+                corrections.append(f"{user_chunk[k]} → {correct_chunk[k]}")
+        elif tag == "delete":        # người học thiếu âm
+            highlight.append((user_chunk, "wrong"))
+        elif tag == "insert":        # người học bỏ sót hoàn toàn
+            highlight.append((correct_chunk, "missing"))
+
+    return {
+        "score": score,
+        "highlight": highlight,
+        "corrections": corrections
+    }

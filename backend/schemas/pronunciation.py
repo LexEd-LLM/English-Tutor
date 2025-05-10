@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Tuple
 
 # Input model for analysis request (not strictly needed if using Form, but good practice)
 class PronunciationAnalysisResult(BaseModel):
@@ -8,6 +8,8 @@ class PronunciationAnalysisResult(BaseModel):
     score: float
     explanation: Optional[str]
     correctPhonemes: Dict # Send correct phonemes back for display
+    highlight: List[Tuple[str, str]]
+    corrections: List[str] 
     
 class PronunciationScoreRequest(BaseModel):
     userPhonemes: str

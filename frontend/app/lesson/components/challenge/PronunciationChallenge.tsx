@@ -16,70 +16,11 @@ type AnalysisResult = {
     score: number;
     explanation: string | null;
     correctPhonemes: Record<string, string>; // e.g., { "en-us": "...", "en-gb": "..." }
+    highlight: Array<[string, "ok"|"wrong"|"missing"]>;
+    corrections: string[];
 };
 // Define the maximum recording time in seconds
 const MAX_RECORDING_TIME = 120; // 02:00
-
-// --- Helper Function for Display ---
-const renderColoredPhonemes = (correct: string = "", user: string = "") => {
-    const output = [];
-    const userPhonemesArray = user.split(/\s+/); // Split by space
-    const correctPhonemesArray = correct.split(/\s+/); // Split by space
-  
-    // Simple alignment (can be improved with more sophisticated algorithms like Needleman-Wunsch if needed)
-    const maxLength = Math.max(correctPhonemesArray.length, userPhonemesArray.length);
-  
-    for (let i = 0; i < maxLength; i++) {
-      const cPhoneme = correctPhonemesArray[i] || "";
-      const uPhoneme = userPhonemesArray[i] || "";
-  
-      // Treat empty strings (padding) as non-matches unless both are empty
-      const isMatch = cPhoneme && uPhoneme && cPhoneme === uPhoneme;
-      const isMissing = !uPhoneme && cPhoneme;
-      const isExtra = uPhoneme && !cPhoneme;
-      const isWrong = uPhoneme && cPhoneme && uPhoneme !== cPhoneme;
-  
-      let colorClass = "text-gray-400"; // Default for padding/empty
-      let displayChar = "·"; // Placeholder for missing phoneme
-  
-      if (isMatch) {
-        colorClass = "text-green-600";
-        displayChar = uPhoneme;
-      } else if (isWrong) {
-        colorClass = "text-red-500";
-         // Show user phoneme, maybe strike-through correct one? For simplicity, just show user's wrong one.
-        displayChar = uPhoneme;
-      } else if (isMissing) {
-        colorClass = "text-orange-500"; // Indicate missing phoneme
-        displayChar = "·"; // Show placeholder for missing
-        // Alternatively display correct: displayChar = cPhoneme;
-      } else if (isExtra) {
-         colorClass = "text-purple-500"; // Indicate extra phoneme
-         displayChar = uPhoneme;
-      } else if (uPhoneme) {
-          // If user has phoneme but correct doesn't (due to length diff), mark as extra
-          colorClass = "text-purple-500";
-          displayChar = uPhoneme;
-      }
-  
-  
-      output.push(
-        <span key={i} className={`mr-1 ${colorClass}`}>
-          {displayChar}
-        </span>
-      );
-    }
-  
-    // Add visual indicator for the correct phoneme string as well
-     const correctDisplay = (
-      <div className="font-mono text-gray-800">
-        {correctPhonemesArray.join(' ')}
-      </div>
-     );
-  
-  
-    return { userDisplay: output, correctDisplay }; // Return both parts if needed separately
-  };
 
 export const PronunciationChallenge = ({
     id,
@@ -272,7 +213,15 @@ export const PronunciationChallenge = ({
             }
 
             // Store the full analysis result
-            setAnalysisResult(data as AnalysisResult);
+            setAnalysisResult({
+                url: data.url,
+                userPhonemes: data.userPhonemes,
+                score: data.score,
+                explanation: data.explanation,
+                correctPhonemes: data.correctPhonemes,
+                highlight: data.highlight,
+                corrections: data.corrections
+            });
             setRecordingState("done");
 
             // Pass necessary info for final submission
@@ -341,20 +290,15 @@ export const PronunciationChallenge = ({
     // Determine if interaction should be disabled
     const isDisabled = status !== "none" || recordingState === "processing";
 
-    // --- Render Colored Phonemes based on Analysis Result ---
-    const renderedPhonemes = analysisResult?.userPhonemes !== undefined // Check if analysis is done
-        ? renderColoredPhonemes(
-            analysisResult.correctPhonemes["en-us"] ?? analysisResult.correctPhonemes["en-gb"] ?? "", // Prioritize US, fallback UK
-            analysisResult.userPhonemes ?? ""
-          )
-        : null;
-
     return (
         <div className="space-y-4">
             {/* Question and Original Audio Player Button */}
             <div className="flex items-center gap-4">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-yellow-200 text-yellow-800 font-bold uppercase tracking-wider text-sm md:text-base"> 
+                    Beta
+                </span>
                 <div className="text-xl font-bold text-neutral-700">
-                    <ReactMarkdown>{question}</ReactMarkdown>
+                    <ReactMarkdown>{question}</ReactMarkdown> 
                 </div>
                 {audioUrl && (
                     <>
@@ -379,7 +323,10 @@ export const PronunciationChallenge = ({
                     </>
                 )}
             </div>
-
+            {/* Beta badge and disclaimer */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-xs mt-1">
+                <span className="text-gray-600">* This phoneme recognition system may contain errors and may not reflect your pronunciation precisely. Please use the phonemes and feedback for reference only.</span>
+            </div>
             {/* Recording Controls and Status */}
             <div className="flex flex-col items-center justify-center gap-4 mt-4 p-6 border rounded-lg shadow-sm min-h-[150px]">
                 {recordingState === "idle" && (
@@ -390,8 +337,8 @@ export const PronunciationChallenge = ({
                         aria-label="Start recording"
                     >
                         <Image src="/icons/microphone.svg" alt="" width={40} height={40} style={{ filter: "invert(48%) sepia(80%) saturate(2476%) hue-rotate(200deg) brightness(118%) contrast(119%)" }}/>
-                        <span className="mt-2 text-sm font-medium">Nhấn để bắt đầu ghi âm</span>
-                        <span className="mt-1 text-xs text-gray-500">(Giới hạn: 02:00)</span>
+                        <span className="mt-2 text-sm font-medium">Click to start recording</span>
+                        <span className="mt-1 text-xs text-gray-500">(Limit: 02:00)</span>
                     </button>
                 )}
 
@@ -402,9 +349,9 @@ export const PronunciationChallenge = ({
                         aria-label="Stop recording"
                     >
                         <Image src="/icons/stop.svg" alt="" width={40} height={40} style={{ filter: 'invert(13%) sepia(96%) saturate(7465%) hue-rotate(1deg) brightness(90%) contrast(120%)' }}/>
-                        <span className="mt-2 text-sm font-medium">Dừng ghi âm</span>
+                        <span className="mt-2 text-sm font-medium">Stop recording</span>
                         <span className="mt-1 text-lg font-semibold text-gray-700 tabular-nums">
-                            Còn lại: {formatTime(timeLeft)}
+                            Time left: {formatTime(timeLeft)}
                         </span>
                     </button>
                 )}
@@ -417,7 +364,7 @@ export const PronunciationChallenge = ({
                             <span className="w-2.5 h-2.5 bg-blue-400 rounded-full animation-delay-400"></span>
                         </div>
                         <p className="whitespace-pre-line leading-relaxed">
-                            Hệ thống đang xử lý bài ghi âm của bạn.{"\n"}Hãy chờ chút nhé...
+                            Processing your recording.{"\n"}Please wait...
                         </p>
                     </div>
                 )}
@@ -436,25 +383,70 @@ export const PronunciationChallenge = ({
                         {/* Phoneme Comparison Display */}
                         <div className="w-full p-3 border rounded-md bg-gray-50 text-xs md:text-sm">
                            <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
-                               <div className="font-semibold text-gray-600">Phiên âm đúng (US):</div>
+                               <div className="font-semibold text-gray-600">Correct phonemes (US):</div>
                                <div className="font-mono text-gray-800 break-words">
                                    {analysisResult.correctPhonemes["en-us"] || "-"}
                                </div>
 
-                               <div className="font-semibold text-gray-600">Phiên âm đúng (UK):</div>
+                               <div className="font-semibold text-gray-600">Correct phonemes (UK):</div>
                                <div className="font-mono text-gray-800 break-words">
                                    {analysisResult.correctPhonemes["en-gb"] || "-"}
                                </div>
 
-                               <div className="font-semibold text-gray-600 self-start">Phiên âm của bạn:</div>
-                               <div className="font-mono break-words">
-                                   {renderedPhonemes ? renderedPhonemes.userDisplay : (analysisResult.userPhonemes === null ? <span className="text-orange-600">Cannot process</span> : "...")}
+                               <div className="font-semibold text-gray-600 self-start">Your phonemes:</div>
+                               <div className="font-mono break-words flex flex-wrap items-center">
+                                    <div className="font-mono text-gray-800 break-words">
+                                        {analysisResult.userPhonemes || "-"}
+                                    </div>
                                </div>
+                                <div className="font-semibold text-gray-600 self-start">Pronunciation match (color-coded):</div>
+                                <div className="font-mono break-words flex flex-wrap items-center">
+                                    {/* leading slash */}
+                                    <span className="text-gray-700">/</span>
+                                    {/* each chunk → map xuống từng ký tự */}
+                                    {analysisResult.highlight.flatMap(([chunk, status], idx) => {
+                                        const colorClass =
+                                        status === "ok"      ? "text-green-600" :
+                                        status === "wrong"   ? "text-red-500"   :
+                                        status === "missing" ? "text-orange-500": "text-gray-400";
+                                        
+                                        // nếu chunk = "" (insert/missing) thì show placeholder "·"
+                                        const chars = chunk !== "" ? chunk.split("") : ["·"];
+
+                                        return chars.map((ch, j) => (
+                                            <span key={`hp-${idx}-${j}`} className={`${colorClass}`}>
+                                                {ch}
+                                            </span>
+                                        ));
+                                    })}
+                                    {/* trailing slash */}
+                                    <span className="text-gray-700">/</span>
+                                </div>
+                                <div className="mt-2 text-xs text-gray-600 space-x-3 col-span-2">
+                                    <span><span className="text-green-600">●</span> = correct</span>
+                                    <span><span className="text-red-500">●</span> = wrong</span>
+                                    <span><span className="text-orange-500">●</span> = missing sound</span>
+                                    <span><span className="text-gray-400">·</span> = placeholder</span>
+                                </div>
+                                {analysisResult.corrections.length > 0 && (
+                                    <div className="font-semibold text-gray-600 self-start"> Advanced analysis:
+                                        <ul className="list-disc list-inside">
+                                            {analysisResult.corrections.map((c, idx) => {
+                                                const [userPh, correctPh] = c.split(" → ");
+                                                return (
+                                                <li key={idx}>
+                                                    <code>{correctPh}</code> sounds like <code>{userPh}</code>
+                                                </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    </div>
+                                )}
                            </div>
                            {/* Display Score */}
                            <div className="mt-3 text-center">
                                <span className={`font-bold px-2 py-1 rounded ${analysisResult.score >= 0.8 ? 'bg-green-100 text-green-700' : analysisResult.score >= 0.5 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                                    Điểm: {(analysisResult.score * 100).toFixed(0)}%
+                                    Score: {(analysisResult.score * 100).toFixed(0)}%
                                 </span>
                             </div>
                            {/* Display Explanation */}
@@ -480,7 +472,7 @@ export const PronunciationChallenge = ({
                                 height={16} 
                                 style={{ filter: "invert(48%) sepia(80%) saturate(2476%) hue-rotate(200deg) brightness(118%) contrast(119%)" }}
                             />
-                            Ghi âm lại
+                            Record again
                         </button>
                     </div>
                 )}
@@ -496,7 +488,7 @@ export const PronunciationChallenge = ({
                             aria-label="Try recording again"
                         >
                             <Image src="/icons/rotate-left.svg" alt="" width={16} height={16} />
-                            Thử ghi âm lại
+                            Try recording again
                         </button>
                     </div>
                 )}
