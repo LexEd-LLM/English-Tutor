@@ -58,7 +58,7 @@ export const ImageChallenge = ({
       )}
       {/* Beta badge and disclaimer */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-xs mt-1">
-          <span className="text-gray-600"> * This image is AI-generated and may not perfectly match the vocabulary context. Thank you for your understanding—we’re working to improve it.
+          <span className="text-gray-600"> * This image is AI-generated and may not perfectly match the vocabulary context. Thank you for your understanding-we’re working to improve it.
           </span>
       </div>
       <div className="grid grid-cols-1 gap-4">
