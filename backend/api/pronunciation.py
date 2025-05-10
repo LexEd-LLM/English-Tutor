@@ -5,7 +5,7 @@ import uuid
 import os
 from pydub import AudioSegment
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
-from backend.services.voice_quiz_generator import process_user_audio, calculate_pronunciation_score, pronunciation_feedback
+from backend.services.voice_quiz_generator import process_user_audio, pronunciation_feedback
 from backend.database import get_db
 from backend.services.explanation_generator import generate_explanation_pronunciation
 from backend.schemas.pronunciation import PronunciationAnalysisResult, PronunciationScoreRequest, PronunciationScoreResponse
@@ -159,7 +159,7 @@ async def upload_audio(
 @router.post("/calculate-phoneme-score", response_model=PronunciationScoreResponse)
 def calculate_phoneme_score(request: PronunciationScoreRequest):
     try:
-        score = calculate_pronunciation_score(request.userPhonemes, request.correctPhonemes)
-        return PronunciationScoreResponse(score=score)
+        analysis = pronunciation_feedback(request.userPhonemes, request.correctPhonemes)
+        return PronunciationScoreResponse(**analysis)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

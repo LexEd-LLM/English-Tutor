@@ -17,3 +17,5 @@ class PronunciationScoreRequest(BaseModel):
 
 class PronunciationScoreResponse(BaseModel):
     score: float
+    highlight: List[Tuple[str, str]]
+    corrections: List[str]

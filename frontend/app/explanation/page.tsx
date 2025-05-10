@@ -14,28 +14,6 @@ import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
 import { ChatbotPopup } from "@/components/ChatbotPopup";
 
-const renderColoredPhonemes = (correct: string, user: string = "") => {
-  const output = [];
-
-  for (let i = 0; i < Math.max(correct.length, user.length); i++) {
-    const cChar = correct[i] || "";
-    const uChar = user[i] || "";
-
-    const isMatch = cChar === uChar;
-
-    output.push(
-      <span
-        key={i}
-        className={isMatch ? "text-green-600" : "text-red-500"}
-      >
-        {uChar || "·"}
-      </span>
-    );
-  }
-
-  return output;
-};
-
 export default function ExplanationPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -51,27 +29,29 @@ export default function ExplanationPage() {
   const [strengths, setStrengths] = useState<string | null>(null);
   const [weaknesses, setWeaknesses] = useState<string | null>(null);
   
-  const [phonemeScores, setPhonemeScores] = useState<Record<number, number>>({});
+  const [phonemeAnalyses, setPhonemeAnalyses] = useState<
+    Record<number, PhonemeAnalysis>
+  >({});
 
   useEffect(() => {
     if (quizId) {
       getQuizWithAnswers(Number(quizId)).then(async (quizData) => {
         setQuestions(quizData);
   
-        const scores: Record<number, number> = {};
+        const tempAnalyses: Record<number, PhonemeAnalysis> = {};
   
         for (const q of quizData) {
           if (q.type === "PRONUNCIATION") {
             try {
-              const result = await calculatePhonemeScore(q.userPhonemes!, q.correctAnswer);
-              scores[q.id] = result.score;
+              const analysis  = await calculatePhonemeScore(q.userPhonemes!, q.correctAnswer);
+              tempAnalyses[q.id] = analysis; 
             } catch (e) {
               console.error("Error calculating phoneme score:", e);
             }
           }
         }
   
-        setPhonemeScores(scores);
+        setPhonemeAnalyses(tempAnalyses);
       });
 
       getStrengthWeakness(Number(quizId)).then(data => {
@@ -243,7 +223,7 @@ export default function ExplanationPage() {
                           width={24}
                           height={24}
                           className="cursor-pointer"
-                          style={{ filter: getSpeakerColorFilter(phonemeScores[q.id]) }}
+                          style={{ filter: getSpeakerColorFilter(phonemeAnalyses[q.id]) }}
                         />
                       </button>
                     </>
@@ -292,45 +272,92 @@ export default function ExplanationPage() {
               </ul>
             ) : (
               <div className="space-y-2">
+                {/* PHONEME SECTION (PRONUNCIATION) */}
                 {(() => {
-                  let phonemes;
-                  try {
-                    phonemes = JSON.parse(q.correctAnswer);
-                  } catch (err) {
-                    return <div className="text-red-500">Invalid phoneme data</div>;
-                  }
+                  const phonemes = JSON.parse(q.correctAnswer);
+                  const analysisResult = phonemeAnalyses[q.id];
+                  if (!analysisResult) return null;   // hoặc loader
+
                   return (
                     <>
                       <div className="grid grid-cols-2 gap-y-2 text-sm mt-2">
-                        <div className="font-semibold">Phiên âm đúng (US)</div>
-                        <div className="font-mono text-gray-800">{phonemes["en-us"]}</div>
-                  
-                        <div className="font-semibold">Phiên âm đúng (UK)</div>
-                        <div className="font-mono text-gray-800">{phonemes["en-gb"]}</div>
-                  
-                        <div className="font-semibold">Phiên âm của bạn</div>
-                        <div className="font-mono">
-                          {renderColoredPhonemes(phonemes["en-us"], q.userPhonemes)}
+                        <div className="font-semibold text-gray-600">Correct phonemes (US):</div>
+                        <div className="font-mono text-gray-800 break-words">
+                          {phonemes["en-us"] || "-"}
                         </div>
+
+                        <div className="font-semibold text-gray-600">Correct phonemes (UK):</div>
+                        <div className="font-mono text-gray-800 break-words">
+                          {phonemes["en-gb"] || "-"}
+                        </div>
+
+                        <div className="font-semibold text-gray-600 self-start">Your phonemes:</div>
+                        <div className="font-mono break-words flex flex-wrap items-center">
+                          <div className="font-mono text-gray-800 break-words">
+                            {q.userPhonemes || "-"}
+                          </div>
+                        </div>
+
+                        <div className="font-semibold text-gray-600 self-start">
+                          Pronunciation match (color-coded):
+                        </div>
+                        <div className="font-mono break-words flex flex-wrap items-center">
+                          <span className="text-gray-700">/</span>
+                          {analysisResult.highlight.flatMap(([chunk, status], idx) => {
+                            const colorClass =
+                              status === "ok"
+                                ? "text-green-600"
+                                : status === "wrong"
+                                ? "text-red-500"
+                                : "text-orange-500";
+
+                            const chars = chunk !== "" ? chunk.split("") : ["·"];
+                            return chars.map((ch, j) => (
+                              <span key={`hp-${idx}-${j}`} className={colorClass}>
+                                {ch}
+                              </span>
+                            ));
+                          })}
+                          <span className="text-gray-700">/</span>
+                        </div>
+                        <div className="mt-2 text-xs text-gray-600 space-x-3 col-span-2">
+                            <span><span className="text-green-600">●</span> = correct</span>
+                            <span><span className="text-red-500">●</span> = wrong</span>
+                            <span><span className="text-orange-500">●</span> = missing sound</span>
+                            <span><span className="text-gray-400">·</span> = placeholder</span>
+                        </div>
+                        {analysisResult.corrections.length > 0 && (
+                            <div className="font-semibold text-gray-600 self-start"> Advanced analysis:
+                                <ul className="list-disc list-inside">
+                                    {analysisResult.corrections.map((c, idx) => {
+                                        const [userPh, correctPh] = c.split(" → ");
+                                        return (
+                                        <li key={idx}>
+                                            <code>{correctPh}</code> sounds like <code>{userPh}</code>
+                                        </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
+                        )}
                       </div>
-                  
-                      {phonemeScores[q.id] !== undefined && (
-                        <div className="flex justify-center mt-2">
-                          <span
-                            className={`font-bold px-3 py-1 rounded text-sm ${
-                              phonemeScores[q.id] >= 0.8
-                                ? 'bg-green-100 text-green-700'
-                                : phonemeScores[q.id] >= 0.5
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : 'bg-red-100 text-red-700'
-                            }`}
-                          >
-                            Điểm: {(phonemeScores[q.id] * 100).toFixed(0)}%
-                          </span>
-                        </div>
-                      )}
+
+                      {/* điểm tổng */}
+                      <div className="flex justify-center mt-2">
+                        <span
+                          className={`font-bold px-3 py-1 rounded text-sm ${
+                            analysisResult.score >= 0.8
+                              ? "bg-green-100 text-green-700"
+                              : analysisResult.score >= 0.5
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          Điểm: {(analysisResult.score * 100).toFixed(0)}%
+                        </span>
+                      </div>
                     </>
-                  );                  
+                  );
                 })()}
               </div>
             )}
