@@ -8,7 +8,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import Image from "next/image";
-import { getQuizWithAnswers, generateExplanation, calculatePhonemeScore, generatePracticeQuiz, getStrengthWeakness } from "./api";
+import { getQuizWithAnswers, generateExplanation, calculatePhonemeScore, generatePracticeQuiz, getStrengthWeakness, PhonemeAnalysis } from "./api";
 import { Footer } from "./footer";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";

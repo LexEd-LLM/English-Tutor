@@ -446,7 +446,7 @@ export const PronunciationChallenge = ({
                            {/* Display Score */}
                            <div className="mt-3 text-center">
                                <span className={`font-bold px-2 py-1 rounded ${analysisResult.score >= 0.8 ? 'bg-green-100 text-green-700' : analysisResult.score >= 0.5 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                                    Score: {(analysisResult.score * 100).toFixed(0)}%
+                                    Phoneme-matching accuracy: {(analysisResult.score * 100).toFixed(0)}%
                                 </span>
                             </div>
                            {/* Display Explanation */}
