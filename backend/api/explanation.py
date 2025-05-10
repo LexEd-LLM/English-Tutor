@@ -21,7 +21,8 @@ async def generate_explanation_api(request: ExplanationRequest):
             explanation = generate_explanation_mcq(
                 question=request.question_text, 
                 correct_answer=request.correct_answer, 
-                user_answer=request.user_answer
+                user_answer=request.user_answer,
+                options=request.options
             )
         conn = get_db()
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:

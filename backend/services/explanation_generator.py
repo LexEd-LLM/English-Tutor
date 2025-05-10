@@ -3,8 +3,12 @@ from llama_index.core.prompts import PromptTemplate
 from ..config.settings import llm
 from googletrans import Translator
 
-def generate_explanation_mcq(question: str, correct_answer: str, user_answer: str) -> str:
+def generate_explanation_mcq(question: str, correct_answer: str, user_answer: str, options: List[dict]) -> str:
     """Generate explanation for a question."""
+    option_text = "\n".join(
+        [f"{chr(65+i)}. {opt['text']}{' (Đáp án đúng)' if opt['correct'] else ''}" for i, opt in enumerate(options)]
+    )
+    
     template = PromptTemplate(
         template=(
         "Bạn là một giáo viên tận tâm, hướng dẫn học sinh lớp 12 ôn tập môn tiếng Anh. "
@@ -13,15 +17,17 @@ def generate_explanation_mcq(question: str, correct_answer: str, user_answer: st
         "- Nếu đáp án của học sinh ({user_answer}) khác đáp án đúng, hãy phân tích lý do sai và đưa ví dụ minh họa.\n"
         "- Nếu học sinh đã chọn đúng, hãy củng cố bằng cách giải thích rõ vì sao đó là lựa chọn tốt nhất và đưa ví dụ tương tự để học sinh ghi nhớ.\n\n"
         "Câu hỏi: {question}\n"
-        "Đáp án đúng: {correct_answer}\n"
+        "Các lựa chọn:\n{option_text}\n\n"
         "Đáp án của học sinh: {user_answer}\n\n"
         "Giải thích:"
         )
     )
+
     prompt = template.format(
         question=question,
         correct_answer=correct_answer,
-        user_answer=user_answer
+        user_answer=user_answer,
+        option_text=option_text
     )
     response = llm.complete(prompt)
     return "\n".join(response.text.splitlines()[1:])
