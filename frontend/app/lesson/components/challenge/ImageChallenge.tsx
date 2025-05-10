@@ -24,11 +24,15 @@ export const ImageChallenge = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-xl font-bold text-neutral-700">
-        <ReactMarkdown>{question}</ReactMarkdown>
+      <div className="space-y-6">
+        <div className="flex items-start gap-3">
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-yellow-200 text-yellow-800 font-bold uppercase tracking-wider text-sm md:text-base">
+            Beta
+          </span>
+          <div className="text-xl font-bold text-neutral-700">
+            <ReactMarkdown>{question}</ReactMarkdown>
+          </div>
       </div>
-
       {imageUrl && !imageError && (
         <div className="relative h-64 w-full overflow-hidden rounded-lg">
           {isImageLoading && (
@@ -52,7 +56,11 @@ export const ImageChallenge = ({
           />
         </div>
       )}
-
+      {/* Beta badge and disclaimer */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-xs mt-1">
+          <span className="text-gray-600"> * This image is AI-generated and may not perfectly match the vocabulary context. Thank you for your understanding—we’re working to improve it.
+          </span>
+      </div>
       <div className="grid grid-cols-1 gap-4">
         {options.map((option) => (
           <button
