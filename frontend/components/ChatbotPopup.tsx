@@ -12,45 +12,92 @@ interface Message {
 // <DEMO>
 // Define the initial conversation for the prototype
 const initialMessages: Message[] = [
-    { role: "user", content: "Sự khác nhau giữa so sánh hơn và so sánh nhất" },
-    { role: "bot", content: `Chào em! Để cô giúp em phân biệt rõ hơn về so sánh hơn và so sánh nhất nhé.
-So sánh hơn và so sánh nhất đều dùng để so sánh các đối tượng, nhưng cách dùng và ý nghĩa của chúng khác nhau:\n
-🔸 So sánh hơn:
-Dùng để so sánh hai đối tượng (người, vật, sự việc...) với nhau.\n
-Mục đích là chỉ ra đối tượng nào có đặc điểm gì hơn so với đối tượng còn lại.\n
-Ví dụ:\n
-"This book is more interesting than that one." (Cuốn sách này thú vị hơn cuốn sách kia.)\n
-"She is taller than her brother." (Cô ấy cao hơn anh trai mình.)\n
-🔹 So sánh nhất:\n
-Dùng để so sánh một đối tượng với tất cả các đối tượng còn lại trong một nhóm.\n
-Mục đích là chỉ ra đối tượng nào có đặc điểm nhất (cao nhất, đẹp nhất, thông minh nhất...) trong nhóm đó.\n
-Ví dụ:\n
-"Mount Everest is the highest mountain in the world." (Đỉnh Everest là ngọn núi cao nhất trên thế giới.)\n
-"He is the most intelligent student in the class." (Cậu ấy là học sinh thông minh nhất lớp.)\n
-Tóm lại, so sánh hơn dùng để so sánh giữa hai đối tượng, còn so sánh nhất dùng để so sánh một đối tượng với cả một nhóm.\n
-Em nắm vững lý thuyết này rồi thì sẽ làm bài tập tốt hơn đó! Cố lên nhé!` },
-    { role: "user", content: "Hãy giúp em làm câu 17. Làm sao để xác định một câu là so sánh hơn hay so sánh nhất." },
-    { role: "bot", content: `Tuyệt vời! Câu 17 là một ví dụ rất tốt để mình luyện tập phân biệt so sánh hơn và so sánh nhất đấy. Câu hỏi là:
-  "Vo Nguyen Giap is considered ___ military strategist by many historians."
-  
-  Để xác định xem câu này cần so sánh hơn hay so sánh nhất, em hãy tự trả lời các câu hỏi sau đây:
-  1.  Câu này có đang so sánh *hai* đối tượng cụ thể với nhau không? Ví dụ, có phải câu này đang so sánh Đại tướng Võ Nguyên Giáp với một nhà chiến lược quân sự cụ thể nào khác không?
-  2.  Hay câu này đang đánh giá Đại tướng Võ Nguyên Giáp so với *tất cả* các nhà chiến lược quân sự khác, để xếp hạng ông ở vị trí cao nhất?
-  
-  Nếu em trả lời được hai câu hỏi này, em sẽ biết mình cần dùng so sánh hơn hay so sánh nhất đó! Hãy suy nghĩ kỹ rồi cho cô biết câu trả lời của em nhé. Cô ở đây để giúp đỡ nếu em cần thêm gợi ý.` },
-    { role: "user", content: "Câu này không so sánh Đại tướng Võ Nguyên Giáp với một nhà chiến lược quân sự cụ thể, câu này đang so với tất cả các nhà chiến lược quân sự khác" },
-    { role: "bot", content: `Chính xác! Em đã nhận định đúng rồi đó. Câu này đang đánh giá về tài năng của Đại tướng Võ Nguyên Giáp so với *tất cả* các nhà chiến lược quân sự khác. Vậy, theo kiến thức mình vừa ôn tập, khi so sánh một đối tượng với *tất cả* các đối tượng còn lại trong một nhóm, chúng ta sử dụng cấu trúc gì? (So sánh hơn hay so sánh nhất?)` },
-    { role: "user", content: "So sánh hơn ạ" },
-    { role: "bot", content: `Gần đúng rồi, nhưng em hãy nhớ lại định nghĩa và mục đích của so sánh hơn và so sánh nhất một lần nữa nhé:
-  *   **So sánh hơn:** So sánh *hai* đối tượng để thấy sự khác biệt.
-  *   **So sánh nhất:** So sánh *một* đối tượng với *tất cả* các đối tượng còn lại để tìm ra cái "nhất".
-  
-  Trong trường hợp này, mình đang so sánh Đại tướng Võ Nguyên Giáp với TẤT CẢ các nhà chiến lược quân sự khác, vậy mình cần tìm ra nhà chiến lược "nhất" trong số đó. Vậy thì mình sẽ dùng cấu trúc nào?` },
-    { role: "user", content: "So sánh nhất ạ" },
-    { role: "bot", content: `Đúng rồi! Vì mình đang muốn nói đến mức độ cao nhất trong nhóm các nhà chiến lược quân sự, nên mình dùng so sánh nhất.
-  
-  Bây giờ em hãy xem lại các lựa chọn trong câu 17 và chọn đáp án đúng nhất dựa trên cấu trúc so sánh nhất mà mình đã ôn tập nhé. Cố lên!` }
-  ];
+  {
+    role: "user",
+    content: "Sự khác nhau giữa so sánh hơn và so sánh nhất"
+  },
+  {
+    role: "bot",
+    content: `Chào em! Để cô giúp em phân biệt rõ hơn về so sánh hơn và so sánh nhất nhé.
+
+So sánh hơn và so sánh nhất đều dùng để so sánh các đối tượng, nhưng cách dùng và ý nghĩa của chúng khác nhau:
+
+🔸 **So sánh hơn**  
+Dùng để so sánh hai đối tượng (người, vật, sự việc...) với nhau.  
+Mục đích là chỉ ra đối tượng nào có đặc điểm gì hơn so với đối tượng còn lại.
+
+Ví dụ:  
+- "This book is more interesting than that one."  
+  *(Cuốn sách này thú vị hơn cuốn sách kia.)*  
+- "She is taller than her brother."  
+  *(Cô ấy cao hơn anh trai mình.)*
+
+🔹 **So sánh nhất**  
+Dùng để so sánh một đối tượng với tất cả các đối tượng còn lại trong một nhóm.  
+Mục đích là chỉ ra đối tượng nào có đặc điểm nhất (cao nhất, đẹp nhất, thông minh nhất...) trong nhóm đó.
+
+Ví dụ:  
+- "Mount Everest is the highest mountain in the world."  
+  *(Đỉnh Everest là ngọn núi cao nhất trên thế giới.)*  
+- "He is the most intelligent student in the class."  
+  *(Cậu ấy là học sinh thông minh nhất lớp.)*
+
+**Tóm lại**, so sánh hơn dùng để so sánh giữa *hai đối tượng*, còn so sánh nhất dùng để so sánh *một đối tượng với cả một nhóm*.  
+Em nắm vững lý thuyết này rồi thì sẽ làm bài tập tốt hơn đó! Cố lên nhé!`
+  },
+  {
+    role: "user",
+    content: "Hãy giúp em làm câu 17. Làm sao để xác định một câu là so sánh hơn hay so sánh nhất."
+  },
+  {
+    role: "bot",
+    content: `Tuyệt vời! Câu 17 là một ví dụ rất tốt để mình luyện tập phân biệt so sánh hơn và so sánh nhất đấy. Câu hỏi là:
+
+"**Vo Nguyen Giap is considered ___ military strategist by many historians.**"
+
+Để xác định xem câu này cần so sánh hơn hay so sánh nhất, em hãy tự trả lời các câu hỏi sau đây:
+
+1. Câu này có đang so sánh *hai* đối tượng cụ thể với nhau không? Ví dụ, có phải câu này đang so sánh Đại tướng Võ Nguyên Giáp với một nhà chiến lược quân sự cụ thể nào khác không?
+
+2. Hay câu này đang đánh giá Đại tướng Võ Nguyên Giáp so với *tất cả* các nhà chiến lược quân sự khác, để xếp hạng ông ở vị trí cao nhất?
+
+Nếu em trả lời được hai câu hỏi này, em sẽ biết mình cần dùng so sánh hơn hay so sánh nhất đó! Hãy suy nghĩ kỹ rồi cho cô biết câu trả lời của em nhé. Cô ở đây để giúp đỡ nếu em cần thêm gợi ý.`
+  },
+  {
+    role: "user",
+    content: "Câu này không so sánh Đại tướng Võ Nguyên Giáp với một nhà chiến lược quân sự cụ thể, câu này đang so với tất cả các nhà chiến lược quân sự khác"
+  },
+  {
+    role: "bot",
+    content: `Chính xác! Em đã nhận định đúng rồi đó. Câu này đang đánh giá về tài năng của Đại tướng Võ Nguyên Giáp so với *tất cả* các nhà chiến lược quân sự khác.
+
+Vậy, theo kiến thức mình vừa ôn tập, khi so sánh một đối tượng với *tất cả* các đối tượng còn lại trong một nhóm, chúng ta sử dụng cấu trúc gì? (So sánh hơn hay so sánh nhất?)`
+  },
+  {
+    role: "user",
+    content: "So sánh hơn ạ"
+  },
+  {
+    role: "bot",
+    content: `Gần đúng rồi, nhưng em hãy nhớ lại định nghĩa và mục đích của so sánh hơn và so sánh nhất một lần nữa nhé:
+
+- **So sánh hơn:** So sánh *hai* đối tượng để thấy sự khác biệt.  
+- **So sánh nhất:** So sánh *một* đối tượng với *tất cả* các đối tượng còn lại để tìm ra cái "nhất".
+
+Trong trường hợp này, mình đang so sánh Đại tướng Võ Nguyên Giáp với **TẤT CẢ** các nhà chiến lược quân sự khác, vậy mình cần tìm ra nhà chiến lược "nhất" trong số đó.  
+Vậy thì mình sẽ dùng cấu trúc nào?`
+  },
+  {
+    role: "user",
+    content: "So sánh nhất ạ"
+  },
+  {
+    role: "bot",
+    content: `Đúng rồi! Vì mình đang muốn nói đến mức độ cao nhất trong nhóm các nhà chiến lược quân sự, nên mình dùng **so sánh nhất**.
+
+Bây giờ em hãy xem lại các lựa chọn trong câu 17 và chọn đáp án đúng nhất dựa trên cấu trúc so sánh nhất mà mình đã ôn tập nhé. Cố lên!`
+  }
+];
 
 // <DEMO>
 
