@@ -68,7 +68,9 @@ export const Header = ({
               height={24}
               className="h-6 w-6"
             />
-            {!isVIP && (
+            {isVIP ? (
+              <InfinityIcon className="h-6 w-6 shrink-0 stroke-[3] text-[#26f663]" />
+            ) : (
               <span className="text-rose-500 font-bold">{hearts}</span>
             )}
           </div>

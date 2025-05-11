@@ -205,6 +205,7 @@ export default function ResultPage() {
               variant="hearts"
               value={userRole === "VIP" || userRole === "ADMIN" ? "∞" : userHearts}
               label="Quota Left"
+              isVIP={userRole === "VIP" || userRole === "ADMIN"}
             />
           </div>
           <div className="flex flex-col gap-y-4 w-full mt-4">

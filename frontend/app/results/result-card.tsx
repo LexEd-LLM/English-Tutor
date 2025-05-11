@@ -14,14 +14,21 @@ type ResultCardProps = {
   label?: string;
   showPracticeButton?: boolean;
   onPractice?: () => void;
+  isVIP?: boolean;
 };
 
 export const ResultCard = ({ 
   value, 
   variant, 
   label,
+  isVIP=false,
 }: ResultCardProps) => {
-  const imageSrc = variant === "score" ? "/points.svg" : "/heart.svg";
+  const imageSrc =
+    variant === "score"
+      ? "/points.svg"
+      : isVIP
+      ? "/unlimited_heart.svg"
+      : "/heart.svg";
 
   return (
     <div
@@ -57,7 +64,7 @@ export const ResultCard = ({
             className="mr-1.5"
           />
           {value === "∞" ? (
-            <InfinityIcon className="h-6 w-6 stroke-[3]" />
+            <InfinityIcon className="h-6 w-6 stroke-[3] text-[#26f663]" />
           ) : typeof value === "object" ? (
             `${value.correct}/${value.total}`
           ) : (
