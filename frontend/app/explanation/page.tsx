@@ -223,7 +223,7 @@ export default function ExplanationPage() {
                           width={24}
                           height={24}
                           className="cursor-pointer"
-                          style={{ filter: getSpeakerColorFilter(phonemeAnalyses[q.id]) }}
+                          style={{ filter: getSpeakerColorFilter(phonemeAnalyses[q.id]?.score) }}
                         />
                       </button>
                     </>
