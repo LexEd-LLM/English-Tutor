@@ -1,10 +1,10 @@
 "use client";
 
-import { ArrowLeft, Heart, InfinityIcon } from "lucide-react";
+import { ArrowLeft, InfinityIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
-
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -61,10 +61,14 @@ export const Header = ({
         <div className="w-[368px] relative flex items-center justify-end px-6">
           {/* Heart - centered absolutely */}
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-x-2">
-            <Heart className="h-6 w-6 text-rose-500 fill-rose-500" />
-            {isVIP ? (
-              <InfinityIcon className="h-6 w-6 shrink-0 stroke-[3] text-rose-500" />
-            ) : (
+            <Image
+              src={isVIP ? "/unlimited_heart.svg" : "/heart.svg"}
+              alt="Heart"
+              width={24}
+              height={24}
+              className="h-6 w-6"
+            />
+            {!isVIP && (
               <span className="text-rose-500 font-bold">{hearts}</span>
             )}
           </div>
