@@ -13,6 +13,7 @@ import { Footer } from "./footer";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
 import { ChatbotPopup } from "@/components/ChatbotPopup";
+import { QuizCard } from "./QuizCard";
 
 export default function ExplanationPage() {
   const searchParams = useSearchParams();
@@ -20,6 +21,7 @@ export default function ExplanationPage() {
   const quizId = searchParams.get("quizId");
   const { userId } = useAuth();
   const [questions, setQuestions] = useState<any[]>([]);
+  const [quizInfo, setQuizInfo] = useState<any>(null);
   const [explanations, setExplanations] = useState<Record<number, string>>({});
   const [generatingExplanations, setGeneratingExplanations] = useState<Record<number, boolean>>({});
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
@@ -67,7 +69,16 @@ export default function ExplanationPage() {
   useEffect(() => {
     if (quizId) {
       getQuizWithAnswers(Number(quizId)).then(async (quizData) => {
+        if (!quizData || quizData.length === 0) return;
         setQuestions(quizData);
+
+        const firstQuestion = quizData[0];
+        setQuizInfo({
+          curriculumTitle: firstQuestion.curriculumTitle ?? "General English",
+          quizTitle: firstQuestion.quizTitle ?? "Untitled Quiz",
+          createdAt: firstQuestion.createdAt ?? new Date().toISOString(),
+          visibility: firstQuestion.visibility ?? false,
+        });
   
         const tempAnalyses: Record<number, PhonemeAnalysis> = {};
   
@@ -189,8 +200,21 @@ export default function ExplanationPage() {
         <Button variant="ghost" onClick={() => router.back()} className="flex items-center gap-2">
           <ArrowLeft className="h-5 w-5" /> Back
         </Button>
-        <h1 className="text-3xl font-bold text-center flex-1">Quiz Explanations</h1>
       </div>
+      {quizId && questions.length > 0 && (
+        <div className="mb-6">
+        {quizInfo && (
+          <QuizCard
+            quizId={Number(quizId)}
+            imageUrl={"/quiz_placeholder.png"}
+            curriculumTitle={quizInfo.curriculumTitle}
+            quizTitle={quizInfo.quizTitle}
+            createdAt={quizInfo.createdAt}
+            visibility={quizInfo.visibility}
+          />
+        )}
+        </div>
+      )}
       {(strengths || weaknesses) && (
         <div className="mt-4 space-y-2 mb-10">
           {strengths && (

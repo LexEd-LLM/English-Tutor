@@ -15,6 +15,10 @@ interface QuizQuestionWithUserAnswer {
   userAnswer?: string;
   isCorrect?: boolean;
   userPhonemes?: string;
+  curriculumTitle?: string;
+  quizTitle?: string;
+  createdAt?: string;
+  visibility?: boolean;
 }
 
 export async function getQuizWithAnswers(quizId: number): Promise<QuizQuestionWithUserAnswer[]> {
@@ -111,3 +115,17 @@ export const generatePracticeQuiz = async (
         throw error;
     }
 };
+
+export async function updateVisibility(quizId: number, visibility: boolean) {
+  const res = await fetch(`/api/quiz/${quizId}/visibility`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ visibility }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to update visibility");
+  }
+
+  return await res.json(); // expected to return updated quiz object
+}

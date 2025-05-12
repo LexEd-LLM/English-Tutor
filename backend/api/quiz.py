@@ -140,7 +140,7 @@ async def generate_quiz(request: QuizRequest):
     return result
 
 @router.get("/{quiz_id}", response_model=QuizResponse)
-async def get_quiz_by_id(quiz_id: int, lesson_id):
+async def get_quiz_by_id(quiz_id: int, lesson_id = None):
     """
     Get quiz data by ID.
     Returns all questions and metadata for the specified quiz.
@@ -306,9 +306,16 @@ async def get_quiz_with_user_answers(quiz_id: int) -> List[QuizQuestionWithUserA
                     q.audio_url,
                     ua.user_answer,
                     ua.is_correct,
-                    ua.user_phonemes
+                    ua.user_phonemes,
+                    uq.created_at,
+                    uq.visibility,
+                    u.title AS unit_title,
+                    c.title AS curriculum_title
                 FROM quiz_questions q
                 LEFT JOIN user_answers ua ON ua.question_id = q.id
+                JOIN user_quizzes uq ON q.quiz_id = uq.id
+                JOIN units u ON uq.unit_id = u.id
+                JOIN curriculums c ON u.curriculum_id = c.id
                 WHERE q.quiz_id = %s
                 ORDER BY q.id
             """, (quiz_id,))
@@ -326,7 +333,11 @@ async def get_quiz_with_user_answers(quiz_id: int) -> List[QuizQuestionWithUserA
                     audioUrl=row.get("audio_url"),
                     userAnswer=row.get("user_answer"),
                     isCorrect=row.get("is_correct"),
-                    userPhonemes=row.get("user_phonemes") or ""
+                    userPhonemes=row.get("user_phonemes") or "",
+                    curriculumTitle=row.get("curriculum_title"),
+                    quizTitle=row.get("unit_title"),
+                    createdAt=row.get("created_at").isoformat() if row.get("created_at") else None,
+                    visibility=row.get("visibility"),
                 )
                 for i, row in enumerate(rows, start=1)
             ]
@@ -354,5 +365,33 @@ async def get_assignment_feedback(quiz_id: int):
     except Exception as e:
         print(f"[ERROR] Failed to fetch strengths/weaknesses: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch strengths/weaknesses")
+    finally:
+        conn.close()
+        
+@router.patch("/{quiz_id}/visibility")
+async def update_quiz_visibility(quiz_id: int, payload: dict):
+    conn = get_db()
+    try:
+        visibility = payload.get("visibility")
+        if visibility is None or not isinstance(visibility, bool):
+            raise HTTPException(status_code=400, detail="Invalid visibility value")
+
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("""
+                UPDATE user_quizzes
+                SET visibility = %s
+                WHERE id = %s
+                RETURNING id, user_id, unit_id, title, visibility, created_at
+            """, (visibility, quiz_id))
+
+            updated = cur.fetchone()
+            if not updated:
+                raise HTTPException(status_code=404, detail="Quiz not found")
+
+            conn.commit()
+            return updated
+    except Exception as e:
+        print(f"[ERROR] Failed to update quiz visibility: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update quiz visibility")
     finally:
         conn.close()

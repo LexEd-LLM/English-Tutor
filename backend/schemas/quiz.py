@@ -76,6 +76,10 @@ class QuizQuestionWithUserAnswer(BaseModel):
     userAnswer: Optional[str]
     isCorrect: Optional[bool]
     userPhonemes: Optional[str] = ""
+    curriculumTitle: Optional[str]
+    quizTitle: Optional[str]
+    createdAt: Optional[str]
+    visibility: Optional[bool]
     
 class QuizUserRequest(BaseModel):
     user_id: str
