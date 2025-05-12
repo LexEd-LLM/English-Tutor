@@ -120,6 +120,7 @@ export const userQuizzes = pgTable("user_quizzes", {
   strengths: text("strengths"),      // điểm mạnh của user trong quiz
   weaknesses: text("weaknesses"),    // điểm yếu của user trong quiz
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  visibility: boolean("visibility").default(false),
 });
 
 // quiz_questions – Câu hỏi trong quiz do AI tạo

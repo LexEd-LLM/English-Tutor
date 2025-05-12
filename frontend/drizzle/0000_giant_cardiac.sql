@@ -86,7 +86,8 @@ CREATE TABLE IF NOT EXISTS "user_quizzes" (
 	"depth_of_knowledge" dok_level[],
 	"strengths" text,
 	"weaknesses" text,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"visibility" boolean DEFAULT false
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "user_unit_progress" (

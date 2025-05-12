@@ -1,5 +1,5 @@
 {
-  "id": "c0f0e57c-7892-4c92-adcc-46cea452e89f",
+  "id": "89b9cb2b-f2c7-4344-984d-9a31f6c69180",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -448,6 +448,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
         }
       },
       "indexes": {},
