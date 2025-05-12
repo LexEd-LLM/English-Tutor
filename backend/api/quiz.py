@@ -140,7 +140,7 @@ async def generate_quiz(request: QuizRequest):
     return result
 
 @router.get("/{quiz_id}", response_model=QuizResponse)
-async def get_quiz_by_id(quiz_id: int, lesson_id: int = 0):
+async def get_quiz_by_id(quiz_id: int, lesson_id):
     """
     Get quiz data by ID.
     Returns all questions and metadata for the specified quiz.
