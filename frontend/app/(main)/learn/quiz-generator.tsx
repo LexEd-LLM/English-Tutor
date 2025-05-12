@@ -62,6 +62,11 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
       toast.error("Please select at least one question");
       return;
     }
+    
+    if (counts.multipleChoice > 50 || counts.image > 10 || counts.voice > 20) {
+      toast.error("You choose too many questions");
+      return;
+    }
   
     setIsLoading(true);
     try {
