@@ -33,6 +33,13 @@ export default authMiddleware({
   beforeAuth: (req) => {
     const { pathname } = req.nextUrl;
 
+    // Redirect từ /explanation sang /quiz
+    if (pathname.startsWith('/explanation')) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/quiz';
+      return NextResponse.redirect(url);
+    }
+
     // Nếu là admin route, kiểm tra custom auth
     if (isAdminRoute(pathname) && !isPublicRoute(pathname)) {
       const token = req.cookies.get("admin_token")?.value;
