@@ -127,5 +127,19 @@ export async function updateVisibility(quizId: number, visibility: boolean) {
     throw new Error("Failed to update visibility");
   }
 
-  return await res.json(); // expected to return updated quiz object
+  return await res.json();
+}
+
+export async function updateQuizTitle(quizId: number, newTitle: string) {
+  const res = await fetch(`/api/quiz/${quizId}/rename-title`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title: newTitle }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to update title");
+  }
+
+  return await res.json();
 }

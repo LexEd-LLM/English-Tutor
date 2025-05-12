@@ -395,3 +395,31 @@ async def update_quiz_visibility(quiz_id: int, payload: dict):
         raise HTTPException(status_code=500, detail="Failed to update quiz visibility")
     finally:
         conn.close()
+
+@router.patch("/{quiz_id}/rename-title")
+async def rename_quiz_title(quiz_id: int, payload: dict):
+    conn = get_db()
+    try:
+        new_title = payload.get("title")
+        if not new_title or not isinstance(new_title, str):
+            raise HTTPException(status_code=400, detail="Invalid or missing title")
+
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("""
+                UPDATE user_quizzes
+                SET title = %s
+                WHERE id = %s
+                RETURNING id, user_id, unit_id, title, visibility, created_at
+            """, (new_title, quiz_id))
+
+            updated = cur.fetchone()
+            if not updated:
+                raise HTTPException(status_code=404, detail="Quiz not found")
+
+            conn.commit()
+            return updated
+    except Exception as e:
+        print(f"[ERROR] Failed to rename quiz title: {e}")
+        raise HTTPException(status_code=500, detail="Failed to rename quiz title")
+    finally:
+        conn.close()
