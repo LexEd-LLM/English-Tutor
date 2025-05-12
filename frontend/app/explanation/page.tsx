@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, XCircle, RefreshCw } from "lucide-react";
@@ -28,10 +28,41 @@ export default function ExplanationPage() {
   const userAudioRefs = useRef<Record<number, HTMLAudioElement | null>>({});
   const [strengths, setStrengths] = useState<string | null>(null);
   const [weaknesses, setWeaknesses] = useState<string | null>(null);
-  
   const [phonemeAnalyses, setPhonemeAnalyses] = useState<
     Record<number, PhonemeAnalysis>
   >({});
+  const pageContent = useMemo(() => {
+    const blocks: string[] = [];
+  
+    if (strengths)   blocks.push(`Strengths:\n${strengths}`);
+    if (weaknesses)  blocks.push(`Weaknesses:\n${weaknesses}`);
+  
+    questions.forEach((q, idx) => {
+      blocks.push(`\nQuestion ${idx + 1}: ${q.questionText}`);
+  
+      // thêm các lựa chọn (nếu không phải PRONUNCIATION)
+      if (q.type !== "PRONUNCIATION") {
+        const opts = q.options.map((o: any) => {
+          // đánh dấu đáp án đúng bằng *, đáp án người chọn bằng >
+          const prefix = o.text === q.correctAnswer ? "*" :
+                         o.text === q.userAnswer   ? ">" : " ";
+          return `${prefix} ${o.text}`;
+        }).join("\n");
+        blocks.push("Options:\n" + opts);
+      }
+  
+      // đáp án / kết quả
+      const userAns = q.type === "PRONUNCIATION" ? q.userPhonemes : q.userAnswer;
+      const result  = userAns === q.correctAnswer ? "Correct" : "Incorrect";
+      blocks.push(`User answer: ${userAns || "-"}\nCorrect answer: ${q.correctAnswer}\nResult: ${result}`);
+  
+      // lời giải
+      const exp = explanations[q.id] || q.explanation;
+      if (exp) blocks.push("Explanation:\n" + exp);
+    });
+  
+    return blocks.join("\n\n").trim();
+  }, [strengths, weaknesses, questions, explanations]);
 
   useEffect(() => {
     if (quizId) {
@@ -153,7 +184,7 @@ export default function ExplanationPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-6 pb-24">
-      <ChatbotPopup />
+      <ChatbotPopup pageContent={pageContent} />
       <div className="flex items-center mb-6">
         <Button variant="ghost" onClick={() => router.back()} className="flex items-center gap-2">
           <ArrowLeft className="h-5 w-5" /> Back
@@ -209,7 +240,7 @@ export default function ExplanationPage() {
                       </button>
                     </>
                   )}
-                  {q.userAnswer && (
+                  {q.type === "PRONUNCIATION" && q.userAnswer && (
                     <>
                       <audio ref={setUserAudioRef(q.id)} src={q.userAnswer} controls={false} />
                       <button
