@@ -83,11 +83,11 @@ export const ImageChallenge = ({
                   />
                 </div>
               )}
-              <p className="text-sm">
+              <div className="text-sm">
                 <ReactMarkdown>
                 {option.text}
                 </ReactMarkdown>
-              </p>
+              </div>
             </div>
           </button>
         ))}
