@@ -11,6 +11,7 @@ import {
   users,
   quizQuestions,
   unitContents,
+  userAnswers,
 } from "./schema";
 
 import type { InferSelectModel } from "drizzle-orm";
@@ -355,6 +356,21 @@ export const getUserQuizzes = cache(async () => {
   });
 
   return quizzes;
+});
+
+export const getUserQuizAccuracy = cache(async (quizId: number) => {
+  const correctAnswers = await db.query.userAnswers.findMany({
+    where: and(
+      eq(userAnswers.questionId, quizId),
+      eq(userAnswers.isCorrect, true)
+    ),
+  });  
+
+  const totalAnswers = await db.query.userAnswers.findMany({
+    where: eq(userAnswers.questionId, quizId),
+  });
+
+  return `${correctAnswers.length}/${totalAnswers.length}`;
 });
 
 export const getUserQuizQuestions = async () => {
