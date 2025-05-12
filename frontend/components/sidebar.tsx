@@ -1,17 +1,23 @@
+"use client";
+
 import { ClerkLoading, ClerkLoaded, UserButton } from "@clerk/nextjs";
 import { Loader } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-
 import { cn } from "@/lib/utils";
-
 import { SidebarItem } from "./sidebar-item";
+import { toast } from "sonner";
 
 type SidebarProps = {
   className?: string;
 };
 
 export const Sidebar = ({ className }: SidebarProps) => {
+  const handleComingSoon = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    toast.info("This feature is under development.");
+  };
+  
   return (
     <div
       className={cn(
@@ -35,9 +41,20 @@ export const Sidebar = ({ className }: SidebarProps) => {
           label="Leaderboard"
           href="/leaderboard"
           iconSrc="/leaderboard.svg"
+          onClick={handleComingSoon}
         />
-        <SidebarItem label="Quests" href="/quests" iconSrc="/quests.svg" />
-        <SidebarItem label="Shop" href="/shop" iconSrc="/shop.svg" />
+        <SidebarItem 
+          label="Quests" 
+          href="/quests" 
+          iconSrc="/quests.svg" 
+          onClick={handleComingSoon}
+          />
+        <SidebarItem 
+          label="Shop" 
+          href="/shop" 
+          iconSrc="/shop.svg" 
+          onClick={handleComingSoon}
+        />
       </div>
 
       <div className="p-4">
