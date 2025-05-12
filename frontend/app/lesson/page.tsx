@@ -46,8 +46,12 @@ const LessonPage = async ({ searchParams }: PageProps) => {
     const hearts =  userProgress.hearts;
 
     // Fetch quiz data using the new API
-    const quizData = await lessonApi.fetchQuizById(parseInt(quizId), lessonId ? parseInt(lessonId) : undefined);
-    
+    const quizData = await lessonApi.fetchQuizById(
+      parseInt(quizId),
+      lessonId ? parseInt(lessonId) : undefined,
+      userProgress.userId
+    );
+
     // Combine all questions into challenges array
     const challenges = [
       ...quizData.multiple_choice_questions,
