@@ -82,7 +82,7 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
   
       if (result.success && result.quizId) {
         toast.success("Quiz generated successfully!");
-        router.push(`/lesson?quizId=${result.quizId}`);
+        router.push(`/lesson?quizId=${result.quizId}&lessonId=0`);
       } else {
         toast.error(result.error || "Failed to generate quiz");
       }
