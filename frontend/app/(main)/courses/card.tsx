@@ -24,34 +24,50 @@ export const Card = ({
   disabled,
   active,
 }: CardProps) => {
+  /* ---------- maintenance-block ---------- */
+  const allowed = id === 12;          // chỉ course #12 được phép
+  /* --------------------------------------- */
+
   return (
     <Button
       type="button"
-      onClick={() => onClick(id)}
-      disabled={disabled}
+      onClick={() => allowed && onClick(id)}          // chặn click
+      disabled={disabled || !allowed}                 // chặn focus/tab
       className={cn(
         "relative w-full p-0 flex flex-col items-start justify-between h-auto",
         "hover:bg-accent hover:text-accent-foreground",
-        active && "border-primary border-2"
+        active && "border-primary border-2",
+        !allowed && "opacity-50"                      // làm mờ
       )}
     >
       <div className="p-6 flex flex-col gap-4 w-full">
         <div className="font-bold line-clamp-2">{title}</div>
-        
+
         {image_url && (
           <div className="w-full h-[160px] relative overflow-hidden rounded-lg">
-            <img 
-              src={image_url} 
+            <img
+              src={image_url}
               alt={title}
               className="object-contain w-full h-full"
             />
           </div>
         )}
-        
-        <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap">{description}</p>
+
+        <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap">
+          {description}
+        </p>
       </div>
-      
-      {active && (
+
+      {/* hiển thị vòng tròn “Maintenance” khi khóa */}
+      {!allowed && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="flex items-center justify-center w-24 h-24 rounded-full bg-black/70 text-white text-xs font-semibold">
+            Maintenance
+          </span>
+        </div>
+      )}
+
+      {allowed && active && (
         <div className="absolute top-3 right-3">
           <Check className="h-4 w-4 text-primary" />
         </div>
@@ -59,3 +75,4 @@ export const Card = ({
     </Button>
   );
 };
+
