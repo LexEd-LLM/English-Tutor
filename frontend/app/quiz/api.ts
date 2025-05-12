@@ -143,3 +143,15 @@ export async function updateQuizTitle(quizId: number, newTitle: string) {
 
   return await res.json();
 }
+
+export async function deleteQuiz(quizId: number) {
+  const res = await fetch(`/api/quiz/${quizId}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to delete quiz");
+  }
+
+  return await res.json();
+}

@@ -309,7 +309,7 @@ async def get_quiz_with_user_answers(quiz_id: int) -> List[QuizQuestionWithUserA
                     ua.user_phonemes,
                     uq.created_at,
                     uq.visibility,
-                    u.title AS unit_title,
+                    uq.title AS quiz_title,
                     c.title AS curriculum_title
                 FROM quiz_questions q
                 LEFT JOIN user_answers ua ON ua.question_id = q.id
@@ -335,7 +335,7 @@ async def get_quiz_with_user_answers(quiz_id: int) -> List[QuizQuestionWithUserA
                     isCorrect=row.get("is_correct"),
                     userPhonemes=row.get("user_phonemes") or "",
                     curriculumTitle=row.get("curriculum_title"),
-                    quizTitle=row.get("unit_title"),
+                    quizTitle=row.get("quiz_title"),
                     createdAt=row.get("created_at").isoformat() if row.get("created_at") else None,
                     visibility=row.get("visibility"),
                 )
@@ -421,5 +421,28 @@ async def rename_quiz_title(quiz_id: int, payload: dict):
     except Exception as e:
         print(f"[ERROR] Failed to rename quiz title: {e}")
         raise HTTPException(status_code=500, detail="Failed to rename quiz title")
+    finally:
+        conn.close()
+        
+@router.delete("/{quiz_id}")
+async def delete_quiz(quiz_id: int):
+    conn = get_db()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("""
+                DELETE FROM user_quizzes
+                WHERE id = %s
+                RETURNING *
+            """, (quiz_id,))
+
+            deleted = cur.fetchone()
+            if not deleted:
+                raise HTTPException(status_code=404, detail="Quiz not found")
+
+            conn.commit()
+            return deleted
+    except Exception as e:
+        print(f"[ERROR] Failed to delete quiz: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete quiz")
     finally:
         conn.close()
