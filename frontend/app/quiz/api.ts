@@ -21,9 +21,13 @@ interface QuizQuestionWithUserAnswer {
   visibility?: boolean;
 }
 
-export async function getQuizWithAnswers(quizId: number): Promise<QuizQuestionWithUserAnswer[]> {
-  const res = await axios.get(`/api/quiz/${quizId}/explanations`);
-  return res.data;
+export async function getQuizWithAnswers(quizId: number, userId: string): Promise<QuizQuestionWithUserAnswer[]> {
+  const res = await fetch(`/api/quiz/${quizId}/explanations?userId=${userId}`);
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Failed to fetch quiz explanations");
+  }
+  return await res.json();
 }
 
 export async function getStrengthWeakness(quizId: number) {

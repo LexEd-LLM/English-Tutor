@@ -1,6 +1,6 @@
 import psycopg2
 import random
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from typing import List
 
@@ -140,12 +140,28 @@ async def generate_quiz(request: QuizRequest):
     return result
 
 @router.get("/{quiz_id}", response_model=QuizResponse)
-async def get_quiz_by_id(quiz_id: int, lesson_id = None):
+async def get_quiz_by_id(quiz_id: int, lesson_id = None, user_id: str = Query(..., alias="userId")):
     """
     Get quiz data by ID.
     Returns all questions and metadata for the specified quiz.
     """
     try:
+        conn = get_db()
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            # Lấy visibility và owner
+            cur.execute("""
+                SELECT user_id, visibility FROM user_quizzes WHERE id = %s
+            """, (quiz_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Quiz not found")
+
+            visibility = row["visibility"]
+            quiz_owner = row["user_id"]
+
+            if visibility is False and user_id != quiz_owner:
+                raise HTTPException(status_code=403, detail="This quiz is not public.")
+            
         # Get quiz questions from database
         questions = quiz_service.get_quiz_questions(quiz_id, lesson_id)
         if not questions:
@@ -290,7 +306,7 @@ async def submit_quiz(submission: QuizSubmission):
             conn.close()
 
 @router.get("/{quiz_id}/explanations")
-async def get_quiz_with_user_answers(quiz_id: int) -> List[QuizQuestionWithUserAnswer]:
+async def get_quiz_with_user_answers(quiz_id: int, user_id: str = Query(..., alias="userId")) -> List[QuizQuestionWithUserAnswer]:
     conn = get_db()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -308,6 +324,7 @@ async def get_quiz_with_user_answers(quiz_id: int) -> List[QuizQuestionWithUserA
                     ua.is_correct,
                     ua.user_phonemes,
                     uq.created_at,
+                    uq.user_id AS quiz_owner_id,
                     uq.visibility,
                     uq.title AS quiz_title,
                     c.title AS curriculum_title
@@ -320,6 +337,16 @@ async def get_quiz_with_user_answers(quiz_id: int) -> List[QuizQuestionWithUserA
                 ORDER BY q.id
             """, (quiz_id,))
             rows = cur.fetchall()
+            
+            if not rows:
+                raise HTTPException(status_code=404, detail="Quiz not found")
+
+            quiz_owner_id = rows[0]["quiz_owner_id"]
+            visibility = rows[0]["visibility"]
+
+            if visibility is False and user_id != quiz_owner_id:
+                raise HTTPException(status_code=403, detail="This quiz is not public.")
+            
             return [
                 QuizQuestionWithUserAnswer(
                     id=i,
@@ -341,6 +368,8 @@ async def get_quiz_with_user_answers(quiz_id: int) -> List[QuizQuestionWithUserA
                 )
                 for i, row in enumerate(rows, start=1)
             ]
+    except HTTPException as e:
+        raise e
     except Exception as e:
         print(f"[ERROR] Failed to fetch quiz explanations: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch quiz explanations")

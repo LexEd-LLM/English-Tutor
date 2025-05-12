@@ -66,12 +66,33 @@ export default function ExplanationPage() {
     return blocks.join("\n\n").trim();
   }, [strengths, weaknesses, questions, explanations]);
 
-  useEffect(() => {
-    if (quizId) {
-      getQuizWithAnswers(Number(quizId)).then(async (quizData) => {
-        if (!quizData || quizData.length === 0) return;
-        setQuestions(quizData);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!quizId || !userId) return;
+  
+    let quizDataTemp: any[] = [];
+  
+    Promise.allSettled([
+      getQuizWithAnswers(Number(quizId), userId),
+      getStrengthWeakness(Number(quizId))
+    ])
+      .then(async ([quizResult, swResult]) => {
+        // Check if quiz failed
+        if (quizResult.status === "rejected") {
+          setErrorMessage(quizResult.reason?.message || "Failed to load quiz");
+          return;
+        }
+  
+        const quizData = quizResult.value;
+        if (!quizData || quizData.length === 0) {
+          setErrorMessage("No quiz data found.");
+          return;
+        }
+  
+        setQuestions(quizData);
+        quizDataTemp = quizData;
+  
         const firstQuestion = quizData[0];
         setQuizInfo({
           curriculumTitle: firstQuestion.curriculumTitle ?? "General English",
@@ -80,31 +101,31 @@ export default function ExplanationPage() {
           visibility: firstQuestion.visibility ?? false,
         });
   
+        // process phonemes in parallel
         const tempAnalyses: Record<number, PhonemeAnalysis> = {};
-  
         for (const q of quizData) {
           if (q.type === "PRONUNCIATION") {
             try {
-              const analysis  = await calculatePhonemeScore(q.userPhonemes!, q.correctAnswer);
-              tempAnalyses[q.id] = analysis; 
+              const analysis = await calculatePhonemeScore(q.userPhonemes!, q.correctAnswer);
+              tempAnalyses[q.id] = analysis;
             } catch (e) {
               console.error("Error calculating phoneme score:", e);
             }
           }
         }
-  
         setPhonemeAnalyses(tempAnalyses);
+  
+        // Set strengths/weaknesses only if quiz is valid
+        if (swResult.status === "fulfilled") {
+          setStrengths(swResult.value.strengths);
+          setWeaknesses(swResult.value.weaknesses);
+        }
+      })
+      .catch((err) => {
+        console.error("Unexpected error:", err);
+        setErrorMessage("Unexpected error occurred.");
       });
-
-      getStrengthWeakness(Number(quizId)).then(data => {
-        setStrengths(data.strengths);
-        setWeaknesses(data.weaknesses);
-      }).catch(err => {
-        console.error("Failed to load strengths/weaknesses:", err);
-      });
-      
-    }
-  }, [quizId]);  
+  }, [quizId, userId]);
 
   const toggleExplanation = (id: number) => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -192,6 +213,19 @@ export default function ExplanationPage() {
       return "invert(41%) sepia(99%) saturate(5792%) hue-rotate(348deg) brightness(98%) contrast(116%)"; // red
     }
   };
+
+  if (errorMessage) {
+    return (
+      <div className="max-w-2xl mx-auto mt-20 text-center">
+        <div className="text-red-600 text-lg font-semibold">
+          {errorMessage}
+        </div>
+        <Button onClick={() => router.push("/learn")} className="mt-4">
+          Return to Learn Page
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto p-6 pb-24">
