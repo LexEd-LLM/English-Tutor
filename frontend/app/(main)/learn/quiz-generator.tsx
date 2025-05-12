@@ -45,6 +45,23 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
       toast.error("Please select a unit");
       return;
     }
+
+    if (dokLevel.length === 0) {
+      toast.error("Please select at least one difficulty level (DOK)");
+      return;
+    }
+
+    // Kiểm tra giá trị âm
+    if (counts.multipleChoice < 0 || counts.image < 0 || counts.voice < 0) {
+      toast.error("Number of questions cannot be negative");
+      return;
+    }
+
+    // Kiểm tra có ít nhất 1 loại câu hỏi
+    if (counts.multipleChoice === 0 && counts.image === 0 && counts.voice === 0) {
+      toast.error("Please select at least one question");
+      return;
+    }
   
     setIsLoading(true);
     try {
