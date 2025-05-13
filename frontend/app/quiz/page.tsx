@@ -490,7 +490,7 @@ export default function ExplanationPage() {
                       {explanations[q.id] || q.explanation}
                     </ReactMarkdown>
                     ) : (
-                      <p>Chưa có giải thích cho câu hỏi này.</p>
+                      <p>There is no explanation for this question yet.</p>
                     )}
                   </div>
 
