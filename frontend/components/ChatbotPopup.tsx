@@ -150,7 +150,7 @@ export const ChatbotPopup = ({ pageContent }: ChatbotPopupProps) => {
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: "bot", content: "Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại." },
+        { role: "bot", content: "Sorry, something went wrong. Please try again." },
       ]);
     }
   };
@@ -199,7 +199,7 @@ export const ChatbotPopup = ({ pageContent }: ChatbotPopupProps) => {
                 <MoreVertical size={18} />
               </button>
               <Menu anchorEl={anchorEl} open={openMenu} onClose={handleCloseMenu}>
-                <MenuItem onClick={handleClearChat}>Xoá cuộc trò chuyện</MenuItem>
+                <MenuItem onClick={handleClearChat}>Clear conversation</MenuItem>
               </Menu>
               <button onClick={() => setIsOpen(false)} className="text-gray-500 hover:text-gray-700">
                 <X size={18} />
@@ -213,27 +213,27 @@ export const ChatbotPopup = ({ pageContent }: ChatbotPopupProps) => {
               <div className="text-center text-gray-700 mt-4 space-y-4">
                 <img src="/linga.svg" alt="Bot Avatar" className="mx-auto w-16 h-16" />
                 <div>
-                  <p className="font-semibold text-lg">Xin chào 👋</p>
-                  <p className="text-base">Mình có thể giúp gì cho bạn?</p>
+                  <p className="font-semibold text-lg">Hello 👋</p>
+                  <p className="text-base">How can I help you?</p>
                 </div>
                 <div className="flex flex-col gap-2">
                   <button
-                    onClick={() => setInput("Tôi không biết bắt đầu làm bài thế nào")}
+                    onClick={() => setInput("I don’t know how to start the exercise")}
                     className="border border-blue-500 text-blue-600 rounded-md px-4 py-2 hover:bg-blue-50"
                   >
-                    Tôi không biết bắt đầu làm bài thế nào
+                    I don’t know how to start the exercise
                   </button>
                   <button
-                    onClick={() => setInput("Hướng dẫn giúp tôi cách làm bài tập")}
+                    onClick={() => setInput("Guide me on how to solve the exercise")}
                     className="border border-blue-500 text-blue-600 rounded-md px-4 py-2 hover:bg-blue-50"
                   >
-                    Hướng dẫn giúp tôi cách làm bài tập
+                    Guide me on how to solve the exercise
                   </button>
                   <button
-                    onClick={() => setInput("Tạo thêm các câu hỏi trắc nghiệm để ôn tập")}
+                    onClick={() => setInput("Generate more multiple-choice questions to practice more")}
                     className="border border-blue-500 text-blue-600 rounded-md px-4 py-2 hover:bg-blue-50"
                   >
-                    Tạo thêm các câu hỏi trắc nghiệm để ôn tập
+                    Generate more multiple-choice questions to practice more
                   </button>
                 </div>
               </div>
@@ -279,7 +279,7 @@ export const ChatbotPopup = ({ pageContent }: ChatbotPopupProps) => {
             <div className="flex items-center gap-2">
               <input
                 className="flex-1 rounded-md border p-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="Nhập câu hỏi của bạn…"
+                placeholder="Type your question…"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
