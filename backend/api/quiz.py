@@ -98,6 +98,11 @@ async def generate_quiz(request: QuizRequest):
         text_chunks.extend(text_chunk)
         bookmap_chunks.extend(bookmap_chunk)
     random_text_chunks = random.sample(text_chunks, 2) if len(text_chunks) > 2 else text_chunks
+    total_len = sum(len(c) for c in random_text_chunks)
+    random_text_chunks = [
+        chunk[:int(4000 * len(chunk) / total_len)]
+        for chunk in random_text_chunks
+    ] # Cắt còn 4000 từ
     
     precontent_vocabs = [vocab.strip() for vocab_per_unit in vocab_chunks for vocab in vocab_per_unit.split("\n") if vocab.strip()]
     random_vocab_chunks = random.sample(precontent_vocabs, 30) if len(precontent_vocabs) > 30 else precontent_vocabs
