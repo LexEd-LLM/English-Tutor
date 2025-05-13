@@ -291,7 +291,7 @@ async def submit_quiz(submission: QuizSubmission):
         results = {
             "success": True,
             "totalQuestions": total_questions,
-            "correctAnswers": correct_answers_score,
+            "correctAnswers": round(correct_answers_score, 1),
             "quizId": submission.quizId
         }
         
