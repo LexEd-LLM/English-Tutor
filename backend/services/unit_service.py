@@ -1,5 +1,6 @@
 import json
 import psycopg2
+import random
 from typing import List
 from ..database.database import get_db
        
@@ -25,7 +26,13 @@ def get_unit_main_chunks(unit_id: int) -> List[str]:
                     vocab = row["content"]
                 elif row_type == "BOOKMAP" and bookmap is None:
                     bookmap = row["content"]
-            unit_chunks = [bookmap, vocab]
+
+            if vocab:
+                vocab_list = vocab.splitlines()
+                random.shuffle(vocab_list)
+                vocab = "\n".join(vocab_list)
+                
+            unit_chunks = ["Vocab: ", vocab, "Bookmap: ", bookmap]
             return unit_chunks, vocab
     finally:
         conn.close()
