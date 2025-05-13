@@ -102,7 +102,11 @@ async def generate_quiz(request: QuizRequest):
     precontent_vocabs = [vocab.strip() for vocab_per_unit in vocab_chunks for vocab in vocab_per_unit.split("\n") if vocab.strip()]
     random_vocab_chunks = random.sample(precontent_vocabs, 30) if len(precontent_vocabs) > 30 else precontent_vocabs
     vocabs.extend(random_vocab_chunks)
-    prior_contents = random_vocab_chunks + bookmap_chunks
+    prior_contents = [
+        "Previously learned content:\n",
+        "Vocab from earlier units: " + ", ".join(random_vocab_chunks),
+        "Grammar from earlier units: " + ", ".join(bookmap_chunks),
+    ]
 
     # Generate questions from chunks
     questions_data = generate_questions_batch(

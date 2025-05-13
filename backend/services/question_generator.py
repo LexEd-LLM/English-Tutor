@@ -30,10 +30,11 @@ Create {count} unique multiple-choice questions.
 
 Make sure:
 1. Use a variety of school-level question formats. Avoid repeating similar formats.
-2. The content should feel like it belongs in a Vietnamese English textbook or exam paper.
-3. Avoid repetition.
-4. The "question" field should only contain the problem statement (stem). Do not include any answer choices here. Put all four answer choices into the "options" list.
-5. You may use standard Markdown syntax only (e.g., **bold**, *italic*, ~~strikethrough~~, line breaks \n). Use ___ for blanks.
+2. You may occasionally draw on vocabulary or grammar students are likely to have learned in earlier units, to reflect natural cumulative learning.
+3. The content should feel like it belongs in a Vietnamese English textbook or exam paper.
+4. Avoid repetition.
+5. The "question" field should only contain the problem statement (stem). Do not include any answer choices here. Put all four answer choices into the "options" list.
+6. You may use standard Markdown syntax only (e.g., **bold**, *italic*, ~~strikethrough~~, line breaks \n). Use ___ for blanks.
 
 Format (in JSON array):
 - id: from 1 to {count}
