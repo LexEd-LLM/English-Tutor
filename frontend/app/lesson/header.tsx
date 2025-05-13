@@ -74,7 +74,7 @@ export const Header = ({
 
       {/* Desktop sidebar nav */}
       {showQuestionsNav && totalQuestions > 0 && (
-        <div className="hidden md:flex fixed left-4 top-[150px] flex-col gap-2 p-4 bg-white rounded-md shadow-sm z-20">
+        <div className="hidden md:flex fixed left-4 top-[150px] flex-col gap-2 p-4 rounded-md shadow-sm z-20">
           {renderNavButtons()}
         </div>
       )}
