@@ -229,7 +229,10 @@ export default function ExplanationPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-6 pb-24">
-      <ChatbotPopup pageContent={pageContent} />
+      <ChatbotPopup 
+        pageContent={pageContent}
+        quizId={quizId}
+      />
       <div className="flex items-center mb-6">
         <Button variant="ghost" onClick={() => router.back()} className="flex items-center gap-2">
           <ArrowLeft className="h-5 w-5" /> Back

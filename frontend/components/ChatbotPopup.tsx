@@ -16,6 +16,7 @@ import { Menu, MenuItem } from "@mui/material";
  */
 interface ChatbotPopupProps {
   pageContent: string;
+  quizId: string | null;
 }
 
 interface Message {
@@ -23,7 +24,7 @@ interface Message {
   content: string;
 }
 
-export const ChatbotPopup = ({ pageContent }: ChatbotPopupProps) => {
+export const ChatbotPopup = ({ pageContent, quizId }: ChatbotPopupProps) => {
   // -------------- Local state -------------- //
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -52,13 +53,13 @@ export const ChatbotPopup = ({ pageContent }: ChatbotPopupProps) => {
 
   // -------------- Persist history in‑tab -------------- //
   useEffect(() => {
-    const saved = sessionStorage.getItem("chatHistory");
+    const saved = sessionStorage.getItem(`chatHistory_${quizId}`);
     if (saved) setMessages(JSON.parse(saved));
-  }, []);
-
+  }, [quizId]);
+  
   useEffect(() => {
-    sessionStorage.setItem("chatHistory", JSON.stringify(messages));
-  }, [messages]);
+    sessionStorage.setItem(`chatHistory_${quizId}`, JSON.stringify(messages));
+  }, [messages, quizId]);
 
   // -------------- Drag handlers -------------- //
   const handleMouseDown = (e: React.MouseEvent) => {
