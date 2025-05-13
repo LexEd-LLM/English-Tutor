@@ -274,11 +274,13 @@ class QuizService:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO user_quizzes (user_id, unit_id, prompt, depth_of_knowledge)
-                VALUES (%s, %s, %s, %s::dok_level[])
+                INSERT INTO user_quizzes (user_id, unit_id, title, prompt, depth_of_knowledge)
+                SELECT %s, u.id, u.title, %s, %s::dok_level[]
+                FROM units u
+                WHERE u.id = %s
                 RETURNING id
                 """,
-                (user_id, unit_id, prompt, dok_level)
+                (user_id, prompt, dok_level, unit_id)
             )
             quiz_id = cursor.fetchone()['id']
             conn.commit()
