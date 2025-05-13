@@ -267,7 +267,9 @@ class QuizService:
         }
 
         dok_level = [DOK_ENUM[i] for i in dok_level]
-
+        if prompt:
+            prompt = json.dumps({"custom_prompt": prompt})
+        
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute(
