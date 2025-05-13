@@ -221,13 +221,13 @@ export default function ResultPage() {
           <div className="w-full max-w-4xl space-y-4">
             {strengths && (
               <div className="bg-green-100 text-green-800 px-4 py-2 rounded-md font-medium whitespace-pre-wrap">
-                <div className="mb-1">🟢 <strong>Điểm tốt:</strong></div>
+                <div className="mb-1">🟢 <strong>Strengths:</strong></div>
                 <ReactMarkdown>{strengths}</ReactMarkdown>
               </div>
             )}
             {weaknesses && (
               <div className="bg-red-100 text-red-800 px-4 py-2 rounded-md font-medium whitespace-pre-wrap">
-                <div className="mb-1">🔴 <strong>Điểm chưa tốt:</strong></div>
+                <div className="mb-1">🔴 <strong>Weaknesses:</strong></div>
                 <ReactMarkdown>{weaknesses}</ReactMarkdown>
               </div>
             )}

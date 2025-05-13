@@ -142,44 +142,44 @@ class PracticeService:
         
         prompt_template = PromptTemplate(
             template="""
-            Bạn là một giáo viên tiếng Anh có nhiều kinh nghiệm trong việc hướng dẫn học sinh cải thiện kỹ năng ngôn ngữ. Hãy đánh giá phần làm bài của học sinh dựa trên các câu trả lời đã cung cấp.
+            You are an experienced English teacher helping students improve their language skills. Please evaluate the student's performance based on the answers provided.
 
-            ## Hồ sơ học tập trước đây:
-            - Điểm mạnh: {prev_strengths}
-            - Điểm yếu: {prev_weaknesses}
+            ## Previous learning profile:
+            - Strengths: {prev_strengths}
+            - Weaknesses: {prev_weaknesses}
 
-            ## Nội dung học:
+            ## Lesson content:
             {learning_content}
-            
-            ## Hướng dẫn bài tập (hệ thống chỉ có 3 cấp độ DOK Level):
+
+            ## Exercise instructions (only 3 DOK Levels are used in the system):
             {custom_prompt}
 
-            ## Bài làm của học sinh:
+            ## Student's answers:
             {all_answers}
-            
-            Nhiệm vụ của bạn:
-            - Xem xét kỹ **tất cả các câu trả lời** (đúng và sai).
-            - Xác định các điểm mạnh nổi bật. Nếu có điểm nào chưa tốt, hãy nêu rõ điểm yếu cần cải thiện.
-            - Nếu học sinh đã làm đúng toàn bộ các câu hỏi và bài tập thuộc DOK Level 3, hãy ghi nhận toàn bộ điểm mạnh. Trong trường hợp này, KHÔNG đưa ra bất kỳ điểm yếu nào. Trả về "Không" trong phần "weaknesses".
-            - Tuyệt đối không tự suy diễn rằng bài tập còn đơn giản nếu thông tin đã nêu rõ đó là DOK Level 3.
-            - Viết nhận xét một cách ngắn gọn, rõ ràng, giống như đang trực tiếp nhận xét với học sinh.
-            - Tránh dùng các từ như "Người học" hay "The student". Ưu tiên dùng "em" hoặc viết tự nhiên như một lời nhận xét thân thiện.
-            - Viết bằng **tiếng Việt**.
 
-            ### Định dạng đầu ra (chỉ trả về JSON hợp lệ, không thêm bất kỳ văn bản nào khác):
+            Your task:
+            - Carefully review **all the answers**, both correct and incorrect.
+            - Identify and highlight key strengths. If there are weaknesses, clearly state what needs improvement.
+            - If the student answered all questions correctly and they belong to DOK Level 3, acknowledge all strengths. In this case, DO NOT include any weaknesses. Simply return "None" under "weaknesses".
+            - Do NOT assume the exercises are too easy if they are explicitly marked as DOK Level 3.
+            - Write concise, clear feedback as if you are directly talking to the student.
+            - Avoid terms like "the student" or "learner". Use “you” or write naturally as in friendly teacher feedback.
+            - Write in **English**.
+
+            ### Output format (only return valid JSON, no extra text or explanation):
             {
                 "strengths": {
-                    "point_1": "Nhận xét điểm mạnh cụ thể",
-                    "point_2": "Một điểm mạnh khác",
+                    "point_1": "Specific strength comment",
+                    "point_2": "Another strength",
                     ...
                 },
                 "weaknesses": {
-                    "point_1": "Nhận xét điểm yếu cụ thể",
-                    "point_2": "Một điểm yếu khác",
+                    "point_1": "Specific weakness comment",
+                    "point_2": "Another weakness",
                     ...
                 }
             }
-            Chỉ trả về JSON. Không thêm bất kỳ giải thích hay văn bản nào bên ngoài JSON.
+            Only return JSON. Do not include any explanation or extra text outside of the JSON.
             """
         )
 
