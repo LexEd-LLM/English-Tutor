@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { auth } from "@clerk/nextjs";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, inArray } from "drizzle-orm";
 import db from "./drizzle";
 import {
   units,
@@ -359,15 +359,26 @@ export const getUserQuizzes = cache(async () => {
 });
 
 export const getUserQuizAccuracy = cache(async (quizId: number) => {
+  // Lấy tất cả questionId thuộc quiz đó
+  const questions = await db.query.quizQuestions.findMany({
+    where: eq(quizQuestions.quizId, quizId),
+    columns: { id: true }
+  });
+
+  const questionIds = questions.map((q) => q.id);
+  if (questionIds.length === 0) return "0/0";
+
+  // Đếm số câu đúng
   const correctAnswers = await db.query.userAnswers.findMany({
     where: and(
-      eq(userAnswers.questionId, quizId),
+      inArray(userAnswers.questionId, questionIds),
       eq(userAnswers.isCorrect, true)
-    ),
-  });  
+    )
+  });
 
+  // Tổng số câu trả lời
   const totalAnswers = await db.query.userAnswers.findMany({
-    where: eq(userAnswers.questionId, quizId),
+    where: inArray(userAnswers.questionId, questionIds)
   });
 
   return `${correctAnswers.length}/${totalAnswers.length}`;
