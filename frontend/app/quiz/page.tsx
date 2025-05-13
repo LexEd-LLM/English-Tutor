@@ -445,7 +445,7 @@ export default function ExplanationPage() {
                               : "bg-red-100 text-red-700"
                           }`}
                         >
-                          Điểm: {(analysisResult.score * 100).toFixed(0)}%
+                          Phoneme-matching accuracy: {(analysisResult.score * 100).toFixed(0)}%
                         </span>
                       </div>
                     </>
