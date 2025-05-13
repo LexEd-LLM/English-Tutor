@@ -141,16 +141,11 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
       </Tooltip.Provider>
     );
   };
-  
-  {/* ---------- maintenance-block ---------- */}
-  const isAllowedUnit = (unitId: number) => unitId === 162;  // chỉ unit #162 được phép
-  {/* --------------------------------------- */}
-
   return (
     <div className="flex justify-center md:justify-start">
       <Card className="w-full p-6 bg-green-50">
         <div className="space-y-6">
-          {/* Unit Selection
+          {/* Unit Selection */}
           <div className="space-y-4">
             <Label className="text-base font-semibold">Please select a unit</Label>
             <Select value={selectedUnit} onValueChange={setSelectedUnit}>
@@ -163,46 +158,6 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
                     {unit.title}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div> */}
-
-          {/* Unit Selection */}
-          <div className="space-y-4">
-            <Label className="text-base font-semibold">Please select a unit</Label>
-            <Select
-              value={selectedUnit}
-              onValueChange={(value) => {
-                const id = Number(value);
-                if (isAllowedUnit(id)) {
-                  setSelectedUnit(value);
-                }
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a unit to generate quiz" />
-              </SelectTrigger>
-              <SelectContent>
-                {units.map((unit) => {
-                  const allowed = isAllowedUnit(unit.id);
-                  return (
-                    <SelectItem
-                      key={unit.id}
-                      value={unit.id.toString()}
-                      disabled={!allowed}                     // chặn focus/tab
-                      className={cn(!allowed && "opacity-50")} // làm mờ
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <span>{unit.title}</span>
-                        {!allowed && (
-                          <span className="ml-2 px-2 py-1 text-xs font-semibold bg-black/70 text-white rounded">
-                            Maintenance
-                          </span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
               </SelectContent>
             </Select>
           </div>
