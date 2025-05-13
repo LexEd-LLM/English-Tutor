@@ -15,3 +15,6 @@ transformers
 torch
 gtts
 audioop-lts
+pytest 
+httpx 
+pytest-asyncio
