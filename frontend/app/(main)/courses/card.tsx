@@ -46,7 +46,7 @@ export const Card = ({
         {image_url && (
           <div className="w-full h-[160px] relative overflow-hidden rounded-lg">
             <Image
-              src={image_url}
+              src={`/${image_url}`}
               alt={title}
               className="object-contain w-full h-full"
               fill
