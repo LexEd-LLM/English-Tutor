@@ -97,6 +97,17 @@ export const QuizCard = ({
         }
     };
 
+    const handleCopyLink = async () => {
+        const quizLink = `${window.location.origin}/quiz?quizId=${quizId}`;
+        try {
+            await navigator.clipboard.writeText(quizLink);
+            toast.success("Link copied to clipboard");
+        } catch (err) {
+            console.error("Failed to copy link", err);
+            toast.error("Failed to copy link");
+        }
+    };
+
     return (
         <div className="border rounded-lg p-4 shadow-sm bg-white flex flex-col md:flex-row gap-4 items-start md:items-center">
             {/* Thumbnail */}
@@ -158,6 +169,9 @@ export const QuizCard = ({
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
+                                <DropdownMenuItem onClick={handleCopyLink}>
+                                    Copy Link
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onClick={handleDeleteQuiz}
                                     className="text-red-600 focus:bg-red-100"
