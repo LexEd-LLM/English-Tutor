@@ -1,7 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
-
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -45,10 +45,12 @@ export const Card = ({
 
         {image_url && (
           <div className="w-full h-[160px] relative overflow-hidden rounded-lg">
-            <img
+            <Image
               src={image_url}
               alt={title}
               className="object-contain w-full h-full"
+              fill
+              sizes="100%"
             />
           </div>
         )}
