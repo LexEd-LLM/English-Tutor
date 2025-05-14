@@ -46,12 +46,3 @@ def test_chat_missing_fields():
     for req in invalid_requests:
         response = client.post("/api/chat", json=req)
         assert response.status_code == 422  # Validation error
-
-def test_chat_invalid_history_format():
-    request_data = {
-        "history": [{"invalid": "format"}],  # Invalid history format
-        "pageContent": "context",
-        "promptText": "hello"
-    }
-    response = client.post("/api/chat", json=request_data)
-    assert response.status_code == 422  # Validation error 

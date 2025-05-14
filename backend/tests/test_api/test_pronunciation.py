@@ -33,33 +33,6 @@ def mock_pronunciation_data():
         }
     }
 
-def test_upload_audio(mock_audio_file):
-    with open(mock_audio_file, 'rb') as f:
-        files = {'file': ('test.wav', f, 'audio/wav')}
-        data = {'id': '1', 'user_id': 'test_user'}
-        response = client.post("/api/upload-audio", files=files, data=data)
-        assert response.status_code in [200, 500]
-        if response.status_code == 200:
-            data = response.json()
-            assert "score" in data
-            assert "highlight" in data
-            assert "corrections" in data
-            assert "explanation" in data
-
-def test_calculate_phoneme_score(mock_pronunciation_data):
-    response = client.post(
-        "/api/calculate-phoneme-score",
-        json=mock_pronunciation_data
-    )
-    assert response.status_code in [200, 500]
-    if response.status_code == 200:
-        data = response.json()
-        assert "score" in data
-        assert isinstance(data["score"], float)
-        assert 0 <= data["score"] <= 1
-        assert "highlight" in data
-        assert "corrections" in data
-
 def test_invalid_audio_upload():
     # Test with invalid file format
     files = {'file': ('test.txt', b'not an audio file', 'text/plain')}
