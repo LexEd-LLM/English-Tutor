@@ -9,6 +9,20 @@ const publicRoutes = [
   "/api/admin/auth"
 ];
 
+const protectedUserRoutes = [
+  "/quiz",
+  "/results",
+  "/lesson",
+  "/courses",
+  "/quiz-history", 
+  "/learn",
+  "/shop",
+  "/leaderboard"
+];
+
+const isProtectedUserRoute = (path: string) =>
+  protectedUserRoutes.some(route => path.startsWith(route));
+
 // Các route admin
 const adminRoutes = [
   "/admin",
@@ -55,6 +69,11 @@ export default authMiddleware({
     // Xử lý sau khi Clerk auth hoàn tất
     const { pathname } = req.nextUrl;
     
+    // Redirect về "/" nếu chưa đăng nhập và truy cập route cần bảo vệ
+    if (!auth.userId && isProtectedUserRoute(pathname)) {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+
     // Nếu chưa đăng nhập và không phải public route, redirect tới /admin/login
     if (!auth.userId && !isPublicRoute(pathname)) {
       const isAdmin = isAdminRoute(pathname);

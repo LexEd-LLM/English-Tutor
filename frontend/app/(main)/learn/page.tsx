@@ -32,10 +32,10 @@ const LearnPage = async () => {
   ]);
 
   if (!userProgress || !userProgress.curriculum)
-    redirect("/courses");
+    redirect("/");
 
   if (!userHearts)
-    redirect("/sign-in");
+    redirect("/");
 
   const isVIP = userSubscription?.isLifetime || 
     (userSubscription?.isActive && userSubscription?.endDate && 
