@@ -225,6 +225,7 @@ export const Quiz = ({
         <div className="mx-auto h-full max-w-[1140px] px-6 pb-[100px] pt-8 lg:px-10">
           {challenge && (
             <Challenge
+              key={challenge.id}
               id={challenge.id}
               type={challenge.type}
               question={challenge.question}
