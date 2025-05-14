@@ -23,10 +23,13 @@ services:
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_URL: http://backend:8000
+        BACKEND_URL: http://backend:8000
     ports:
       - "11954:3000"
     env_file:
-    - frontend/.env
+      - frontend/.env
     environment:
       - NEXT_PUBLIC_BACKEND_URL=http://backend:8000
       - BACKEND_URL=http://backend:8000
