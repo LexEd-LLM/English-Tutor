@@ -64,7 +64,7 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
       return;
     }
     
-    if (counts.multipleChoice > 50 || counts.image > 10 || counts.voice > 20) {
+    if (counts.multipleChoice > 50 || counts.image > 5 || counts.voice > 20) {
       toast.error("You choose too many questions");
       return;
     }
@@ -197,7 +197,7 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
                   <Input
                     type="number"
                     min={0}
-                    max={type === "multipleChoice" ? 50 : type === "voice" ? 20 : 10}
+                    max={type === "multipleChoice" ? 50 : type === "voice" ? 20 : 5}
                     value={counts[type as keyof typeof counts]}
                     onChange={(e) =>
                       setCounts((prev) => ({
