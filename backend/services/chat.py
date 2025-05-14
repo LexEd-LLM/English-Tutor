@@ -23,10 +23,10 @@ Quy tắc:
    - Dùng danh sách gạch đầu dòng hoặc chia mục rõ ràng.
    - Mỗi đoạn ngắn gọn, cách dòng hợp lý để dễ đọc.
    - Với nội dung so sánh, dùng định dạng:
-     - 🔸 Điểm A:
+     - Điểm A:
         - Mô tả…
         - Ví dụ…
-     - 🔹 Điểm B:
+     - Điểm B:
         - Mô tả…
         - Ví dụ…
 """.strip()
