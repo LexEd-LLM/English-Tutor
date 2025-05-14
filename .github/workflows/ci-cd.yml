@@ -66,4 +66,4 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             docker compose -f /home/${{ secrets.SSH_USER }}/ai-questgen/docker-compose.yml down
-            tmux send-keys -t ${{ secrets.TMUX_SESSION_NAME }}:0.0 "cd /home/${{ secrets.SSH_USER }}/ai-questgen && git pull origin main && docker compose up -d --build" C-m
+            tmux send-keys -t ${{ secrets.TMUX_SESSION_NAME }}:0.0 "cd /home/${{ secrets.SSH_USER }}/ai-questgen && git pull origin main && docker compose up --build" C-m
