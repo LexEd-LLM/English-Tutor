@@ -62,7 +62,4 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /home/your-user/ai-questgen
-            git pull origin main
-            docker compose down
-            docker compose up -d --build
+            tmux send-keys -t ${{ secrets.TMUX_SESSION_NAME }}:0.0 "cd /home/${{ secrets.SSH_USER }}/ai-questgen && git pull origin main && docker compose down && docker compose up -d --build" C-m
