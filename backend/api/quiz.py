@@ -114,7 +114,7 @@ async def generate_quiz(request: QuizRequest):
     ]
 
     # Generate questions from chunks
-    questions_data = generate_questions_batch(
+    questions_data = await generate_questions_batch(
         quiz_id=quiz_id,
         contents=main_contents,
         prior_contents=prior_contents,

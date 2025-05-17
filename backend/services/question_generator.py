@@ -1,3 +1,5 @@
+import asyncio
+from asyncio import to_thread
 import random
 from llama_index.core.prompts import PromptTemplate
 from ..config.settings import llm
@@ -82,7 +84,7 @@ Output format (JSON array):
 Return exactly {count} questions.
 """
 
-def generate_text_questions(
+async def generate_text_questions(
     content: str,
     prior_contents: str,
     text_chunks: str,
@@ -124,7 +126,8 @@ def generate_text_questions(
             count=count,
         )
 
-    response = llm.complete(prompt)
+    # response = llm.complete(prompt)
+    response = await to_thread(llm.complete, prompt)
     questions = parse_json_questions(response.text)
     return [
         {
@@ -136,7 +139,7 @@ def generate_text_questions(
         for q in questions
     ]
 
-def generate_image_questions(
+async def generate_image_questions(
     vocab: str,
     count: int,
     custom_prompt: Optional[str] = None
@@ -175,25 +178,42 @@ def generate_image_questions(
     )
     
     prompt = prompt_template.format(vocab_list=vocab, count=count)
-    response = llm.complete(prompt)
+    response = await to_thread(llm.complete, prompt)
     questions = parse_json_questions(response.text)
     
     # Generate images for each question
-    return [
-        {
+    # return [
+    #     {
+    #         "question": q["question"],
+    #         "options": q["options"],
+    #         "correct_answer": q["correct_answer"],
+    #         "type": QuestionType.IMAGE.value,
+    #         "image_url": generate_image(
+    #             f"An illustration in Duolingo flat style based on the following scene: {q.get('image_description', '')}. The image must not include any text or labels."
+    #         ),
+    #         "image_description": q.get("image_description", "")
+    #     }
+    #     for q in questions
+    # ]
+    
+    async def _build(q):
+        url = await to_thread(
+            generate_image,
+            f"An illustration in Duolingo flat style based on the following scene: "
+            f"{q.get('image_description', '')}. The image must not include any text or labels.",
+        )
+        return {
             "question": q["question"],
             "options": q["options"],
             "correct_answer": q["correct_answer"],
             "type": QuestionType.IMAGE.value,
-            "image_url": generate_image(
-                f"An illustration in Duolingo flat style based on the following scene: {q.get('image_description', '')}. The image must not include any text or labels."
-            ),
-            "image_description": q.get("image_description", "")
+            "image_url": url,
+            "image_description": q.get("image_description", ""),
         }
-        for q in questions
-    ]
 
-def generate_voice_questions(
+    return [await _build(q) for q in questions]
+
+async def generate_voice_questions(
     content: str,
     count: int,
     text_chunks: Optional[str] = None,
@@ -249,22 +269,33 @@ def generate_voice_questions(
         text_chunks=text_chunks,
         diffucult_level=diffucult_level
     )
-    response = llm.complete(prompt)
+    response = await to_thread(llm.complete, prompt)
     questions = parse_json_questions(response.text)
     
-    # Generate audio for each question
-    return [
-        {
+    # # Generate audio for each question
+    # return [
+    #     {
+    #         "question": q["question"],
+    #         "options": q["options"],
+    #         "correct_answer": q["correct_answer"],
+    #         "type": QuestionType.VOICE.value,
+    #         "audio_url": generate_audio(q["correct_answer"])
+    #     }
+    #     for q in questions
+    # ]
+    async def _build(q):
+        audio = await to_thread(generate_audio, q["correct_answer"])
+        return {
             "question": q["question"],
             "options": q["options"],
             "correct_answer": q["correct_answer"],
             "type": QuestionType.VOICE.value,
-            "audio_url": generate_audio(q["correct_answer"])
+            "audio_url": audio,
         }
-        for q in questions
-    ]
 
-def generate_pronunciation_questions(
+    return [await _build(q) for q in questions]
+
+async def generate_pronunciation_questions(
     content: str,
     count: int,
     text_chunks: str,
@@ -311,21 +342,22 @@ def generate_pronunciation_questions(
         text_chunks=text_chunks,
         diffucult_level=diffucult_level
     )
-    response = llm.complete(prompt)
+    response = await to_thread(llm.complete, prompt)
     questions = parse_json_questions(response.text)
     
-    # Generate audio for each question using gTTS
-    return [
-        {
+    async def _build(q):
+        phonemes = get_phonemes(q["correct_answer"])
+        audio = await to_thread(generate_audio, q["correct_answer"])
+        return {
             "question": q["question"],
-            "correct_answer": get_phonemes(q["correct_answer"]),
+            "correct_answer": phonemes,
             "type": QuestionType.PRONUNCIATION.value,
-            "audio_url": generate_audio(q["correct_answer"])
+            "audio_url": audio,
         }
-        for q in questions
-    ]
 
-def generate_questions_batch(
+    return [await _build(q) for q in questions]
+
+async def generate_questions_batch(
     quiz_id: int,
     contents: List[str],
     prior_contents: List[str],
@@ -376,18 +408,35 @@ def generate_questions_batch(
     )
     
     # Generate questions
-    text_questions = generate_text_questions(
-        combined_contents,
-        combined_prior_contents,
-        combined_text_chunks,
-        multiple_choice_count,
-        combined_custom_prompt,
-    )
+    # text_questions = generate_text_questions(
+    #     combined_contents,
+    #     combined_prior_contents,
+    #     combined_text_chunks,
+    #     multiple_choice_count,
+    #     combined_custom_prompt,
+    # )
     
-    # Get maximum of dok_level to meaning difficult level
-    image_questions = generate_image_questions(vocabs, image_count, custom_prompt)
-    voice_questions = generate_voice_questions(vocabs, listen_count, combined_text_chunks, custom_prompt, max(dok_level))
-    pronunciation_questions = generate_pronunciation_questions(vocabs, pronunciation_count, combined_text_chunks, custom_prompt, max(dok_level))
+    # # Get maximum of dok_level to meaning difficult level
+    # image_questions = generate_image_questions(vocabs, image_count, custom_prompt)
+    # voice_questions = generate_voice_questions(vocabs, listen_count, combined_text_chunks, custom_prompt, max(dok_level))
+    # pronunciation_questions = generate_pronunciation_questions(vocabs, pronunciation_count, combined_text_chunks, custom_prompt, max(dok_level))
+    
+    text_questions, image_questions, voice_questions, pronunciation_questions = await asyncio.gather(
+        generate_text_questions(
+            combined_contents,
+            combined_prior_contents,
+            combined_text_chunks,
+            multiple_choice_count,
+            combined_custom_prompt,
+        ),
+        generate_image_questions(combined_vocabs, image_count, custom_prompt),
+        generate_voice_questions(
+            combined_vocabs, listen_count, combined_text_chunks, custom_prompt, max(dok_level)
+        ),
+        generate_pronunciation_questions(
+            combined_vocabs, pronunciation_count, combined_text_chunks, custom_prompt, max(dok_level)
+        ),
+    )
     
     return {
         "multiple_choice_questions": text_questions,
