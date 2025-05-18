@@ -1,5 +1,6 @@
 # backend/libs/api_key_manager.py
 import os
+import re
 from typing import Iterator, Optional
 import redis
 
@@ -10,11 +11,16 @@ class APIKeyManager:
         self.redis = redis.Redis(host=host, port=int(port), decode_responses=True)
         self.key_prefix = key_prefix
         self.purpose = purpose  # "text" hoặc "image"
-        self.all_keys = [
-            os.environ.get(f"{key_prefix}_{i}")
-            for i in range(1, 10)
-            if os.environ.get(f"{key_prefix}_{i}")
-        ]
+        key_pattern = re.compile(f"^{key_prefix}_(\\d+)$")
+        indexed_keys = sorted(
+            [
+                (int(match.group(1)), os.environ[var])
+                for var in os.environ
+                if (match := key_pattern.match(var))
+            ],
+            key=lambda x: x[0]
+        )
+        self.all_keys = [value for _, value in indexed_keys]
         main_key = os.environ.get(key_prefix)
         if main_key:
             self.all_keys.insert(0, main_key)
