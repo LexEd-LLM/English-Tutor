@@ -66,7 +66,7 @@ export const Header = ({
       {showQuestionsNav && totalQuestions > 0 && (
         <button
           onClick={() => setMobileNavOpen(true)}
-          className="md:hidden fixed left-4 bottom-[80px] z-30 p-2 bg-white rounded-full shadow-md text-gray-500 hover:opacity-75"
+          className="xl:hidden fixed left-4 bottom-[80px] z-30 p-2 bg-white rounded-full shadow-md text-gray-500 hover:opacity-75"
         >
           &gt;
         </button>
@@ -74,7 +74,7 @@ export const Header = ({
 
       {/* Desktop sidebar nav */}
       {showQuestionsNav && totalQuestions > 0 && (
-        <div className="hidden md:flex fixed left-4 top-[150px] flex-col gap-2 p-4 rounded-md z-20">
+        <div className="hidden xl:flex fixed left-4 top-[150px] flex-col gap-2 p-4 rounded-md z-20">
           {renderNavButtons()}
         </div>
       )}
@@ -97,7 +97,7 @@ export const Header = ({
               z-50 p-4
               transform ${mobileNavOpen ? "translate-y-0" : "translate-y-full"}
               transition-transform duration-300 ease-in-out
-              md:hidden
+              xl:hidden
             `}
           >
             <div className="flex justify-end">
