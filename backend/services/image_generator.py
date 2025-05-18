@@ -5,7 +5,6 @@ import uuid
 from pathlib import Path
 from google import genai
 from google.genai import types
-from google.api_core.exceptions import ResourceExhausted
 from ..config.settings import img_model
 
 def save_binary_file(file_name: str, data: bytes) -> None:
@@ -72,10 +71,10 @@ def generate_image(prompt: str) -> str:
                         save_binary_file(str(filepath), inline_data.data)
                         return f"/media/images/{filename}{file_extension}"
 
-            except ResourceExhausted:
-                print(f"[Quota] API key exceeded. Trying next key...")
-                continue
             except Exception as e:
+                if "RESOURCE_EXHAUSTED" in str(e) or "quota" in str(e).lower():
+                    print(f"[Quota] API key exceeded. Trying next key...")
+                    continue
                 print(f"[Other Error] {e}")
                 break
 
