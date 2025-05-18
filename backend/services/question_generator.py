@@ -425,23 +425,24 @@ async def generate_questions_batch(
         "pronunciation_questions": pronunciation_questions
     }
 
-def generate_questions_adaptive(
+async def generate_questions_adaptive(
     quiz_id: int,
-    contents: str,
-    prior_contents: str, 
-    text_chunks: str,
+    contents: List[str],
+    prior_contents: List[str],
+    vocabs: List[str],
+    text_chunks: List[str],
     multiple_choice_count: int,
     image_count: int,
     voice_count: int,
-    strengths: str,
-    weaknesses: str,
+    strengths: List[str],
+    weaknesses: List[str],
     custom_prompt: Optional[str] = None,
-    dok_level: Optional[str] = None
+    dok_level: Optional[List[int]] = None,
 ) -> Dict[str, List[Dict[str, Any]]]:
     """Generate adaptive questions based on user's strengths and weaknesses."""   
     # Split voice questions between voice and pronunciation
     pronunciation_count = 1 if voice_count > 0 else 0
-    voice_count = voice_count - pronunciation_count
+    listen_count = voice_count - pronunciation_count
 
     # Create adaptive prompt based on strengths and weaknesses
     adaptive_prompt = "Please focus on these areas that need improvement:\n"
@@ -458,19 +459,23 @@ def generate_questions_adaptive(
     dok_level = dok_level.strip('{}').split(',')
     dok_level = max([DOK_LEVEL[i] for i in dok_level])
     
-    # Generate questions with adaptive focus
-    text_questions = generate_text_questions(
-        contents,
-        prior_contents,
-        text_chunks,
-        multiple_choice_count,
-        custom_prompt,
-        adaptive_prompt
+    text_questions, image_questions, voice_questions, pronunciation_questions = await asyncio.gather(
+        generate_text_questions(
+            contents,
+            prior_contents,
+            text_chunks,
+            multiple_choice_count,
+            custom_prompt,
+            adaptive_prompt
+        ),
+        generate_image_questions(vocabs, image_count, custom_prompt),
+        generate_voice_questions(
+            vocabs, listen_count, text_chunks, custom_prompt, max(dok_level)
+        ),
+        generate_pronunciation_questions(
+            vocabs, pronunciation_count, text_chunks, custom_prompt, max(dok_level)
+        ),
     )
-    
-    image_questions = generate_image_questions(contents, image_count, custom_prompt)
-    voice_questions = generate_voice_questions(contents, voice_count, text_chunks, custom_prompt, dok_level)
-    pronunciation_questions = generate_pronunciation_questions(contents, pronunciation_count, text_chunks, custom_prompt, dok_level)
     
     # Return questions to be appended to existing quiz
     return {
