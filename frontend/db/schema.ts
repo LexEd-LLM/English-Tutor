@@ -41,7 +41,7 @@ export const users = pgTable("users", {
   id: text("id").primaryKey(),
   name: text("name").notNull().default("User"),
   imageSrc: text("image_src").notNull().default("/default-user.png"),
-  role: roleEnum("role").notNull().default("USER"),
+  role: roleEnum("role").notNull().default("VIP"),
   hearts: integer("hearts").notNull().default(MAX_HEARTS),
   activeCourseId: integer("active_course_id")
   .references(() => curriculums.id, { onDelete: "set null" }), // cho phép null khi curriculum bị xóa
