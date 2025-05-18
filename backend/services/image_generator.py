@@ -48,7 +48,7 @@ def generate_image(prompt: str) -> str:
         # Generate image
         while True:
             api_key = next(key_iterator)
-            if api_key is None:
+            if not api_key:
                 print("[Error] All API keys are on cooldown.")
                 return ""
 
@@ -71,8 +71,8 @@ def generate_image(prompt: str) -> str:
                         return f"/media/images/{filename}{file_extension}"
 
             except Exception as e:
-                if "RESOURCE_EXHAUSTED" in str(e) or "quota" in str(e).lower():
-                    print(f"[Quota] API key exceeded. Trying next key...")
+                if "RESOURCE_EXHAUSTED" in str(e) or "api" in str(e).lower():
+                    print(f"[Quota] API key {api_key[:8]} exceeded. Trying next key...")
                     key_manager.mark_key_exhausted(api_key)
                     continue
                 print(f"[Other Error] {e}")
