@@ -1,7 +1,6 @@
 # services/chat_service.py
 import asyncio
 from asyncio import to_thread
-from __future__ import annotations
 from typing import List, Dict
 from llama_index.core.llms import ChatMessage, MessageRole
 from llama_index.core.prompts import ChatPromptTemplate
