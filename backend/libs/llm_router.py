@@ -10,7 +10,9 @@ from requests.exceptions import ConnectionError as RequestsConnectionError
 
 class LLMRouter:
     def __init__(self, model: str, temperature: float = 1.0):
-        self.redis = redis.Redis(host='redis-server', port=6379, decode_responses=True)
+        redis_url = os.environ.get("REDIS_URL")
+        host, port = redis_url.split(":")
+        self.redis = redis.Redis(host=host, port=int(port), decode_responses=True)
 
         self.all_keys = [
             os.environ.get(f"GEMINI_API_KEY_{i}")
