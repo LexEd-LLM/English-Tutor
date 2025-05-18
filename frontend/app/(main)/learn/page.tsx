@@ -49,7 +49,7 @@ const LearnPage = async () => {
         activeCourse={userProgress.curriculum}
         isVIP={isVIP}
       />
-      <div className="flex flex-row-reverse gap-[48px] px-6 flex-1">
+      <div className="flex flex-col items-center lg:flex-row-reverse lg:justify-end gap-6 lg:gap-[48px] px-6 flex-1">
         <StickyWrapper>
           <UserProgress
             activeCourse={userProgress.curriculum}
