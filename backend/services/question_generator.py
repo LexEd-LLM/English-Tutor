@@ -11,6 +11,7 @@ from .voice_quiz_generator import generate_audio, get_phonemes
 from .image_generator import generate_image
 from .prompt_banks import POSSIBLE_CUSTOM_PROMPTS, DOK_DESCRIPTIONS, QUESTION_TYPES, DIFFICULTY_LEVELS_VOICE_QUESTIONS, DIFFICULTY_LEVELS_PHONUNCIATION_QUESTIONS
 from .quiz_service import quiz_service
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 # Base prompt template for question generation without strengths/weaknesses
 BASE_TEXT_QUESTION_TEMPLATE = """ 
@@ -126,10 +127,8 @@ async def generate_text_questions(
             count=count,
         )
 
-    # response = llm.complete(prompt)
     try:
-        response = await to_thread(llm.complete, prompt)
-        questions = parse_json_questions(response.text)
+        questions = await to_thread(generate_questions_with_retry, prompt)
         return [
             {
                 "question": q["question"],
@@ -194,23 +193,7 @@ async def generate_image_questions(
     
     try:
         prompt = prompt_template.format(vocab_list=vocab, count=count)
-        response = await to_thread(llm.complete, prompt)
-        questions = parse_json_questions(response.text)
-        
-        # Generate images for each question
-        # return [
-        #     {
-        #         "question": q["question"],
-        #         "options": q["options"],
-        #         "correct_answer": q["correct_answer"],
-        #         "type": QuestionType.IMAGE.value,
-        #         "image_url": generate_image(
-        #             f"An illustration in Duolingo flat style based on the following scene: {q.get('image_description', '')}. The image must not include any text or labels."
-        #         ),
-        #         "image_description": q.get("image_description", "")
-        #     }
-        #     for q in questions
-        # ]
+        questions = await to_thread(generate_questions_with_retry, prompt)
         
         async def _build(q):
             url = await to_thread(
@@ -288,20 +271,8 @@ async def generate_voice_questions(
         diffucult_level=diffucult_level
     )
     try:
-        response = await to_thread(llm.complete, prompt)
-        questions = parse_json_questions(response.text)
-        
-        # # Generate audio for each question
-        # return [
-        #     {
-        #         "question": q["question"],
-        #         "options": q["options"],
-        #         "correct_answer": q["correct_answer"],
-        #         "type": QuestionType.VOICE.value,
-        #         "audio_url": generate_audio(q["correct_answer"])
-        #     }
-        #     for q in questions
-        # ]
+        questions = await to_thread(generate_questions_with_retry, prompt)
+
         async def _build(q):
             audio = await to_thread(generate_audio, q["correct_answer"])
             return {
@@ -364,9 +335,8 @@ async def generate_pronunciation_questions(
         diffucult_level=diffucult_level
     )
     try:
-        response = await to_thread(llm.complete, prompt)
-        questions = parse_json_questions(response.text)
-        
+        questions = await to_thread(generate_questions_with_retry, prompt)
+
         async def _build(q):
             phonemes = get_phonemes(q["correct_answer"])
             audio = await to_thread(generate_audio, q["correct_answer"])
@@ -430,21 +400,7 @@ async def generate_questions_batch(
         voice_count=voice_count,
         custom_prompt=combined_custom_prompt,
     )
-    
-    # Generate questions
-    # text_questions = generate_text_questions(
-    #     combined_contents,
-    #     combined_prior_contents,
-    #     combined_text_chunks,
-    #     multiple_choice_count,
-    #     combined_custom_prompt,
-    # )
-    
-    # # Get maximum of dok_level to meaning difficult level
-    # image_questions = generate_image_questions(vocabs, image_count, custom_prompt)
-    # voice_questions = generate_voice_questions(vocabs, listen_count, combined_text_chunks, custom_prompt, max(dok_level))
-    # pronunciation_questions = generate_pronunciation_questions(vocabs, pronunciation_count, combined_text_chunks, custom_prompt, max(dok_level))
-    
+
     text_questions, image_questions, voice_questions, pronunciation_questions = await asyncio.gather(
         generate_text_questions(
             combined_contents,
@@ -552,3 +508,14 @@ def parse_json_questions(response_text: str) -> List[Dict[str, Any]]:
         print(f"Error parsing questions: {e}")
         print(response_text)
         return []
+    
+@retry(stop=stop_after_attempt(2), wait=wait_fixed(1))
+def generate_questions_with_retry(prompt):
+    response = llm.complete(prompt)
+    try:
+        return parse_json_questions(response.text)
+    except Exception as e:
+        error_message = str(e)
+        fix_prompt = f"""The following output could not be parsed as valid JSON due to this error:\n\n{error_message}\n\nPlease correct the JSON formatting issues below and return only a valid JSON array of question objects:\n\n{response.text}"""
+        fixed_response = llm.complete(fix_prompt)
+        return parse_json_questions(fixed_response.text)
