@@ -4,7 +4,6 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator, metrics
 from prometheus_fastapi_instrumentator.metrics import (
-    info,
     latency,
     request_size,
     response_size,
@@ -38,13 +37,11 @@ app.include_router(api_router)
 # Prometheus metrics setup
 instrumentator = Instrumentator(
     should_group_status_codes=True,
-    should_ignore_untemplated=True,
     should_respect_env_var=False,
     excluded_handlers=["/metrics", "/favicon.ico"]
 )
-
+instrumentator.add(metrics.default())
 instrumentator \
-    .add(info()) \
     .add(latency()) \
     .add(request_size()) \
     .add(response_size()) \
