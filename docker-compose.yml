@@ -40,6 +40,37 @@ services:
       - app-network
     restart: on-failure
 
+  vllm:
+    image: vllm/vllm-openai:v0.8.2
+    container_name: gemma-3-12b-it-int4-awq
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    volumes:
+      - /home/buma04/weights_llm:/models
+    command: >
+      --model /models/gemma-3-12b-it-int4-awq
+      --served_model_name gemma-3-12b
+      --max-model-len 8096
+      --tensor-parallel-size 2
+      --max-num-seqs 20
+      --gpu-memory-utilization 0.7
+      --generation-config vllm
+    ports:
+      - "8800:8000"
+    ipc: host
+    networks:
+      - app-network
+    restart: on-failure
+
+  redis-server:
+    image: redis:latest
+    container_name: redis-server
+    networks:
+      - app-network
+    restart: unless-stopped
+
 volumes:
   backend-media:
   postgres-data:
