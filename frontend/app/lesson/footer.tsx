@@ -22,7 +22,7 @@ export const Footer = ({
   isLastQuestion = false,
   allQuestionsAnswered = false,
 }: FooterProps) => {
-  const isMobile = useMedia("(max-width: 768px)");
+  const isMobile = useMedia("(max-width: 1024px)");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useKey("Enter", onNext, {}, [onNext]);
