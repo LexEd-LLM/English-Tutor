@@ -516,6 +516,6 @@ def generate_questions_with_retry(prompt):
         return parse_json_questions(response.text)
     except Exception as e:
         error_message = str(e)
-        fix_prompt = f"""The following output could not be parsed as valid JSON due to this error:\n\n{error_message}\n\nPlease correct the JSON formatting issues below and return only a valid JSON array of question objects:\n\n{response.text}"""
+        fix_prompt = f"""The following output could not be parsed as valid JSON due to this error:\n\n{error_message}\n\nPlease fix the formatting and return only the corrected JSON array of question objects.\n\nOriginal (invalid) output:\n{response.text}"""
         fixed_response = llm.complete(fix_prompt)
         return parse_json_questions(fixed_response.text)
