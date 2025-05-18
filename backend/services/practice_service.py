@@ -89,6 +89,7 @@ class PracticeService:
                     return {
                         "contents": prompt_data.get("contents", []),
                         "prior_contents": prompt_data.get("prior_contents", []),
+                        "vocabs": prompt_data.get("vocabs", []),
                         "text_chunks": prompt_data.get("text_chunks", []),
                         "multiple_choice_count": prompt_data.get("multiple_choice_count", 0),
                         "image_count": prompt_data.get("image_count", 0),
@@ -267,24 +268,12 @@ class PracticeService:
         prompt_data = await self.get_prompt_data(quiz_id)
         print("Successfully loaded prompt data")
 
-        # # Get all answers including wrong ones
-        # answers_data = await self.get_quiz_answers(quiz_id)
-        # print("Successfully loaded quiz answers")
-        
-        # # Analyze current performance
-        # user_profile = await self.analyze_performance(
-        #     quiz_id,
-        #     answers_data,
-        #     prompt_data,
-        #     user_profile
-        # )
-        # print("Successfully analyzed performance")
-
         # Generate adaptive questions
         questions_data = generate_questions_adaptive(
             quiz_id=quiz_id,
             contents=prompt_data.get("contents", None),
             prior_contents=prompt_data.get("prior_contents", None),
+            vocabs=prompt_data.get("vocabs", None),
             text_chunks=prompt_data.get("text_chunks", None),
             multiple_choice_count=prompt_data.get("multiple_choice_count", 3),
             image_count=prompt_data.get("image_count", 1),
