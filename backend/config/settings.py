@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from backend.libs.llm_router import LLMRouter
+from backend.integrators.llm_router import LLMRouter
 from transformers import pipeline
 
 _ = load_dotenv(dotenv_path=".env", override=True)

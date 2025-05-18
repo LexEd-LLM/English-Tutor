@@ -1,46 +1,24 @@
-# backend/libs/llm_router.py
+# backend/integrators/llm_router.py
 import os
 import redis
 import itertools
 from llama_index.llms.gemini import Gemini
-from backend.libs.vllm import VllmServer
+from backend.integrators.vllm import VllmServer
 from tenacity import retry, stop_after_attempt, wait_random_exponential, retry_if_exception_type
 from google.api_core.exceptions import ResourceExhausted
 from requests.exceptions import ConnectionError as RequestsConnectionError
+from backend.integrators.api_key_manager import APIKeyManager
 
 class LLMRouter:
     def __init__(self, model: str, temperature: float = 1.0):
-        redis_url = os.environ.get("REDIS_URL")
-        host, port = redis_url.split(":")
-        self.redis = redis.Redis(host=host, port=int(port), decode_responses=True)
-
-        self.all_keys = [
-            os.environ.get(f"GEMINI_API_KEY_{i}")
-            for i in range(1, 10)
-            if os.environ.get(f"GEMINI_API_KEY_{i}")
-        ]
-        main_key = os.environ.get("GEMINI_API_KEY")
-        if main_key:
-            self.all_keys.append(main_key)
-
-        if not self.all_keys:
-            raise ValueError("No Gemini API keys found.")
-
+        self.key_manager = APIKeyManager(purpose="text")
+        self.redis = self.key_manager.get_redis()
+        self.key_iterator = self.key_manager.key_cycle()
+        
         self.model = model
         self.temperature = temperature
-        self.key_iterator = self._key_cycle()
 
         self._init_llm()
-
-    def _key_cycle(self):
-        while True:
-            active_keys = [key for key in self.all_keys if not self.redis.exists(f"cooldown:{key}")]
-            if not active_keys:
-                yield None  # Tín hiệu hết key → fallback
-            else:
-                for key in active_keys:
-                    yield key
-
 
     def _init_llm(self):
         next_key = next(self.key_iterator)

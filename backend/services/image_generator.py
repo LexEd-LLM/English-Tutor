@@ -1,11 +1,10 @@
-import base64
-import os
 import mimetypes
 import uuid
 from pathlib import Path
 from google import genai
 from google.genai import types
 from ..config.settings import img_model
+from ..integrators.api_key_manager import APIKeyManager
 
 def save_binary_file(file_name: str, data: bytes) -> None:
     """Save binary data to a file"""
@@ -27,14 +26,9 @@ def generate_image(prompt: str) -> str:
         img_dir = Path("media/images")
         img_dir.mkdir(parents=True, exist_ok=True)
         
-        api_keys = [
-            os.environ.get(f"GEMINI_API_KEY_{i}")
-            for i in range(1, 10)
-            if os.environ.get(f"GEMINI_API_KEY_{i}")
-        ]
-        if os.environ.get("GEMINI_API_KEY"):
-            api_keys.insert(0, os.environ["GEMINI_API_KEY"])
-        
+        key_manager = APIKeyManager(purpose="image")
+        key_iterator = key_manager.key_cycle()
+
         # Prepare content for generation
         contents = [
             types.Content(
@@ -52,7 +46,12 @@ def generate_image(prompt: str) -> str:
         )
         
         # Generate image
-        for api_key in api_keys:
+        while True:
+            api_key = next(key_iterator)
+            if api_key is None:
+                print("[Error] All API keys are on cooldown.")
+                return ""
+
             try:
                 client = genai.Client(api_key=api_key)
                 for chunk in client.models.generate_content_stream(
@@ -74,6 +73,7 @@ def generate_image(prompt: str) -> str:
             except Exception as e:
                 if "RESOURCE_EXHAUSTED" in str(e) or "quota" in str(e).lower():
                     print(f"[Quota] API key exceeded. Trying next key...")
+                    key_manager.mark_key_exhausted(api_key)
                     continue
                 print(f"[Other Error] {e}")
                 break
