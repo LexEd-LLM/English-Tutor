@@ -1,9 +1,11 @@
+import asyncio
+from asyncio import to_thread
 from typing import List
 from llama_index.core.prompts import PromptTemplate
 from ..config.settings import llm
 from googletrans import Translator
 
-def generate_explanation_mcq(question: str, correct_answer: str, user_answer: str, options: List[dict]) -> str:
+async def generate_explanation_mcq(question: str, correct_answer: str, user_answer: str, options: List[dict]) -> str:
     """Generate explanation for a question."""
     option_text = "\n".join(
         [f"{chr(65+i)}. {opt['text']}{' (Đáp án đúng)' if opt['correct'] else ''}" for i, opt in enumerate(options)]
@@ -29,10 +31,10 @@ def generate_explanation_mcq(question: str, correct_answer: str, user_answer: st
         user_answer=user_answer,
         option_text=option_text
     )
-    response = llm.complete(prompt)
+    response = await to_thread(llm.complete, prompt)
     return "\n".join(response.text.splitlines()[1:])
 
-def generate_explanation_pronunciation(question: str, correct_answer: str, user_answer: str) -> str:
+async def generate_explanation_pronunciation(question: str, correct_answer: str, user_answer: str) -> str:
     """Generate explanation for a question."""
     template = PromptTemplate(
         template=(
@@ -64,7 +66,7 @@ def generate_explanation_pronunciation(question: str, correct_answer: str, user_
         correct_answer=correct_answer,
         user_answer=user_answer
     )
-    response = llm.complete(prompt)
+    response = await to_thread(llm.complete, prompt)
     return "\n".join(response.text.splitlines())
 
 async def generate_explanation_image(options: List[dict]) -> str:
