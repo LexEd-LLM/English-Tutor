@@ -12,10 +12,17 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    services:
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+
     env:
       DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
       PYTHONPATH: ${{ github.workspace }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      REDIS_URL: localhost:6379
 
     steps:
       - name: Checkout code
@@ -65,5 +72,5 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            docker compose -f /home/${{ secrets.SSH_USER }}/ai-questgen/docker-compose.yml down
-            tmux send-keys -t ${{ secrets.TMUX_SESSION_NAME }}:0.0 "cd /home/${{ secrets.SSH_USER }}/ai-questgen && git pull origin main && docker compose up --build" C-m
+            docker compose -f /home/${{ secrets.SSH_USER }}/English-Tutor/docker-compose.yml down
+            tmux send-keys -t ${{ secrets.TMUX_SESSION_NAME }}:0.0 "cd /home/${{ secrets.SSH_USER }}/English-Tutor && git pull origin main && docker compose up --build" C-m

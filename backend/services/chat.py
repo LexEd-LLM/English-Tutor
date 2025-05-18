@@ -1,5 +1,6 @@
 # services/chat_service.py
-from __future__ import annotations
+import asyncio
+from asyncio import to_thread
 from typing import List, Dict
 from llama_index.core.llms import ChatMessage, MessageRole
 from llama_index.core.prompts import ChatPromptTemplate
@@ -40,7 +41,7 @@ CHATBOT_PROMPT = ChatPromptTemplate(
 )
 
 # ---------- 2. Hàm chính ---------- #
-def chat(
+async def chat(
     history: List[Dict[str, str]],
     page_content: str,
     query: str,
@@ -65,5 +66,5 @@ def chat(
     full_messages = messages[:1] + chat_history[-10:] + messages[1:]
 
     # 4. Gọi LLM
-    response = llm.chat(full_messages)
+    response = await to_thread(llm.chat, full_messages)
     return response.message.content.strip()

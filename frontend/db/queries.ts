@@ -366,7 +366,9 @@ export const getUserQuizAccuracy = cache(async (quizId: number) => {
   });
 
   const questionIds = questions.map((q) => q.id);
-  if (questionIds.length === 0) return "0/0";
+  const totalQuestions = questionIds.length;
+
+  if (totalQuestions === 0) return "0/0";
 
   // Đếm số câu đúng
   const correctAnswers = await db.query.userAnswers.findMany({
@@ -376,12 +378,9 @@ export const getUserQuizAccuracy = cache(async (quizId: number) => {
     )
   });
 
-  // Tổng số câu trả lời
-  const totalAnswers = await db.query.userAnswers.findMany({
-    where: inArray(userAnswers.questionId, questionIds)
-  });
+  const correctCount = correctAnswers.length;
 
-  return `${correctAnswers.length}/${totalAnswers.length}`;
+  return `${correctCount}/${totalQuestions}`;
 });
 
 export const getUserQuizQuestions = async () => {

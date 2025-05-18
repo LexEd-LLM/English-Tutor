@@ -1,3 +1,5 @@
+import asyncio
+from asyncio import to_thread
 from typing import List, Dict, Any, Optional
 from backend.services.question_generator import generate_questions_adaptive
 from ..config.settings import llm
@@ -5,6 +7,7 @@ from llama_index.core.prompts import PromptTemplate
 from backend.database.database import get_db
 import json
 from .quiz_service import quiz_service
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 class PracticeService:
     def __init__(self):
@@ -23,6 +26,7 @@ class PracticeService:
                 
                 result = cur.fetchone()
                 if result and result["strengths"] and result["weaknesses"]:
+                    print("Successfully loaded user profile")
                     return {
                         "strengths": result["strengths"].split("\n"),
                         "weaknesses": result["weaknesses"].split("\n")
@@ -65,7 +69,7 @@ class PracticeService:
                         "userPhonemes": row["user_phonemes"],
                     }
                     all_answers.append(answer)
-                        
+                print("Successfully loaded quiz answers")
                 return all_answers
         finally:
             conn.close()
@@ -84,9 +88,11 @@ class PracticeService:
                 result = cur.fetchone()
                 if result and result["prompt"]:
                     prompt_data = result["prompt"]
+                    print("Successfully loaded prompt data")
                     return {
                         "contents": prompt_data.get("contents", []),
                         "prior_contents": prompt_data.get("prior_contents", []),
+                        "vocabs": prompt_data.get("vocabs", []),
                         "text_chunks": prompt_data.get("text_chunks", []),
                         "multiple_choice_count": prompt_data.get("multiple_choice_count", 0),
                         "image_count": prompt_data.get("image_count", 0),
@@ -126,10 +132,7 @@ class PracticeService:
         except Exception as e:
             print(f"Error parsing response: {e}")
             print(f"Response text: {response_text}")
-            return {
-                "strengths": {},
-                "weaknesses": {}
-            }
+            raise e
     
     async def analyze_performance(
         self,
@@ -217,9 +220,8 @@ class PracticeService:
             all_answers=formatted_answers
         )
 
-        response = llm.complete(prompt)
         try:
-            analysis = self.parse_json_response(response.text)
+            analysis = await to_thread(self.generate_analysis_with_retry, prompt)
             # Store the updated profile
             strengths = analysis.get("strengths", {})
             weaknesses = analysis.get("weaknesses", {})
@@ -265,24 +267,12 @@ class PracticeService:
         prompt_data = await self.get_prompt_data(quiz_id)
         print("Successfully loaded prompt data")
 
-        # # Get all answers including wrong ones
-        # answers_data = await self.get_quiz_answers(quiz_id)
-        # print("Successfully loaded quiz answers")
-        
-        # # Analyze current performance
-        # user_profile = await self.analyze_performance(
-        #     quiz_id,
-        #     answers_data,
-        #     prompt_data,
-        #     user_profile
-        # )
-        # print("Successfully analyzed performance")
-
         # Generate adaptive questions
-        questions_data = generate_questions_adaptive(
+        questions_data = await generate_questions_adaptive(
             quiz_id=quiz_id,
             contents=prompt_data.get("contents", None),
             prior_contents=prompt_data.get("prior_contents", None),
+            vocabs=prompt_data.get("vocabs", None),
             text_chunks=prompt_data.get("text_chunks", None),
             multiple_choice_count=prompt_data.get("multiple_choice_count", 3),
             image_count=prompt_data.get("image_count", 1),
@@ -296,5 +286,17 @@ class PracticeService:
         
         # Append new questions to existing quiz
         return quiz_service.append_questions_to_quiz(quiz_id, questions_data)
+    
+    @retry(stop=stop_after_attempt(2), wait=wait_fixed(1))
+    def generate_analysis_with_retry(self, prompt: str) -> Dict[str, Any]:
+        response = llm.complete(prompt)
+        try:
+            return self.parse_json_response(response.text)
+        except Exception as e:
+            print("Retrying question generation...")
+            error_message = str(e)
+            fix_prompt = f"""Output dưới đây không thể phân tích cú pháp JSON do lỗi này:\n\n{error_message}\n\nHãy chỉ trả về JSON đã được sửa lại (object) hợp lệ, không kèm text nào khác.\n\nOriginal (invalid) output:\n{response.text}"""
+            fixed_response = llm.complete(fix_prompt)
+            return self.parse_json_response(fixed_response.text)
 
 practice_service = PracticeService() 

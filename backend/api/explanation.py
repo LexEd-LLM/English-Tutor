@@ -10,7 +10,7 @@ router = APIRouter(tags=["explanation"], prefix="/api/quiz")
 async def generate_explanation_api(request: ExplanationRequest):
     try:
         if request.type == "PRONUNCIATION":
-            explanation = generate_explanation_pronunciation(
+            explanation = await generate_explanation_pronunciation(
                 question=request.question_text, 
                 correct_answer=request.correct_answer, 
                 user_answer=request.user_answer
@@ -18,7 +18,7 @@ async def generate_explanation_api(request: ExplanationRequest):
         elif request.type == "IMAGE":
             explanation = await generate_explanation_image(request.options)
         else:
-            explanation = generate_explanation_mcq(
+            explanation = await generate_explanation_mcq(
                 question=request.question_text, 
                 correct_answer=request.correct_answer, 
                 user_answer=request.user_answer,

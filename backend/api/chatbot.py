@@ -20,7 +20,7 @@ class ChatResponse(BaseModel):
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(body: ChatRequest):
     try:
-        answer = chat_service(
+        answer = await chat_service(
             history=body.history,
             page_content=body.pageContent,
             query=body.promptText,

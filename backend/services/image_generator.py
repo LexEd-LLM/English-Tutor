@@ -5,6 +5,7 @@ import uuid
 from pathlib import Path
 from google import genai
 from google.genai import types
+from google.api_core.exceptions import ResourceExhausted
 from ..config.settings import img_model
 
 def save_binary_file(file_name: str, data: bytes) -> None:
@@ -27,10 +28,13 @@ def generate_image(prompt: str) -> str:
         img_dir = Path("media/images")
         img_dir.mkdir(parents=True, exist_ok=True)
         
-        # Initialize Gemini client
-        client = genai.Client(
-            api_key=os.environ.get("GEMINI_API_KEY"),
-        )
+        api_keys = [
+            os.environ.get(f"GEMINI_API_KEY_{i}")
+            for i in range(1, 10)
+            if os.environ.get(f"GEMINI_API_KEY_{i}")
+        ]
+        if os.environ.get("GEMINI_API_KEY"):
+            api_keys.insert(0, os.environ["GEMINI_API_KEY"])
         
         # Prepare content for generation
         contents = [
@@ -49,27 +53,32 @@ def generate_image(prompt: str) -> str:
         )
         
         # Generate image
-        for chunk in client.models.generate_content_stream(
-            model=img_model,
-            contents=contents,
-            config=generate_content_config,
-        ):
-            if not chunk.candidates or not chunk.candidates[0].content or not chunk.candidates[0].content.parts:
+        for api_key in api_keys:
+            try:
+                client = genai.Client(api_key=api_key)
+                for chunk in client.models.generate_content_stream(
+                    model=img_model,
+                    contents=contents,
+                    config=generate_content_config,
+                ):
+                    if not chunk.candidates or not chunk.candidates[0].content or not chunk.candidates[0].content.parts:
+                        continue
+
+                    if chunk.candidates[0].content.parts[0].inline_data:
+                        filename = f"{uuid.uuid4()}"
+                        inline_data = chunk.candidates[0].content.parts[0].inline_data
+                        file_extension = mimetypes.guess_extension(inline_data.mime_type)
+                        filepath = img_dir / f"{filename}{file_extension}"
+                        save_binary_file(str(filepath), inline_data.data)
+                        return f"/media/images/{filename}{file_extension}"
+
+            except ResourceExhausted:
+                print(f"[Quota] API key exceeded. Trying next key...")
                 continue
-                
-            if chunk.candidates[0].content.parts[0].inline_data:
-                # Generate unique filename
-                filename = f"{uuid.uuid4()}"
-                inline_data = chunk.candidates[0].content.parts[0].inline_data
-                file_extension = mimetypes.guess_extension(inline_data.mime_type)
-                
-                # Save file
-                filepath = img_dir / f"{filename}{file_extension}"
-                save_binary_file(str(filepath), inline_data.data)
-                
-                # Return relative path
-                return f"/media/images/{filename}{file_extension}"
-                
+            except Exception as e:
+                print(f"[Other Error] {e}")
+                break
+
         return ""
         
     except Exception as e:

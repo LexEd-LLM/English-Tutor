@@ -144,7 +144,10 @@ export default function ExplanationPage() {
         options: question.options,
         correctAnswer: question.correctAnswer,
         type: question.type,
-        userAnswer: question.type === "PRONUNCIATION" ? question.userPhonemes : question.userAnswer,
+        userAnswer: 
+          question.type === "PRONUNCIATION" 
+            ? question.userPhonemes 
+            : question.userAnswer || question.correctAnswer,
       };
   
       const { explanation, saved } = await generateExplanation(payload);
