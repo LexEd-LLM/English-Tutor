@@ -149,7 +149,8 @@ def generate_image_questions(
             You are an educational content creation expert. Create {count} English vocabulary learning questions using images based on the following vocabulary list:
             {vocab_list}
             
-            Requirements:
+            
+            ## TASK REQUIREMENTS
             1. Each question must focus on **one specific vocabulary word** that is a noun and can be visualized with an image.
             2. For each word:
                 - Create a question: What is this?
@@ -170,7 +171,17 @@ def generate_image_questions(
             - type: "image"
             - image_description: detailed description for image generation
             
-            Generate exactly {count} questions.
+            ## FORMAT INSTRUCTIONS
+            Return the output as a valid JSON array of {count} question objects. Each object must strictly follow this schema:
+            ```json
+            {
+            "question": "What is this?",
+            "options": array of 4 English words,
+            "correct_answer": "the correct English word",
+            "type": "image",
+            "image_description": "Detailed visual description here"
+            }
+            ```
         """
     )
     
