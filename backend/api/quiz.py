@@ -1,9 +1,10 @@
 import psycopg2
 import random
+import asyncio
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from typing import List
-
+from asyncio import to_thread
 from backend.schemas.quiz import (
     QuizItem,
     QuizOption,
@@ -128,10 +129,12 @@ async def generate_quiz(request: QuizRequest):
     )
     
     # Convert each question type
-    multiple_choice_items = convert_to_quiz_items(questions_data["multiple_choice_questions"], 0)
-    image_items = convert_to_quiz_items(questions_data["image_questions"], len(multiple_choice_items))
-    voice_items = convert_to_quiz_items(questions_data["voice_questions"], len(multiple_choice_items) + len(image_items))
-    pronunc_items = convert_to_quiz_items(questions_data["pronunciation_questions"], len(multiple_choice_items) + len(image_items) + len(voice_items))
+    multiple_choice_items, image_items, voice_items, pronunc_items = await asyncio.gather(
+        to_thread(convert_to_quiz_items, questions_data["multiple_choice_questions"], 0),
+        to_thread(convert_to_quiz_items, questions_data["image_questions"], len(questions_data["multiple_choice_questions"])),
+        to_thread(convert_to_quiz_items, questions_data["voice_questions"], len(questions_data["multiple_choice_questions"]) + len(questions_data["image_questions"])),
+        to_thread(convert_to_quiz_items, questions_data["pronunciation_questions"], len(questions_data["multiple_choice_questions"]) + len(questions_data["image_questions"]) + len(questions_data["voice_questions"]))
+    )
     
     # Save questions to database
     all_items = multiple_choice_items + image_items + voice_items + pronunc_items
@@ -276,14 +279,14 @@ async def submit_quiz(submission: QuizSubmission):
         # === Analyze and comment on user's performance ===
         quiz_id = submission.quizId
 
-        user_profile = await practice_service.load_user_profile(quiz_id)
-        print("Successfully loaded user profile")
+        user_profile_task = practice_service.load_user_profile(quiz_id)
+        prompt_data_task = practice_service.get_prompt_data(quiz_id)
+        answers_data_task = practice_service.get_quiz_answers(quiz_id)
 
-        prompt_data = await practice_service.get_prompt_data(quiz_id)
-        print("Successfully loaded prompt data")
+        user_profile, prompt_data, answers_data = await asyncio.gather(
+            user_profile_task, prompt_data_task, answers_data_task
+        )
 
-        answers_data = await practice_service.get_quiz_answers(quiz_id)
-        print("Successfully loaded quiz answers")
 
         user_profile = await practice_service.analyze_performance(
             quiz_id,
