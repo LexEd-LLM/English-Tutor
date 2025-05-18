@@ -470,10 +470,10 @@ async def generate_questions_adaptive(
         ),
         generate_image_questions(vocabs, image_count, custom_prompt),
         generate_voice_questions(
-            vocabs, listen_count, text_chunks, custom_prompt, max(dok_level)
+            vocabs, listen_count, text_chunks, custom_prompt, dok_level
         ),
         generate_pronunciation_questions(
-            vocabs, pronunciation_count, text_chunks, custom_prompt, max(dok_level)
+            vocabs, pronunciation_count, text_chunks, custom_prompt, dok_level
         ),
     )
     
