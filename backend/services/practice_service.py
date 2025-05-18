@@ -269,7 +269,7 @@ class PracticeService:
         print("Successfully loaded prompt data")
 
         # Generate adaptive questions
-        questions_data = generate_questions_adaptive(
+        questions_data = await generate_questions_adaptive(
             quiz_id=quiz_id,
             contents=prompt_data.get("contents", None),
             prior_contents=prompt_data.get("prior_contents", None),
