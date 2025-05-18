@@ -1,3 +1,5 @@
+import asyncio
+from asyncio import to_thread
 from typing import List, Dict, Any, Optional
 from backend.services.question_generator import generate_questions_adaptive
 from ..config.settings import llm
@@ -5,6 +7,7 @@ from llama_index.core.prompts import PromptTemplate
 from backend.database.database import get_db
 import json
 from .quiz_service import quiz_service
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 class PracticeService:
     def __init__(self):
@@ -129,10 +132,7 @@ class PracticeService:
         except Exception as e:
             print(f"Error parsing response: {e}")
             print(f"Response text: {response_text}")
-            return {
-                "strengths": {},
-                "weaknesses": {}
-            }
+            raise e
     
     async def analyze_performance(
         self,
@@ -220,9 +220,8 @@ class PracticeService:
             all_answers=formatted_answers
         )
 
-        response = llm.complete(prompt)
         try:
-            analysis = self.parse_json_response(response.text)
+            analysis = await to_thread(self.generate_analysis_with_retry, prompt)
             # Store the updated profile
             strengths = analysis.get("strengths", {})
             weaknesses = analysis.get("weaknesses", {})
@@ -287,5 +286,17 @@ class PracticeService:
         
         # Append new questions to existing quiz
         return quiz_service.append_questions_to_quiz(quiz_id, questions_data)
+    
+    @retry(stop=stop_after_attempt(2), wait=wait_fixed(1))
+    def generate_analysis_with_retry(self, prompt: str) -> Dict[str, Any]:
+        response = llm.complete(prompt)
+        try:
+            return self.parse_json_response(response.text)
+        except Exception as e:
+            print("Retrying question generation...")
+            error_message = str(e)
+            fix_prompt = f"""Output dưới đây không thể phân tích cú pháp JSON do lỗi này:\n\n{error_message}\n\nHãy chỉ trả về JSON đã được sửa lại (object) hợp lệ, không kèm text nào khác.\n\nOriginal (invalid) output:\n{response.text}"""
+            fixed_response = llm.complete(fix_prompt)
+            return self.parse_json_response(fixed_response.text)
 
 practice_service = PracticeService() 
