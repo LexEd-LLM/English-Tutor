@@ -96,7 +96,7 @@ async def upload_audio(
         is_correct = score >= 0.8
         
         # Generate explanation (optional here, can be regenerated on submit)
-        explanation = generate_explanation_pronunciation(question_text, correct_answer_json, user_phonemes)
+        explanation = await generate_explanation_pronunciation(question_text, correct_answer_json, user_phonemes)
 
         # Save user_phonemes and explanation to DB
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
