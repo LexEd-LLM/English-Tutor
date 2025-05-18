@@ -70,7 +70,6 @@ services:
 
   redis-server:
     image: redis:latest
-    container_name: redis-server
     networks:
       - app-network
     restart: unless-stopped
