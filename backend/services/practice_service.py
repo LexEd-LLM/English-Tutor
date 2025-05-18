@@ -23,6 +23,7 @@ class PracticeService:
                 
                 result = cur.fetchone()
                 if result and result["strengths"] and result["weaknesses"]:
+                    print("Successfully loaded user profile")
                     return {
                         "strengths": result["strengths"].split("\n"),
                         "weaknesses": result["weaknesses"].split("\n")
@@ -65,7 +66,7 @@ class PracticeService:
                         "userPhonemes": row["user_phonemes"],
                     }
                     all_answers.append(answer)
-                        
+                print("Successfully loaded quiz answers")
                 return all_answers
         finally:
             conn.close()
@@ -84,6 +85,7 @@ class PracticeService:
                 result = cur.fetchone()
                 if result and result["prompt"]:
                     prompt_data = result["prompt"]
+                    print("Successfully loaded prompt data")
                     return {
                         "contents": prompt_data.get("contents", []),
                         "prior_contents": prompt_data.get("prior_contents", []),
