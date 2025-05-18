@@ -10,7 +10,7 @@ services:
     volumes:
       - backend-media:/app/backend/media
     env_file:
-    - backend/.env
+      - backend/.env
     networks:
       - app-network
     healthcheck:
