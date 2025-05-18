@@ -19,3 +19,4 @@ pytest
 httpx 
 pytest-asyncio
 redis
+prometheus_fastapi_instrumentator
