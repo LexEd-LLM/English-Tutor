@@ -3,6 +3,9 @@ import os
 import re
 from typing import Iterator, Optional
 import redis
+from dotenv import load_dotenv
+
+load_dotenv(".env")
 
 class APIKeyManager:
     def __init__(self, key_prefix: str = "GEMINI_API_KEY", purpose: str = "default"):
