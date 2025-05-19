@@ -46,7 +46,7 @@ class APIKeyManager:
                 for k in active:
                     yield k
 
-    def mark_key_exhausted(self, key: str, cooldown_seconds: int = 600):
+    def mark_key_exhausted(self, key: str, cooldown_seconds: int = 90):
         cooldown_key = self._cooldown_key(key)
         print(f"[Quota-{self.purpose}] Cooling down key {key[:8]} for {cooldown_seconds}s")
         self.redis.setex(cooldown_key, cooldown_seconds, "1")
