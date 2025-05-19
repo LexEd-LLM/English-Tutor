@@ -73,4 +73,4 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             docker compose -f /home/${{ secrets.SSH_USER }}/English-Tutor/docker-compose.yml down
-            tmux send-keys -t ${{ secrets.TMUX_SESSION_NAME }}:0.0 "cd /home/${{ secrets.SSH_USER }}/English-Tutor && git pull origin main && COMPOSE_BAKE=true docker compose up --build" C-m
+            tmux send-keys -t ${{ secrets.TMUX_SESSION_NAME }}:0.0 "cd /home/${{ secrets.SSH_USER }}/English-Tutor && git fetch origin && git reset --hard origin/main && COMPOSE_BAKE=true docker compose up --build" C-m
