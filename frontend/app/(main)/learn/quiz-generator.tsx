@@ -36,9 +36,9 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
   const [progress, setProgress] = useState(0);
   const [dokLevel, setDokLevel] = useState<(1 | 2 | 3)[]>([1]);
   const [counts, setCounts] = useState({
-    multipleChoice: 20,
-    image: 5,
-    voice: 5,
+    multipleChoice: 25,
+    image: 2,
+    voice: 3,
   });
 
   const handleGenerateQuiz = async () => {
