@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ResultCard } from "./result-card";
 import { Footer } from "./footer";
 import { generatePracticeQuiz, getUserProfile, Role, getStrengthWeakness } from "./api";
+import { useAuth } from "@clerk/nextjs";
 
 interface QuizResult {
   success: boolean;
@@ -35,6 +36,7 @@ export default function ResultPage() {
 
   const [userRole, setUserRole] = useState<Role | null>(null);
   const [userHearts, setUserHearts] = useState<number>(5);
+  const { userId, isSignedIn } = useAuth();
 
   const { width, height } = useWindowSize();
   const [finishAudio] = useAudio({
@@ -63,8 +65,8 @@ export default function ResultPage() {
             });
         }
 
-        if (parsedResults.userId) {
-          getUserProfile(parsedResults.userId)
+        if (userId) {
+          getUserProfile(userId)
             .then((profile) => {
               setUserRole(profile.role);
               setUserHearts(profile.hearts);
