@@ -45,7 +45,7 @@ class PracticeService:
             with conn.cursor() as cur:
                 cur.execute("""
                     SELECT 
-                        qq.question_text as question,
+                        qq.question_text AS question,
                         qq.options,
                         qq.correct_answer,
                         ua.user_answer,
@@ -54,8 +54,13 @@ class PracticeService:
                     FROM user_answers ua
                     JOIN quiz_questions qq ON ua.question_id = qq.id
                     WHERE qq.quiz_id = %s
+                    AND qq.lesson_id = (
+                        SELECT MAX(lesson_id)
+                        FROM quiz_questions
+                        WHERE quiz_id = %s
+                    )
                     ORDER BY ua.submitted_at DESC
-                """, (quiz_id,))
+                """, (quiz_id, quiz_id))
                 
                 results = cur.fetchall()
                 all_answers = []
@@ -145,60 +150,61 @@ class PracticeService:
         
         prompt_template = PromptTemplate(
             template="""
-            Bạn là một giáo viên tiếng Anh có nhiều kinh nghiệm trong việc hướng dẫn học sinh cải thiện kỹ năng ngôn ngữ. Hãy đánh giá phần làm bài của học sinh dựa trên các câu trả lời đã cung cấp.
+Bạn là một giáo viên tiếng Anh có nhiều kinh nghiệm trong việc hướng dẫn học sinh cải thiện kỹ năng ngôn ngữ. Hãy đánh giá phần làm bài của học sinh dựa trên các câu trả lời đã cung cấp.
 
-            ## Hồ sơ học tập trước đây:
-            - Điểm mạnh: {prev_strengths}
-            - Điểm yếu: {prev_weaknesses}
+## Hồ sơ học tập trước đây:
+- Điểm mạnh: {prev_strengths}
+- Điểm yếu: {prev_weaknesses}
 
-            ## Nội dung học:
-            {learning_content}
-            
-            ## Hướng dẫn bài tập (hệ thống chỉ có 3 cấp độ DOK Level):
-            {custom_prompt}
+## Nội dung học:
+{learning_content}
 
-            ## Bài làm của học sinh:
-            {all_answers}
-            
-            Nhiệm vụ của bạn:
-            - Phân tích các **lỗi sai** (nếu có) và phân loại rõ ràng theo nhóm sau:
-                - **Từ vựng**: dùng sai nghĩa, chọn từ không phù hợp với ngữ cảnh
-                - **Ngữ pháp**: sai về thì, câu điều kiện, câu bị động, so sánh, chia động từ, mệnh đề,...
-                - **Dạng từ**: nhầm lẫn giữa danh từ, động từ, tính từ, trạng từ,...
-                - **Phát âm**: chỉ áp dụng nếu có câu hỏi liên quan đến phát âm
-                - **Khác**: những lỗi không nằm trong các nhóm trên (ví dụ: lỗi chính tả, diễn đạt,...)
-            - Nhận xét điểm mạnh/yếu **ngắn gọn, khái quát**. **TUYỆT ĐỐI KHÔNG** nêu ví dụ cụ thể.
-            - Không dùng câu kiểu: "Ví dụ:..." hoặc "Trong câu..." hoặc trích dẫn câu hỏi.
-            - Xác định các điểm mạnh nổi bật. Nếu có điểm nào chưa tốt, hãy nêu rõ điểm yếu cần cải thiện.
-            - Nếu học sinh đã làm đúng toàn bộ các câu hỏi và bài tập thuộc DOK Level 3, hãy ghi nhận toàn bộ điểm mạnh. Trong trường hợp này, KHÔNG đưa ra bất kỳ điểm yếu nào. Trả về "Không" trong phần "weaknesses".
-            - Tuyệt đối không tự suy diễn rằng bài tập còn đơn giản nếu thông tin đã nêu rõ đó là DOK Level 3.
-            - Viết nhận xét một cách ngắn gọn, rõ ràng, giống như đang trực tiếp nhận xét với học sinh.
-            - Tránh dùng các từ như "Người học" hay "The student". Ưu tiên dùng "em" hoặc viết tự nhiên như một lời nhận xét thân thiện.
-            - Viết bằng **tiếng Việt**.
+## Hướng dẫn bài tập (hệ thống chỉ có 3 cấp độ DOK Level):
+{custom_prompt}
 
-            ### Định dạng đầu ra (chỉ trả về JSON hợp lệ, không thêm bất kỳ văn bản nào khác):
-            {
-                "strengths": {
-                    "point_1": "Nhận xét điểm mạnh cụ thể",
-                    "point_2": "Một điểm mạnh khác",
-                    ...
-                },
-                "weaknesses": {
-                    "point_1": "Nhận xét điểm yếu cụ thể",
-                    "point_2": "Một điểm yếu khác",
-                    ...
-                }
-            }
-            Chỉ trả về JSON. Không thêm bất kỳ giải thích hay văn bản nào bên ngoài JSON.
+## Bài làm của học sinh:
+{all_answers}
+
+Nhiệm vụ của bạn:
+- Phân tích các **lỗi sai** (nếu có) và phân loại rõ ràng theo nhóm sau:
+    - **Từ vựng**: dùng sai nghĩa, chọn từ không phù hợp với ngữ cảnh
+    - **Ngữ pháp**: sai về thì, câu điều kiện, câu bị động, so sánh, chia động từ, mệnh đề,...
+    - **Dạng từ**: nhầm lẫn giữa danh từ, động từ, tính từ, trạng từ,...
+    - **Phát âm**: chỉ áp dụng nếu có câu hỏi liên quan đến phát âm
+    - **Khác**: những lỗi không nằm trong các nhóm trên (ví dụ: lỗi chính tả, diễn đạt,...)
+- Nhận xét điểm mạnh/yếu **ngắn gọn, khái quát**. **TUYỆT ĐỐI KHÔNG** nêu ví dụ cụ thể.
+- So sánh với điểm mạnh và điểm yếu trước đây để cho biết em đã duy trì, cải thiện hay chưa cải thiện những điểm nào.
+- Không dùng câu kiểu: "Ví dụ:..." hoặc "Trong câu..." hoặc trích dẫn câu hỏi.
+- Xác định các điểm mạnh nổi bật. Nếu có điểm nào chưa tốt, hãy nêu rõ điểm yếu cần cải thiện.
+- Nếu học sinh đã làm đúng toàn bộ các câu hỏi và bài tập thuộc DOK Level 3, hãy ghi nhận toàn bộ điểm mạnh. Trong trường hợp này, KHÔNG đưa ra bất kỳ điểm yếu nào. Trả về "Không" trong phần "weaknesses".
+- Tuyệt đối không tự suy diễn rằng bài tập còn đơn giản nếu thông tin đã nêu rõ đó là DOK Level 3.
+- Viết nhận xét một cách ngắn gọn, rõ ràng, giống như đang trực tiếp nhận xét với học sinh.
+- Tránh dùng các từ như "Người học" hay "The student". Ưu tiên dùng "em" hoặc viết tự nhiên như một lời nhận xét thân thiện.
+- Viết bằng **tiếng Việt**.
+
+### Định dạng đầu ra (chỉ trả về JSON hợp lệ, không thêm bất kỳ văn bản nào khác):
+{
+    "strengths": {
+        "point_1": "Nhận xét điểm mạnh cụ thể",
+        "point_2": "Một điểm mạnh khác",
+        ...
+    },
+    "weaknesses": {
+        "point_1": "Nhận xét điểm yếu cụ thể",
+        "point_2": "Một điểm yếu khác",
+        ...
+    }
+}
+Chỉ trả về JSON. Không thêm bất kỳ giải thích hay văn bản nào bên ngoài JSON.
             """
         )
 
         # === Combine learning content ===
-        learning_content = "\n".join(prompt_data.get("prior_contents", []) + prompt_data.get("contents", []))
-        
+        learning_content = f"{prompt_data.get("prior_contents", [])}\n{prompt_data.get("contents", [])}"
+
         # === Format previous profile ===
-        prev_strengths = ", ".join(previous_profile.get("strengths", [])) or "None identified yet"
-        prev_weaknesses = ", ".join(previous_profile.get("weaknesses", [])) or "None identified yet"
+        prev_strengths = " ".join(previous_profile.get("strengths", [])) or "None identified yet"
+        prev_weaknesses = " ".join(previous_profile.get("weaknesses", [])) or "None identified yet"
 
         # === Format answers for prompt ===
         formatted_answers = "\n\n".join(
@@ -226,7 +232,6 @@ class PracticeService:
             custom_prompt=prompt_data.get("custom_prompt", ""),
             all_answers=formatted_answers
         )
-
         try:
             analysis = await to_thread(self.generate_analysis_with_retry, prompt)
             # Store the updated profile

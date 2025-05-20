@@ -53,7 +53,7 @@ Return exactly {count} questions.
 ADAPTIVE_QUESTION_TEMPLATE = """ 
 You are helping Vietnamese students improve their English through personalized and diverse multiple-choice questions.
 
-Use the materials below for inspiration. You are NOT limited to the exact sentences. You may adapt, merge, or simplify ideas to create natural, exam-style questions.
+Use the materials below for inspiration. You are NOT limited to the exact sentences. You may **adapt freely**—rephrase, combine, or simplify so items feel natural in Vietnamese school exams.
 
 { 
   "main_knowledge": "{content}",
@@ -69,7 +69,11 @@ Instruction:
 Create {count} unique multiple-choice questions based on the above.
 
 Guidelines:
-1. Adapt content to address weaknesses and reinforce strengths in the adaptive_prompt.
+1. **Target weaknesses first.**  
+   - Extract every weakness mentioned in *adaptive_prompt*.  
+   - Devote above **70%** of the items to testing or contrasting those weaknesses.  
+   - Each weakness must appear in at least one item.
+   - Use the **30%** or fewer slots that are not allocated to weaknesses to practice or reinforce strengths noted in adaptive_prompt.
 2. Vary question types and difficulty levels. Avoid repeating formats.
 3. Questions should feel suitable for Vietnamese textbooks or exams.
 4. In "question", include only the stem. Put 4 options in "options".
@@ -113,6 +117,7 @@ async def generate_text_questions(
             custom_prompt=custom_prompt,
             question_types=question_types,
             count=count,
+            adaptive_prompt=adaptive_prompt
         )
     else:   
         template = BASE_TEXT_QUESTION_TEMPLATE
@@ -123,7 +128,6 @@ async def generate_text_questions(
             text_chunks=text_chunks,
             custom_prompt=custom_prompt,
             question_types=question_types,
-            adaptive_prompt=adaptive_prompt,
             count=count,
         )
 
