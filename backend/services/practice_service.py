@@ -161,7 +161,14 @@ class PracticeService:
             {all_answers}
             
             Nhiệm vụ của bạn:
-            - Xem xét kỹ **tất cả các câu trả lời** (đúng và sai).
+            - Phân tích các **lỗi sai** (nếu có) và phân loại rõ ràng theo nhóm sau:
+                - **Từ vựng**: dùng sai nghĩa, chọn từ không phù hợp với ngữ cảnh
+                - **Ngữ pháp**: sai về thì, câu điều kiện, câu bị động, so sánh, chia động từ, mệnh đề,...
+                - **Dạng từ**: nhầm lẫn giữa danh từ, động từ, tính từ, trạng từ,...
+                - **Phát âm**: chỉ áp dụng nếu có câu hỏi liên quan đến phát âm
+                - **Khác**: những lỗi không nằm trong các nhóm trên (ví dụ: lỗi chính tả, diễn đạt,...)
+            - Nhận xét điểm mạnh/yếu **ngắn gọn, khái quát**. **TUYỆT ĐỐI KHÔNG** nêu ví dụ cụ thể.
+            - Không dùng câu kiểu: "Ví dụ:..." hoặc "Trong câu..." hoặc trích dẫn câu hỏi.
             - Xác định các điểm mạnh nổi bật. Nếu có điểm nào chưa tốt, hãy nêu rõ điểm yếu cần cải thiện.
             - Nếu học sinh đã làm đúng toàn bộ các câu hỏi và bài tập thuộc DOK Level 3, hãy ghi nhận toàn bộ điểm mạnh. Trong trường hợp này, KHÔNG đưa ra bất kỳ điểm yếu nào. Trả về "Không" trong phần "weaknesses".
             - Tuyệt đối không tự suy diễn rằng bài tập còn đơn giản nếu thông tin đã nêu rõ đó là DOK Level 3.
