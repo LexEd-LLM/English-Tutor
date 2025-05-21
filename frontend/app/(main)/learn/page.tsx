@@ -32,7 +32,7 @@ const LearnPage = async () => {
   ]);
 
   if (!userProgress || !userProgress.curriculum)
-    redirect("/");
+    redirect("/courses");
 
   if (!userHearts)
     redirect("/");
