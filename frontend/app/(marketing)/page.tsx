@@ -33,8 +33,8 @@ export default function MarketingPage() {
             <SignedOut>
               <SignUpButton
                 mode="modal"
-                afterSignInUrl="/learn"
-                afterSignUpUrl="/learn"
+                afterSignInUrl="/courses"
+                afterSignUpUrl="/courses"
               >
                 <Button size="lg" variant="secondary" className="w-full">
                   Get Started
