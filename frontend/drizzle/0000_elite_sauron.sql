@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"id" text PRIMARY KEY NOT NULL,
 	"name" text DEFAULT 'User' NOT NULL,
 	"image_src" text DEFAULT '/default-user.png' NOT NULL,
-	"role" "role" DEFAULT 'USER' NOT NULL,
+	"role" "role" DEFAULT 'VIP' NOT NULL,
 	"hearts" integer DEFAULT 5 NOT NULL,
 	"active_course_id" integer,
 	"subscription_status" "role" DEFAULT 'USER' NOT NULL,

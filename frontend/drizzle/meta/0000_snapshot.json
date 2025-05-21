@@ -1,5 +1,5 @@
 {
-  "id": "46285b08-148e-4bdb-a492-07924d740f20",
+  "id": "54c8c5b1-7084-435c-901c-7ff6c934702f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -580,7 +580,7 @@
           "type": "role",
           "primaryKey": false,
           "notNull": true,
-          "default": "'USER'"
+          "default": "'VIP'"
         },
         "hearts": {
           "name": "hearts",
