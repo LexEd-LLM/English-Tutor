@@ -164,7 +164,7 @@ export const QuizGenerator = ({ units }: QuizGeneratorProps) => {
 
           {/* Prompt */}
           <div className="space-y-4">
-            <Label className="text-base font-semibold">Custom Instructions</Label>
+            <Label className="text-base font-semibold">Custom Instructions (optional)</Label>
             <Input
               placeholder="Enter your custom instructions for the quiz..."
               value={prompt}
