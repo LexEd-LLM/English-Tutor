@@ -1,7 +1,7 @@
 FROM vllm/vllm-openai:v0.8.2
 
 # Copy file sửa thủ công
-COPY backend/libs/shm_broadcast.py /tmp/fix_shm_broadcast.py
+COPY backend/integrators/shm_broadcast.py /tmp/fix_shm_broadcast.py
 
 # Ghi đè file trong image
 RUN cp /tmp/fix_shm_broadcast.py /usr/local/lib/python3.12/dist-packages/vllm/distributed/device_communicators/shm_broadcast.py
